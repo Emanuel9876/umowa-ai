@@ -6,6 +6,8 @@ from io import BytesIO
 import json
 import os
 
+st.set_page_config(layout="centered")
+
 # === BAZA UŻYTKOWNIKÓW ===
 if not os.path.exists("users.json"):
     with open("users.json", "w") as f:
@@ -31,6 +33,12 @@ def authenticate_user(username, password):
     users = load_users()
     return username in users and users[username] == password
 
+# === STAN SESJI ===
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+if "register_mode" not in st.session_state:
+    st.session_state.register_mode = False
+
 # === TRYB JASNY/CIEMNY ===
 dark_mode = st.toggle("🌗 Tryb ciemny/jasny", value=True)
 if dark_mode:
@@ -39,6 +47,12 @@ if dark_mode:
     body {
         background: #0f2027;
         color: white;
+    }
+    .risk-box {
+        background-color: #2c2c2c;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 10px;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -49,39 +63,46 @@ else:
         background: #f5f5f5;
         color: black;
     }
+    .risk-box {
+        background-color: #e0e0e0;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 10px;
+    }
     </style>
     """, unsafe_allow_html=True)
 
 # === LOGOWANIE/REJESTRACJA ===
-menu = st.sidebar.selectbox("🔐 Zaloguj się lub zarejestruj", ["Zaloguj się", "Zarejestruj się"])
+if not st.session_state.logged_in:
+    st.image("https://images.unsplash.com/photo-1581091226825-b156c7ff8cde", use_column_width=True)
+    if st.session_state.register_mode:
+        st.header("📝 Rejestracja")
+        new_user = st.text_input("Nazwa użytkownika")
+        new_pass = st.text_input("Hasło", type="password")
+        if st.button("Zarejestruj"):
+            if register_user(new_user, new_pass):
+                st.success("Zarejestrowano! Możesz się teraz zalogować.")
+                st.session_state.register_mode = False
+            else:
+                st.error("Użytkownik już istnieje!")
+        if st.button("← Masz już konto? Zaloguj się"):
+            st.session_state.register_mode = False
+    else:
+        st.header("🔐 Logowanie")
+        user = st.text_input("Nazwa użytkownika")
+        passwd = st.text_input("Hasło", type="password")
+        if st.button("Zaloguj"):
+            if authenticate_user(user, passwd):
+                st.session_state.logged_in = True
+                st.session_state.username = user
+                st.success("Zalogowano jako " + user)
+            else:
+                st.error("Nieprawidłowy login lub hasło")
+        if st.button("Nie masz konta? Zarejestruj się →"):
+            st.session_state.register_mode = True
 
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-
-if menu == "Zarejestruj się":
-    st.header("📝 Rejestracja")
-    new_user = st.text_input("Nazwa użytkownika")
-    new_pass = st.text_input("Hasło", type="password")
-    if st.button("Zarejestruj"):
-        if register_user(new_user, new_pass):
-            st.success("Zarejestrowano! Możesz się teraz zalogować.")
-        else:
-            st.error("Użytkownik już istnieje!")
-
-elif menu == "Zaloguj się":
-    st.header("🔐 Logowanie")
-    user = st.text_input("Nazwa użytkownika")
-    passwd = st.text_input("Hasło", type="password")
-    if st.button("Zaloguj"):
-        if authenticate_user(user, passwd):
-            st.session_state.logged_in = True
-            st.session_state.username = user
-            st.success("Zalogowano jako " + user)
-        else:
-            st.error("Nieprawidłowy login lub hasło")
-
+# === APLIKACJA PO ZALOGOWANIU ===
 if st.session_state.logged_in:
-    # === APLIKACJA PO ZALOGOWANIU ===
     st.title("🤖 UmowaAI – Ekspert od ryzyk prawnych")
     lang = st.radio("🌐 Język", ["Polski", "English"])
     is_pl = lang == "Polski"
@@ -161,5 +182,3 @@ if st.session_state.logged_in:
             st.download_button("🧾 PDF", data=export_to_pdf(highlighted), file_name="analiza_umowy.pdf")
 
         st.info("🕓 Historia analiz wkrótce dostępna.")
-else:
-    st.warning("🔒 Zaloguj się, aby korzystać z aplikacji.")
