@@ -5,8 +5,9 @@ from fpdf import FPDF
 from io import BytesIO
 import json
 import os
+from datetime import datetime
 
-st.set_page_config(layout="wide", page_title="UmowaAI")
+st.set_page_config(layout="wide", page_title="UmowaAI", page_icon="🤖")
 
 # === BAZA UŻYTKOWNIKÓW ===
 if not os.path.exists("users.json"):
@@ -33,13 +34,36 @@ def authenticate_user(username, password):
     users = load_users()
     return username in users and users[username] == password
 
+# === HISTORIA ANALIZ ===
+if not os.path.exists("history.json"):
+    with open("history.json", "w") as f:
+        json.dump({}, f)
+
+def load_history():
+    with open("history.json", "r") as f:
+        return json.load(f)
+
+def save_history(history):
+    with open("history.json", "w") as f:
+        json.dump(history, f)
+
+def add_analysis_to_history(username, filename, typ_umowy, analiza, risks):
+    history = load_history()
+    if username not in history:
+        history[username] = []
+    history[username].append({
+        "data": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "plik": filename,
+        "typ_umowy": typ_umowy,
+        "analiza": analiza,
+        "ryzyka": [label for label, _ in risks]
+    })
+    save_history(history)
+
 # === STAN SESJI ===
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-if "register_mode" not in st.session_state:
-    st.session_state.register_mode = False
-if "analysis_count" not in st.session_state:
-    st.session_state.analysis_count = 0
+for key in ["logged_in", "register_mode", "analysis_count"]:
+    if key not in st.session_state:
+        st.session_state[key] = False if key != "analysis_count" else 0
 
 # === STYL STRONY ===
 st.markdown("""
@@ -47,7 +71,7 @@ st.markdown("""
 html, body, [class*="css"]  {
     height: 100%;
     margin: 0;
-    background: linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.75)), url('https://cdn.pixabay.com/photo/2016/12/10/07/13/law-1890714_1280.jpg') no-repeat center center fixed;
+    background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url('https://cdn.pixabay.com/photo/2016/12/10/07/13/law-1890714_1280.jpg') no-repeat center center fixed;
     background-size: cover;
     color: white;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -55,10 +79,11 @@ html, body, [class*="css"]  {
 
 .block-container {
     padding: 2rem 3rem;
-    background-color: rgba(255,255,255,0.05);
+    background-color: rgba(255,255,255,0.06);
     border-radius: 20px;
     max-width: 900px;
     margin: auto;
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.05);
 }
 
 .risk-box {
@@ -71,15 +96,20 @@ html, body, [class*="css"]  {
 </style>
 """, unsafe_allow_html=True)
 
-# === LOGOWANIE/REJESTRACJA ===
+# === UWIERZYTELNIENIE ===
 if not st.session_state.logged_in and st.session_state.analysis_count >= 1:
     st.warning("🔐 Aby kontynuować, musisz się zalogować lub zarejestrować.")
 
 if not st.session_state.logged_in:
     st.image("https://images.unsplash.com/photo-1581091226825-b156c7ff8cde", use_container_width=True)
     with st.container():
+        st.markdown("""<div style='text-align:center;'>
+            <h1 style='margin-bottom:10px;'>UmowaAI</h1>
+            <p>Twoje cyfrowe wsparcie w analizie umów</p>
+        </div>""", unsafe_allow_html=True)
+
         if st.session_state.register_mode:
-            st.header("📝 Rejestracja")
+            st.subheader("📝 Rejestracja")
             new_user = st.text_input("Nazwa użytkownika")
             new_pass = st.text_input("Hasło", type="password")
             if st.button("Zarejestruj"):
@@ -88,10 +118,9 @@ if not st.session_state.logged_in:
                     st.session_state.register_mode = False
                 else:
                     st.error("Użytkownik już istnieje!")
-            if st.button("← Masz już konto? Zaloguj się"):
-                st.session_state.register_mode = False
+            st.button("← Masz już konto? Zaloguj się", on_click=lambda: st.session_state.update({"register_mode": False}))
         else:
-            st.header("🔐 Logowanie")
+            st.subheader("🔐 Logowanie")
             user = st.text_input("Nazwa użytkownika")
             passwd = st.text_input("Hasło", type="password")
             if st.button("Zaloguj"):
@@ -101,13 +130,12 @@ if not st.session_state.logged_in:
                     st.success("Zalogowano jako " + user)
                 else:
                     st.error("Nieprawidłowy login lub hasło")
-            if st.button("Nie masz konta? Zarejestruj się →"):
-                st.session_state.register_mode = True
+            st.button("Nie masz konta? Zarejestruj się →", on_click=lambda: st.session_state.update({"register_mode": True}))
 
 # === APLIKACJA ===
 if st.session_state.logged_in or st.session_state.analysis_count < 1:
     st.title("🤖 UmowaAI – Ekspert od ryzyk prawnych")
-    lang = st.radio("🌐 Język", ["Polski", "English"])
+    lang = st.radio("🌐 Język", ["Polski", "English"], horizontal=True)
     is_pl = lang == "Polski"
 
     typ_umowy = st.selectbox("📄 Typ umowy", ["Najmu", "O pracę", "Zlecenie", "Dzieło", "Sprzedaży"])
@@ -186,4 +214,21 @@ if st.session_state.logged_in or st.session_state.analysis_count < 1:
 
         st.session_state.analysis_count += 1
 
-        st.info("🕓 Historia analiz wkrótce dostępna.")
+        if st.session_state.logged_in:
+            add_analysis_to_history(st.session_state.username, uploaded_file.name, typ_umowy, analiza, risks)
+
+    if st.session_state.logged_in:
+        with st.expander("📚 Historia Twoich analiz"):
+            history = load_history().get(st.session_state.username, [])
+            if not history:
+                st.info("Brak zapisanych analiz.")
+            else:
+                for entry in reversed(history[-10:]):
+                    st.markdown(f"""
+                    <div class='risk-box'>
+                        <b>📅 {entry["data"]}</b><br>
+                        📄 Plik: {entry["plik"]}<br>
+                        📝 Umowa: {entry["typ_umowy"]}, Analiza: {entry["analiza"]}<br>
+                        🚨 Ryzyka: {', '.join(entry["ryzyka"]) if entry["ryzyka"] else 'Brak'}
+                    </div>
+                    """, unsafe_allow_html=True)
