@@ -1,72 +1,92 @@
 import streamlit as st
 import fitz  # PyMuPDF
 import re
-from PIL import Image
-from io import BytesIO
-from fpdf import FPDF
-import datetime
 
-st.set_page_config(page_title="UmowaAI – Ekspert od umów", layout="wide")
+# === KONFIGURACJA STRONY ===
+st.set_page_config(page_title="UmowaAI – Legal Risk Detector", layout="wide")
 
 # === STYL STRONY ===
 st.markdown("""
 <style>
+@keyframes gradientBG {
+  0% {background-position: 0% 50%;}
+  50% {background-position: 100% 50%;}
+  100% {background-position: 0% 50%;}
+}
 body {
-    background-color: #0f2027;
-    background-image: linear-gradient(315deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+    background: linear-gradient(135deg, #1f1c2c, #928dab);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+    font-family: 'Segoe UI', sans-serif;
     color: white;
 }
 [data-testid="stAppViewContainer"] > .main {
-    background-color: rgba(0, 0, 0, 0);
+    background-color: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(8px);
     padding: 2rem;
+    border-radius: 16px;
 }
-h1, h2, h3, h4 {
+h1, h2, h3 {
     color: #ffffff;
-    text-shadow: 1px 1px 2px #000000;
+    text-shadow: 1px 1px 2px #000;
 }
 .stButton > button {
-    border-radius: 1rem;
-    padding: 0.75rem 1.5rem;
-    background-color: #ff4b1f;
-    background-image: linear-gradient(to right, #ff416c, #ff4b2b);
+    border-radius: 0.75rem;
+    padding: 0.8rem 1.6rem;
+    background: linear-gradient(to right, #ff416c, #ff4b2b);
     color: white;
-    border: none;
     font-weight: bold;
+    border: none;
+    transition: 0.3s ease;
 }
-.stSelectbox > div > div {
-    background-color: #ffffff11;
-    color: #ffffff;
-}
-.block-container {
-    padding-top: 2rem;
+.stButton > button:hover {
+    background: linear-gradient(to right, #ff4b2b, #ff416c);
+    transform: scale(1.02);
 }
 .risk-box {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-left: 5px solid #ff4b2b;
+    background-color: rgba(255, 0, 0, 0.1);
+    border-left: 4px solid #ff4b2b;
     padding: 1rem;
     margin: 1rem 0;
-    border-radius: 10px;
-    color: white;
+    border-radius: 12px;
     font-size: 1rem;
+    backdrop-filter: blur(3px);
+    box-shadow: 0 0 10px rgba(255, 75, 43, 0.3);
+}
+.stSelectbox > div > div {
+    background-color: #22222255;
+    color: white;
+}
+.block-container {
+    padding-top: 1rem;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# === NAGŁÓWEK Z OBRAZKIEM ===
-st.image("https://cdn.pixabay.com/photo/2017/08/10/07/32/law-2619305_1280.jpg", use_container_width=True)
-st.title("🧠 UmowaAI – Ekspert od ryzyk prawnych")
-st.markdown("""
-##### Wybierz typ umowy, prześlij plik PDF i pozwól AI wskazać wszystkie potencjalne zagrożenia prawne w przejrzysty i zrozumiały sposób.
----
-""")
+# === INTERFEJS MULTI-JĘZYKOWY ===
+lang = st.radio("🌐 Wybierz język / Choose language", ["Polski", "English"])
+is_pl = lang == "Polski"
 
-# === OPCJE UŻYTKOWNIKA ===
-dark_mode = st.toggle("🌗 Tryb ciemny/jasny")
-lang = st.radio("🌐 Język interfejsu", ["Polski", "English"])
-dodatkowa_analiza = st.checkbox("💸 Włącz analizę finansową i niezgodności")
+# === OBRAZ NAGŁÓWKA ===
+st.image("https://cdn.pixabay.com/photo/2022/01/30/11/23/ai-6983455_1280.jpg", use_container_width=True)
 
-# === WYBÓR TYPÓW UMÓW ===
-typ_umowy = st.selectbox("📄 Wybierz typ umowy", ["Najmu", "O pracę", "Zlecenie", "Dzieło", "Sprzedaży"])
+# === TYTUŁ I OPIS ===
+st.title("🤖 UmowaAI – " + ("Ekspert od ryzyk prawnych" if is_pl else "AI Legal Risk Analyzer"))
+st.markdown("#### " + (
+    "Prześlij umowę PDF i AI znajdzie ryzykowne zapisy prawne, finansowe lub inne – automatycznie i zrozumiale."
+    if is_pl else
+    "Upload a contract PDF and AI will detect legal, financial, or other risk clauses – clearly and automatically."
+))
+st.markdown("---")
+
+# === OPCJE: TYP UMOWY I TYP ANALIZY ===
+typ_umowy = st.selectbox("📄 Wybierz typ umowy / Select contract type", [
+    "Najmu", "O pracę", "Zlecenie", "Dzieło", "Sprzedaży"
+])
+
+typ_analizy = st.selectbox("🔍 Co analizować? / Type of risks to detect", [
+    "Prawne", "Finansowe", "Wszystkie"
+])
 
 # === FUNKCJE ===
 def extract_text_from_pdf(file):
@@ -76,87 +96,71 @@ def extract_text_from_pdf(file):
         text += page.get_text()
     return text
 
-def find_risks(text, typ):
+def find_risks(text, typ_umowy, typ_analizy):
     wspolne = {
         "⚠️ Kaucja": r"kaucj[ae]\s+.*?\d+[\s\w]*z[łl]",
         "⏳ Wypowiedzenie": r"wypowiedze?nie.*?(umowy|kontraktu)?",
         "🚫 Kara umowna": r"kara\s+umowna.*?\d+[\s\w]*z[łl]",
-        "📉 Brak odpowiedzialności": r"nie ponosi odpowiedzialn",
     }
-    if dodatkowa_analiza:
-        wspolne["💸 Ukryte koszty"] = r"dodatkowe opłaty|ukryte koszty"
-    typowe = {
+    finansowe = {
+        "💸 Brak wynagrodzenia": r"(nie przysługuje|brak)\s+wynagrodzenia",
+        "📈 Podwyżki bez zgody": r"(automatyczn[aey]|jednostronn[aey])\s+(zmian[aey]|podwyżk)"
+    }
+    spec = {
         "Najmu": {
-            "❌ Zakaz podnajmu": r"(zakaz|brak zgody).*?podnajm",
-            "🧾 Odpowiedzialność za szkody": r"odpowiedzialn[oó]\w+.*?(najemc[aę]|wynajmuj[aą]cego)"
+            "🔐 Zakaz podnajmu": r"(zakaz|brak zgody).*?podnajm",
         },
         "O pracę": {
-            "⛔ Okres próbny": r"okres\s+pr[óo]bny.*?\d+\s+(dni|miesi[ąa]c)",
             "💼 Nadgodziny niepłatne": r"nadgodzin(y|ach|om).*?nieodpłatn"
         },
         "Zlecenie": {
-            "💸 Brak wynagrodzenia": r"(nie przysługuje|brak)\s+wynagrodzenia",
             "📆 Terminy realizacji": r"termin.*?realizacj"
         },
         "Dzieło": {
-            "🛠️ Odpowiedzialność za wady": r"odpowiedzialno\w+.*?wady.*?dzie[łl]",
-            "📉 Kara za opóźnienie": r"kara.*?op[oó]\w+nienia"
+            "🛠️ Odpowiedzialność za wady": r"odpowiedzialno\w+.*?wady.*?dzie[łl]"
         },
         "Sprzedaży": {
-            "🔍 Reklamacje": r"(reklamacj|odpowiedzialno\w+).*?towar",
-            "📅 Termin dostawy": r"termin.*?dostaw[yie]"
+            "🔍 Reklamacje": r"(reklamacj|odpowiedzialno\w+).*?towar"
         }
     }
+
     patterns = wspolne.copy()
-    patterns.update(typowe.get(typ, {}))
+    if typ_analizy in ["Wszystkie", "Finansowe"]:
+        patterns.update(finansowe)
+    if typ_umowy in spec:
+        patterns.update(spec[typ_umowy])
 
     results = []
     for label, pattern in patterns.items():
-        matches = re.finditer(pattern, text, re.IGNORECASE)
-        for match in matches:
+        for match in re.finditer(pattern, text, re.IGNORECASE):
             results.append((label, match.group()))
     return results
 
 def highlight_risks(text, risks):
-    for label, fragment in risks:
-        highlighted = f"**[{label}]** {fragment}"
-        text = text.replace(fragment, highlighted)
+    for label, frag in risks:
+        text = text.replace(frag, f"**[{label}]** {frag}")
     return text
 
-def export_to_pdf(text):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_auto_page_break(auto=True, margin=15)
-    pdf.set_font("Arial", size=12)
-    for line in text.split('\n'):
-        pdf.multi_cell(0, 10, line)
-    buf = BytesIO()
-    pdf.output(buf)
-    return buf.getvalue()
-
 # === ANALIZA ===
-uploaded_file = st.file_uploader("📥 Prześlij plik PDF z umową", type="pdf")
+uploaded_file = st.file_uploader("📥 Wgraj PDF umowy / Upload contract PDF", type="pdf")
 if uploaded_file:
-    with st.spinner("🔎 Trwa analiza dokumentu..."):
+    with st.spinner("🔍 Analiza... / Analyzing..."):
         text = extract_text_from_pdf(uploaded_file)
-        risks = find_risks(text, typ_umowy)
+        risks = find_risks(text, typ_umowy, typ_analizy)
         highlighted = highlight_risks(text, risks)
 
-    st.subheader("🚨 Wykryte ryzyka:")
+    st.subheader("🚨 Wykryte ryzyka:" if is_pl else "🚨 Detected Risks")
     if risks:
         for label, frag in risks:
             st.markdown(f"<div class='risk-box'><b>{label}</b><br>{frag}</div>", unsafe_allow_html=True)
     else:
-        st.success("✅ Nie znaleziono oczywistych ryzyk w umowie.")
+        st.success("✅ Brak oczywistych ryzyk." if is_pl else "✅ No obvious risks found.")
 
-    st.subheader("📄 Treść umowy z oznaczeniami:")
+    st.subheader("📄 Treść umowy z oznaczeniami:" if is_pl else "📄 Contract with highlights")
     st.markdown(highlighted)
 
-    with st.expander("💾 Pobierz wynik analizy"):
-        st.download_button("📩 Pobierz analizę jako TXT", data=highlighted, file_name="analiza_umowy.txt")
-        pdf_bytes = export_to_pdf(highlighted)
-        st.download_button("🧾 Pobierz jako PDF", data=pdf_bytes, file_name="analiza_umowy.pdf")
-
-    st.info("🕓 Historia i logowanie dostępne w wersji premium (wkrótce)")
+    with st.expander("💾 Pobierz analizę / Download result"):
+        st.download_button("📩 Pobierz jako TXT" if is_pl else "📩 Download as TXT",
+                           data=highlighted, file_name="analiza_umowy.txt")
 else:
-    st.info("✍️ Wgraj umowę w formacie PDF, aby rozpocząć analizę.")
+    st.info("✍️ Wgraj umowę PDF, aby rozpocząć analizę." if is_pl else "✍️ Upload a PDF to begin analysis.")
