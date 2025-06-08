@@ -14,15 +14,15 @@ st.markdown("""
   100% {background-position: 0% 50%;}
 }
 body {
-    background: linear-gradient(135deg, #1f1c2c, #928dab);
+    background: linear-gradient(-45deg, #1e3c72, #2a5298, #0f2027, #203a43);
     background-size: 400% 400%;
-    animation: gradientBG 15s ease infinite;
+    animation: gradientBG 20s ease infinite;
     font-family: 'Segoe UI', sans-serif;
     color: white;
 }
 [data-testid="stAppViewContainer"] > .main {
-    background-color: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(8px);
+    background-color: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(10px);
     padding: 2rem;
     border-radius: 16px;
 }
@@ -60,11 +60,43 @@ h1, h2, h3 {
 .block-container {
     padding-top: 1rem;
 }
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 12px;
+    backdrop-filter: blur(5px);
+}
+.nav-left, .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: white;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+.nav-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-align: center;
+    flex-grow: 1;
+    color: #ffda79;
+    text-shadow: 1px 1px 3px #000;
+}
 </style>
 """, unsafe_allow_html=True)
 
 # === INTERFEJS MULTI-JĘZYKOWY ===
-lang = st.radio("🌐 Wybierz język / Choose language", ["Polski", "English"])
+st.markdown("""<div class='navbar'>
+    <div class='nav-left'>🌐 """, unsafe_allow_html=True)
+lang = st.radio("", ["Polski", "English"], horizontal=True, label_visibility="collapsed")
+st.markdown("""</div>
+    <div class='nav-title'>STRONA GŁÓWNA</div>
+    <div class='nav-right'>📄 Typ umowy</div>
+</div>""", unsafe_allow_html=True)
 is_pl = lang == "Polski"
 
 # === OBRAZ NAGŁÓWKA ===
@@ -117,10 +149,10 @@ def find_risks(text, typ_umowy, typ_analizy):
             "📆 Terminy realizacji": r"termin.*?realizacj"
         },
         "Dzieło": {
-            "🛠️ Odpowiedzialność za wady": r"odpowiedzialno\w+.*?wady.*?dzie[łl]"
+            "🛠️ Odpowiedzialność za wady": r"odpowiedzialno\\w+.*?wady.*?dzie[łl]"
         },
         "Sprzedaży": {
-            "🔍 Reklamacje": r"(reklamacj|odpowiedzialno\w+).*?towar"
+            "🔍 Reklamacje": r"(reklamacj|odpowiedzialno\\w+).*?towar"
         }
     }
 
