@@ -57,44 +57,18 @@ if "logged_in" not in st.session_state:
 if "register_mode" not in st.session_state:
     st.session_state.register_mode = False
 
-# === TRYB JASNY/CIEMNY + TŁO ===
-dark_mode = st.toggle("🌗 Tryb ciemny/jasny", value=True)
 background_url = "https://images.unsplash.com/photo-1603575448361-18c1e4d5ecb3"
-if dark_mode:
-    st.markdown(f"""
-    <style>
-    body {{
-        background: url('{background_url}') no-repeat center center fixed;
-        background-size: cover;
-        color: white;
-    }}
-    .risk-box {{
-        background-color: rgba(44, 44, 44, 0.85);
-        padding: 10px;
-        margin: 10px 0;
-        border-radius: 10px;
-    }}
-    </style>
-    """, unsafe_allow_html=True)
-else:
-    st.markdown(f"""
-    <style>
-    body {{
-        background: url('{background_url}') no-repeat center center fixed;
-        background-size: cover;
-        color: black;
-    }}
-    .risk-box {{
-        background-color: rgba(255, 255, 255, 0.85);
-        padding: 10px;
-        margin: 10px 0;
-        border-radius: 10px;
-    }}
-    </style>
-    """, unsafe_allow_html=True)
 
 # === LOGOWANIE/REJESTRACJA ===
 if not st.session_state.logged_in:
+    st.markdown(f"""
+    <style>
+    body {{
+        background: url('{background_url}') no-repeat center center;
+        background-size: cover;
+    }}
+    </style>
+    """, unsafe_allow_html=True)
     st.image("https://images.unsplash.com/photo-1581091226825-b156c7ff8cde", use_container_width=True)
     if st.session_state.register_mode:
         st.header("📝 Rejestracja")
@@ -123,4 +97,48 @@ if not st.session_state.logged_in:
             st.session_state.register_mode = True
 
 # === APLIKACJA PO ZALOGOWANIU ===
-# (reszta kodu pozostaje bez zmian)
+if st.session_state.logged_in:
+    st.markdown("""
+    <style>
+    body {
+        background: none !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.header("🤖 UmowaAI – Ekspert od ryzyk prawnych")
+
+    dark_mode = st.toggle("🌗 Tryb ciemny/jasny", value=False)
+
+    if dark_mode:
+        st.markdown("""
+        <style>
+        body {
+            background-color: #1c1c1c;
+            color: white;
+        }
+        .risk-box {
+            background-color: rgba(44, 44, 44, 0.85);
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 10px;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown("""
+        <style>
+        body {
+            background-color: #f2f2f2;
+            color: black;
+        }
+        .risk-box {
+            background-color: rgba(255, 255, 255, 0.85);
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 10px;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+    # ... (tutaj kontynuuj z resztą funkcji aplikacji)
