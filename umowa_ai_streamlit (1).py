@@ -3,83 +3,131 @@ import fitz  # PyMuPDF
 import re
 from fpdf import FPDF
 from io import BytesIO
+import datetime
 
 # === KONFIGURACJA STRONY ===
 st.set_page_config(page_title="UmowaAI – Legal Risk Detector", layout="wide")
 
-# === TRYB CIEMNY / JASNY ===
-dark_mode = st.toggle("🌗 Tryb ciemny/jasny", key="dark_mode_toggle")
-if dark_mode:
-    st.markdown("""
-    <style>
-    body { background-color: #0f0f0f; color: #ffffff; }
-    </style>
-    """, unsafe_allow_html=True)
-else:
-    st.markdown("""
-    <style>
-    body { background-color: #ffffff; color: #000000; }
-    </style>
-    """, unsafe_allow_html=True)
-
-# === STAN SESJI (logowanie, historia) ===
+# === SESJA UŻYTKOWNIKA ===
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
-if "history" not in st.session_state:
-    st.session_state.history = []
+if "username" not in st.session_state:
+    st.session_state.username = ""
+if "dark_mode" not in st.session_state:
+    st.session_state.dark_mode = True
+
+# === FUNKCJE LOGOWANIA ===
+users = {"admin": "haslo123"}  # Przykładowi użytkownicy, zamień na bazę danych w wersji produkcyjnej
+
+
+def login(username, password):
+    return users.get(username) == password
+
+
+def register(username, password):
+    if username in users:
+        return False
+    users[username] = password
+    return True
+
+# === TRYB JASNY/CIEMNY ===
+dark_mode = st.toggle("🌗 Tryb ciemny/jasny", value=st.session_state.dark_mode)
+st.session_state.dark_mode = dark_mode
+
+# === STYL ===
+st.markdown(f"""
+<style>
+body {{
+    background: {'#1f1c2c' if dark_mode else '#f5f5f5'};
+    color: {'white' if dark_mode else 'black'};
+}}
+[data-testid="stAppViewContainer"] > .main {{
+    background-color: {'rgba(255, 255, 255, 0.03)' if dark_mode else '#ffffff'};
+    backdrop-filter: blur(6px);
+    padding: 2rem;
+    border-radius: 16px;
+}}
+h1, h2, h3 {{
+    color: {'#ffffff' if dark_mode else '#000000'};
+}}
+.risk-box {{
+    background-color: rgba(255, 0, 0, 0.1);
+    border-left: 4px solid #ff4b2b;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 12px;
+    font-size: 1rem;
+    backdrop-filter: blur(3px);
+    box-shadow: 0 0 10px rgba(255, 75, 43, 0.3);
+}}
+</style>
+""", unsafe_allow_html=True)
 
 # === LOGOWANIE ===
 if not st.session_state.logged_in:
-    st.subheader("🔐 Logowanie")
+    st.header("🔐 Logowanie / Login")
     username = st.text_input("Login")
-    password = st.text_input("Hasło", type="password")
-    if st.button("Zaloguj"):
-        if username == "admin" and password == "admin":
-            st.session_state.logged_in = True
-            st.success("Zalogowano pomyślnie")
-        else:
-            st.error("Nieprawidłowy login lub hasło")
+    password = st.text_input("Hasło / Password", type="password")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Zaloguj / Login"):
+            if login(username, password):
+                st.session_state.logged_in = True
+                st.session_state.username = username
+                st.success("Zalogowano!")
+            else:
+                st.error("Błędny login lub hasło.")
+    with col2:
+        if st.button("Zarejestruj / Register"):
+            if register(username, password):
+                st.success("Zarejestrowano! Możesz się teraz zalogować.")
+            else:
+                st.warning("Użytkownik już istnieje.")
     st.stop()
 
-# === INTERFEJS MULTI-JĘZYKOWY ===
-lang = st.radio("🌐 Wybierz język / Choose language", ["Polski", "English"])
-is_pl = lang == "Polski"
-
-# === NAGŁÓWEK ===
+# === INTERFEJS ===
 st.image("https://cdn.pixabay.com/photo/2022/01/30/11/23/ai-6983455_1280.jpg", use_container_width=True)
+lang = st.radio("🌐 Język / Language", ["Polski", "English"])
+is_pl = lang == "Polski"
 st.title("🤖 UmowaAI – " + ("Ekspert od ryzyk prawnych" if is_pl else "AI Legal Risk Analyzer"))
+
 st.markdown("#### " + (
-    "Prześlij umowę PDF i AI znajdzie ryzykowne zapisy prawne, finansowe lub inne."
+    "Prześlij umowę PDF i AI znajdzie ryzykowne zapisy prawne, finansowe lub inne – automatycznie i zrozumiale."
     if is_pl else
-    "Upload a PDF and AI will detect legal, financial or other risks."
+    "Upload a contract PDF and AI will detect legal, financial, or other risk clauses – clearly and automatically."
 ))
+
 st.markdown("---")
 
 # === OPCJE ===
-typ_umowy = st.selectbox("📄 Typ umowy", ["Najmu", "O pracę", "Zlecenie", "Dzieło", "Sprzedaży"])
-typ_analizy = st.selectbox("🔍 Typ analizy", ["Prawne", "Finansowe", "Wszystkie"])
+typ_umowy = st.selectbox("📄 Typ umowy / Contract type", ["Najmu", "O pracę", "Zlecenie", "Dzieło", "Sprzedaży"])
+typ_analizy = st.selectbox("🔍 Co analizować? / Type of risks to detect", ["Prawne", "Finansowe", "Wszystkie"])
 
 # === FUNKCJE ===
 def extract_text_from_pdf(file):
     doc = fitz.open(stream=file.read(), filetype="pdf")
-    return "".join(page.get_text() for page in doc)
+    text = ""
+    for page in doc:
+        text += page.get_text()
+    return text
 
 def find_risks(text, typ_umowy, typ_analizy):
     wspolne = {
-        "⚠️ Kaucja": r"kaucj[ae]\s+.*?\d+[\s\w]*z[\u0142l]",
+        "⚠️ Kaucja": r"kaucj[ae]\s+.*?\d+[\s\w]*z[łl]",
         "⏳ Wypowiedzenie": r"wypowiedze?nie.*?(umowy|kontraktu)?",
-        "🚫 Kara umowna": r"kara\s+umowna.*?\d+[\s\w]*z[\u0142l]",
+        "🚫 Kara umowna": r"kara\s+umowna.*?\d+[\s\w]*z[łl]",
     }
     finansowe = {
         "💸 Brak wynagrodzenia": r"(nie przysługuje|brak)\s+wynagrodzenia",
         "📈 Podwyżki bez zgody": r"(automatyczn[aey]|jednostronn[aey])\s+(zmian[aey]|podwyżk)"
     }
     spec = {
-        "Najmu": {"Zakaz podnajmu": r"(zakaz|brak zgody).*?podnajm"},
-        "O pracę": {"Nadgodziny niepłatne": r"nadgodzin(y|ach|om).*?nieodpłatn"},
-        "Zlecenie": {"Terminy realizacji": r"termin.*?realizacj"},
-        "Dzieło": {"Odpowiedzialność za wady": r"odpowiedzialno\w+.*?wady.*?dzie[\u0142l]"},
-        "Sprzedaży": {"Reklamacje": r"(reklamacj|odpowiedzialno\w+).*?towar"}
+        "Najmu": {"🔐 Zakaz podnajmu": r"(zakaz|brak zgody).*?podnajm"},
+        "O pracę": {"💼 Nadgodziny niepłatne": r"nadgodzin(y|ach|om).*?nieodpłatn"},
+        "Zlecenie": {"📆 Terminy realizacji": r"termin.*?realizacj"},
+        "Dzieło": {"🛠️ Odpowiedzialność za wady": r"odpowiedzialno\w+.*?wady.*?dzie[łl]"},
+        "Sprzedaży": {"🔍 Reklamacje": r"(reklamacj|odpowiedzialno\w+).*?towar"}
     }
     patterns = wspolne.copy()
     if typ_analizy in ["Wszystkie", "Finansowe"]:
@@ -87,7 +135,11 @@ def find_risks(text, typ_umowy, typ_analizy):
     if typ_umowy in spec:
         patterns.update(spec[typ_umowy])
 
-    return [(label, m.group()) for label, pat in patterns.items() for m in re.finditer(pat, text, re.IGNORECASE)]
+    results = []
+    for label, pattern in patterns.items():
+        for match in re.finditer(pattern, text, re.IGNORECASE):
+            results.append((label, match.group()))
+    return results
 
 def highlight_risks(text, risks):
     for label, frag in risks:
@@ -106,30 +158,29 @@ def export_to_pdf(text):
     return buf.getvalue()
 
 # === ANALIZA ===
-uploaded_file = st.file_uploader("📅 Wgraj PDF", type="pdf")
+uploaded_file = st.file_uploader("📥 Wgraj PDF umowy / Upload contract PDF", type="pdf")
 if uploaded_file:
-    with st.spinner("🔍 Analiza..."):
+    with st.spinner("🔍 Analiza... / Analyzing..."):
         text = extract_text_from_pdf(uploaded_file)
         risks = find_risks(text, typ_umowy, typ_analizy)
         highlighted = highlight_risks(text, risks)
 
-    st.subheader("🚨 Ryzyka:")
+    st.subheader("🚨 Wykryte ryzyka:" if is_pl else "🚨 Detected Risks")
     if risks:
         for label, frag in risks:
             st.markdown(f"<div class='risk-box'><b>{label}</b><br>{frag}</div>", unsafe_allow_html=True)
-        st.session_state.history.append({"typ": typ_umowy, "analiza": typ_analizy, "risks": risks})
     else:
-        st.success("✅ Brak ryzyk.")
+        st.success("✅ Brak oczywistych ryzyk." if is_pl else "✅ No obvious risks found.")
 
-    st.subheader("📄 Podgląd umowy:")
+    st.subheader("📄 Treść umowy z oznaczeniami:" if is_pl else "📄 Contract with highlights")
     st.markdown(highlighted)
 
-    with st.expander("📂 Eksport analizy"):
-        st.download_button("📁 Pobierz TXT", highlighted, file_name="analiza.txt")
-        st.download_button("🧾 Pobierz PDF", export_to_pdf(highlighted), file_name="analiza.pdf")
+    with st.expander("💾 Pobierz analizę / Download result"):
+        st.download_button("📩 Pobierz jako TXT" if is_pl else "📩 Download as TXT",
+                           data=highlighted, file_name="analiza_umowy.txt")
+        st.download_button("🧾 Pobierz jako PDF" if is_pl else "🧾 Download as PDF",
+                           data=export_to_pdf(highlighted), file_name="analiza_umowy.pdf")
 
-    with st.expander("🔐 Historia analiz"):
-        for i, entry in enumerate(st.session_state.history[::-1], 1):
-            st.write(f"{i}. {entry['typ']} ({entry['analiza']}): {len(entry['risks'])} ryzyk")
+    st.info("🔐 Historia analiz dostępna w wersji premium – wkrótce." if is_pl else "🔐 Analysis history coming soon in premium version.")
 else:
-    st.info("✍️ Wgraj PDF umowy, aby zacząć.")
+    st.info("✍️ Wgraj umowę PDF, aby rozpocząć analizę." if is_pl else "✍️ Upload a PDF to begin analysis.")
