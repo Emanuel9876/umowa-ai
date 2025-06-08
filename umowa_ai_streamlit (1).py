@@ -2,6 +2,9 @@ import streamlit as st
 import fitz  # PyMuPDF
 import re
 from PIL import Image
+from io import BytesIO
+from fpdf import FPDF
+import datetime
 
 st.set_page_config(page_title="UmowaAI – Ekspert od umów", layout="wide")
 
@@ -50,12 +53,17 @@ h1, h2, h3, h4 {
 """, unsafe_allow_html=True)
 
 # === NAGŁÓWEK Z OBRAZKIEM ===
-st.image("https://cdn.pixabay.com/photo/2017/08/10/07/32/law-2619305_1280.jpg", use_column_width=True)
+st.image("https://cdn.pixabay.com/photo/2017/08/10/07/32/law-2619305_1280.jpg", use_container_width=True)
 st.title("🧠 UmowaAI – Ekspert od ryzyk prawnych")
 st.markdown("""
 ##### Wybierz typ umowy, prześlij plik PDF i pozwól AI wskazać wszystkie potencjalne zagrożenia prawne w przejrzysty i zrozumiały sposób.
 ---
 """)
+
+# === OPCJE UŻYTKOWNIKA ===
+dark_mode = st.toggle("🌗 Tryb ciemny/jasny")
+lang = st.radio("🌐 Język interfejsu", ["Polski", "English"])
+dodatkowa_analiza = st.checkbox("💸 Włącz analizę finansową i niezgodności")
 
 # === WYBÓR TYPÓW UMÓW ===
 typ_umowy = st.selectbox("📄 Wybierz typ umowy", ["Najmu", "O pracę", "Zlecenie", "Dzieło", "Sprzedaży"])
@@ -75,6 +83,8 @@ def find_risks(text, typ):
         "🚫 Kara umowna": r"kara\s+umowna.*?\d+[\s\w]*z[łl]",
         "📉 Brak odpowiedzialności": r"nie ponosi odpowiedzialn",
     }
+    if dodatkowa_analiza:
+        wspolne["💸 Ukryte koszty"] = r"dodatkowe opłaty|ukryte koszty"
     typowe = {
         "Najmu": {
             "❌ Zakaz podnajmu": r"(zakaz|brak zgody).*?podnajm",
@@ -113,6 +123,17 @@ def highlight_risks(text, risks):
         text = text.replace(fragment, highlighted)
     return text
 
+def export_to_pdf(text):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.set_font("Arial", size=12)
+    for line in text.split('\n'):
+        pdf.multi_cell(0, 10, line)
+    buf = BytesIO()
+    pdf.output(buf)
+    return buf.getvalue()
+
 # === ANALIZA ===
 uploaded_file = st.file_uploader("📥 Prześlij plik PDF z umową", type="pdf")
 if uploaded_file:
@@ -133,5 +154,9 @@ if uploaded_file:
 
     with st.expander("💾 Pobierz wynik analizy"):
         st.download_button("📩 Pobierz analizę jako TXT", data=highlighted, file_name="analiza_umowy.txt")
+        pdf_bytes = export_to_pdf(highlighted)
+        st.download_button("🧾 Pobierz jako PDF", data=pdf_bytes, file_name="analiza_umowy.pdf")
+
+    st.info("🕓 Historia i logowanie dostępne w wersji premium (wkrótce)")
 else:
     st.info("✍️ Wgraj umowę w formacie PDF, aby rozpocząć analizę.")
