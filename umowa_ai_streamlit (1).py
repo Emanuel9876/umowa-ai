@@ -6,7 +6,7 @@ from io import BytesIO
 import json
 import os
 
-st.set_page_config(layout="centered")
+st.set_page_config(layout="wide", page_title="UmowaAI")
 
 # === BAZA UŻYTKOWNIKÓW ===
 if not os.path.exists("users.json"):
@@ -38,43 +38,32 @@ if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "register_mode" not in st.session_state:
     st.session_state.register_mode = False
+if "analysis_count" not in st.session_state:
+    st.session_state.analysis_count = 0
 
-# === TRYB JASNY/CIEMNY ===
-dark_mode = st.toggle("🌗 Tryb ciemny/jasny", value=True)
-if dark_mode:
-    st.markdown("""
-    <style>
-    body {
-        background: #0f2027;
-        color: white;
-    }
-    .risk-box {
-        background-color: #2c2c2c;
-        padding: 10px;
-        margin: 10px 0;
-        border-radius: 10px;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-else:
-    st.markdown("""
-    <style>
-    body {
-        background: #f5f5f5;
-        color: black;
-    }
-    .risk-box {
-        background-color: #e0e0e0;
-        padding: 10px;
-        margin: 10px 0;
-        border-radius: 10px;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+# === STYL STRONY ===
+st.markdown("""
+<style>
+body {
+    background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('https://cdn.pixabay.com/photo/2016/12/10/07/13/law-1890714_1280.jpg') no-repeat center center fixed;
+    background-size: cover;
+    color: white;
+}
+.risk-box {
+    background-color: rgba(255, 255, 255, 0.15);
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 10px;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # === LOGOWANIE/REJESTRACJA ===
+if not st.session_state.logged_in and st.session_state.analysis_count >= 1:
+    st.warning("🔐 Aby kontynuować, musisz się zalogować lub zarejestrować.")
+
 if not st.session_state.logged_in:
-    st.image("https://images.unsplash.com/photo-1581091226825-b156c7ff8cde", use_column_width=True)
+    st.image("https://images.unsplash.com/photo-1581091226825-b156c7ff8cde", use_container_width=True)
     if st.session_state.register_mode:
         st.header("📝 Rejestracja")
         new_user = st.text_input("Nazwa użytkownika")
@@ -101,8 +90,8 @@ if not st.session_state.logged_in:
         if st.button("Nie masz konta? Zarejestruj się →"):
             st.session_state.register_mode = True
 
-# === APLIKACJA PO ZALOGOWANIU ===
-if st.session_state.logged_in:
+# === APLIKACJA ===
+if st.session_state.logged_in or st.session_state.analysis_count < 1:
     st.title("🤖 UmowaAI – Ekspert od ryzyk prawnych")
     lang = st.radio("🌐 Język", ["Polski", "English"])
     is_pl = lang == "Polski"
@@ -180,5 +169,7 @@ if st.session_state.logged_in:
         with st.expander("💾 Pobierz analizę"):
             st.download_button("📩 TXT", data=highlighted, file_name="analiza_umowy.txt")
             st.download_button("🧾 PDF", data=export_to_pdf(highlighted), file_name="analiza_umowy.pdf")
+
+        st.session_state.analysis_count += 1
 
         st.info("🕓 Historia analiz wkrótce dostępna.")
