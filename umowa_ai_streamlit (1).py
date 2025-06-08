@@ -8,6 +8,45 @@ st.set_page_config(page_title="UmowaAI – Legal Risk Detector", layout="wide")
 # === STYL STRONY ===
 st.markdown("""
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
+
+body {
+    background-image: url("https://files.oaiusercontent.com/file-VDXu1R184nwGQa6ocn3h4F");
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    font-family: 'Poppins', sans-serif;
+    color: white;
+}
+
+h1, h2, h3 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 800;
+    font-size: 2.5rem;
+    color: #ffffff;
+    text-shadow: 2px 2px 4px #000;
+    margin-top: 0.5rem;
+}
+
+.stButton > button {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.1rem;
+}
+
+.nav-title {
+    font-size: 2.2rem;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 800;
+    text-shadow: 2px 2px 4px #000;
+}
+
+.nav-left, .nav-right {
+    font-size: 1.1rem;
+    font-family: 'Poppins', sans-serif;
+}
+</style>
+
+<style>
 @keyframes gradientBG {
   0% {background-position: 0% 50%;}
   50% {background-position: 100% 50%;}
@@ -196,3 +235,4 @@ if uploaded_file:
                            data=highlighted, file_name="analiza_umowy.txt")
 else:
     st.info("✍️ Wgraj umowę PDF, aby rozpocząć analizę." if is_pl else "✍️ Upload a PDF to begin analysis.")
+
