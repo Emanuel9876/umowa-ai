@@ -2,53 +2,63 @@ import streamlit as st
 import fitz  # PyMuPDF
 import re
 from PIL import Image
-import base64
 
 st.set_page_config(page_title="UmowaAI – Ekspert od umów", layout="wide")
 
 # === STYL STRONY ===
 st.markdown("""
 <style>
-[data-testid="stAppViewContainer"] {
-    background-image: url('https://images.unsplash.com/photo-1554224155-6726b3ff858f');
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    color: #fff;
+body {
+    background-color: #0f2027;
+    background-image: linear-gradient(315deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+    color: white;
 }
-
-.title {
-    font-size: 45px;
+[data-testid="stAppViewContainer"] > .main {
+    background-color: rgba(0, 0, 0, 0);
+    padding: 2rem;
+}
+h1, h2, h3, h4 {
+    color: #ffffff;
+    text-shadow: 1px 1px 2px #000000;
+}
+.stButton > button {
+    border-radius: 1rem;
+    padding: 0.75rem 1.5rem;
+    background-color: #ff4b1f;
+    background-image: linear-gradient(to right, #ff416c, #ff4b2b);
+    color: white;
+    border: none;
     font-weight: bold;
-    text-align: center;
-    margin-top: 1rem;
-    color: #fff;
-    text-shadow: 1px 1px 3px #000;
 }
-
-.subtitle {
-    text-align: center;
-    font-size: 18px;
-    color: #e0e0e0;
-    margin-bottom: 1rem;
+.stSelectbox > div > div {
+    background-color: #ffffff11;
+    color: #ffffff;
 }
-
+.block-container {
+    padding-top: 2rem;
+}
 .risk-box {
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 12px;
-    padding: 10px;
-    margin-bottom: 10px;
-    box-shadow: 0 0 10px rgba(255,255,255,0.2);
+    background-color: rgba(255, 255, 255, 0.1);
+    border-left: 5px solid #ff4b2b;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 10px;
+    color: white;
+    font-size: 1rem;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# === NAGŁÓWEK ===
-st.markdown('<div class="title">🧠 UmowaAI – Ekspert od umów</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">Analizuj PDF-y różnych umów: najmu, o pracę, zlecenia i wykrywaj ryzyka prawne</div>', unsafe_allow_html=True)
+# === NAGŁÓWEK Z OBRAZKIEM ===
+st.image("https://cdn.pixabay.com/photo/2017/08/10/07/32/law-2619305_1280.jpg", use_column_width=True)
+st.title("🧠 UmowaAI – Ekspert od ryzyk prawnych")
+st.markdown("""
+##### Wybierz typ umowy, prześlij plik PDF i pozwól AI wskazać wszystkie potencjalne zagrożenia prawne w przejrzysty i zrozumiały sposób.
+---
+""")
 
-# === WYBÓR RODZAJU UMOWY ===
-umowa_typ = st.selectbox("📑 Wybierz typ umowy do analizy:", ["Najmu", "O pracę", "Zlecenie"])
+# === WYBÓR TYPÓW UMÓW ===
+typ_umowy = st.selectbox("📄 Wybierz typ umowy", ["Najmu", "O pracę", "Zlecenie", "Dzieło", "Sprzedaży"])
 
 # === FUNKCJE ===
 def extract_text_from_pdf(file):
@@ -59,37 +69,39 @@ def extract_text_from_pdf(file):
     return text
 
 def find_risks(text, typ):
-    common = {
+    wspolne = {
         "⚠️ Kaucja": r"kaucj[ae]\s+.*?\d+[\s\w]*z[łl]",
         "⏳ Wypowiedzenie": r"wypowiedze?nie.*?(umowy|kontraktu)?",
         "🚫 Kara umowna": r"kara\s+umowna.*?\d+[\s\w]*z[łl]",
+        "📉 Brak odpowiedzialności": r"nie ponosi odpowiedzialn",
     }
-
-    najem = {
-        "❌ Zakaz podnajmu": r"(zakaz|brak zgody).*?podnajm",
-        "🧾 Odpowiedzialność": r"odpowiedzialn[oó]\w+.*?(najemc[aę]|wynajmuj[aą]cego)"
+    typowe = {
+        "Najmu": {
+            "❌ Zakaz podnajmu": r"(zakaz|brak zgody).*?podnajm",
+            "🧾 Odpowiedzialność za szkody": r"odpowiedzialn[oó]\w+.*?(najemc[aę]|wynajmuj[aą]cego)"
+        },
+        "O pracę": {
+            "⛔ Okres próbny": r"okres\s+pr[óo]bny.*?\d+\s+(dni|miesi[ąa]c)",
+            "💼 Nadgodziny niepłatne": r"nadgodzin(y|ach|om).*?nieodpłatn"
+        },
+        "Zlecenie": {
+            "💸 Brak wynagrodzenia": r"(nie przysługuje|brak)\s+wynagrodzenia",
+            "📆 Terminy realizacji": r"termin.*?realizacj"
+        },
+        "Dzieło": {
+            "🛠️ Odpowiedzialność za wady": r"odpowiedzialno\w+.*?wady.*?dzie[łl]",
+            "📉 Kara za opóźnienie": r"kara.*?op[oó]\w+nienia"
+        },
+        "Sprzedaży": {
+            "🔍 Reklamacje": r"(reklamacj|odpowiedzialno\w+).*?towar",
+            "📅 Termin dostawy": r"termin.*?dostaw[yie]"
+        }
     }
-
-    praca = {
-        "⛔ Okres próbny": r"okres\s+pr[óo]bny.*?\d+\s+(dni|miesi[ąa]c)",
-        "💼 Nadgodziny": r"nadgodzin(y|ach|om).*?(płatne|nieodpłatne)"
-    }
-
-    zlecenie = {
-        "💸 Odpłatność": r"wynagrodzen[iea].*?(brutto|netto)?",
-        "📆 Terminy": r"termin.*?realizacj"
-    }
-
-    risks = common.copy()
-    if typ == "Najmu":
-        risks.update(najem)
-    elif typ == "O pracę":
-        risks.update(praca)
-    elif typ == "Zlecenie":
-        risks.update(zlecenie)
+    patterns = wspolne.copy()
+    patterns.update(typowe.get(typ, {}))
 
     results = []
-    for label, pattern in risks.items():
+    for label, pattern in patterns.items():
         matches = re.finditer(pattern, text, re.IGNORECASE)
         for match in matches:
             results.append((label, match.group()))
@@ -101,27 +113,25 @@ def highlight_risks(text, risks):
         text = text.replace(fragment, highlighted)
     return text
 
-# === WGRANIE PDF ===
-uploaded_file = st.file_uploader("📂 Wgraj plik PDF", type="pdf")
-
+# === ANALIZA ===
+uploaded_file = st.file_uploader("📥 Prześlij plik PDF z umową", type="pdf")
 if uploaded_file:
-    with st.spinner("🔍 Analizuję..."):
+    with st.spinner("🔎 Trwa analiza dokumentu..."):
         text = extract_text_from_pdf(uploaded_file)
-        risks = find_risks(text, umowa_typ)
-        highlighted_text = highlight_risks(text, risks)
+        risks = find_risks(text, typ_umowy)
+        highlighted = highlight_risks(text, risks)
 
-    st.subheader("📌 Wykryte ryzyka:")
+    st.subheader("🚨 Wykryte ryzyka:")
     if risks:
-        for label, fragment in risks:
-            st.markdown(f'<div class="risk-box"><b>{label}</b><br>{fragment}</div>', unsafe_allow_html=True)
+        for label, frag in risks:
+            st.markdown(f"<div class='risk-box'><b>{label}</b><br>{frag}</div>", unsafe_allow_html=True)
     else:
-        st.success("✅ Umowa wygląda dobrze. Brak wykrytych ryzyk.")
+        st.success("✅ Nie znaleziono oczywistych ryzyk w umowie.")
 
-    st.subheader("📄 Podgląd z oznaczeniami:")
-    st.markdown(highlighted_text)
+    st.subheader("📄 Treść umowy z oznaczeniami:")
+    st.markdown(highlighted)
 
-    with st.expander("💾 Pobierz jako TXT"):
-        st.download_button("📥 Pobierz analizę", data=highlighted_text, file_name="analiza_umowy.txt")
+    with st.expander("💾 Pobierz wynik analizy"):
+        st.download_button("📩 Pobierz analizę jako TXT", data=highlighted, file_name="analiza_umowy.txt")
 else:
-    st.info("📤 Wgraj plik PDF, by rozpocząć analizę.")
-
+    st.info("✍️ Wgraj umowę w formacie PDF, aby rozpocząć analizę.")
