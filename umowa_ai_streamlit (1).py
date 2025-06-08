@@ -44,16 +44,29 @@ if "analysis_count" not in st.session_state:
 # === STYL STRONY ===
 st.markdown("""
 <style>
-body {
-    background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('https://cdn.pixabay.com/photo/2016/12/10/07/13/law-1890714_1280.jpg') no-repeat center center fixed;
+html, body, [class*="css"]  {
+    height: 100%;
+    margin: 0;
+    background: linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.75)), url('https://cdn.pixabay.com/photo/2016/12/10/07/13/law-1890714_1280.jpg') no-repeat center center fixed;
     background-size: cover;
     color: white;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
+
+.block-container {
+    padding: 2rem 3rem;
+    background-color: rgba(255,255,255,0.05);
+    border-radius: 20px;
+    max-width: 900px;
+    margin: auto;
+}
+
 .risk-box {
-    background-color: rgba(255, 255, 255, 0.15);
+    background-color: rgba(255, 255, 255, 0.1);
     padding: 1rem;
     margin: 1rem 0;
     border-radius: 10px;
+    border-left: 4px solid #f39c12;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -64,31 +77,32 @@ if not st.session_state.logged_in and st.session_state.analysis_count >= 1:
 
 if not st.session_state.logged_in:
     st.image("https://images.unsplash.com/photo-1581091226825-b156c7ff8cde", use_container_width=True)
-    if st.session_state.register_mode:
-        st.header("📝 Rejestracja")
-        new_user = st.text_input("Nazwa użytkownika")
-        new_pass = st.text_input("Hasło", type="password")
-        if st.button("Zarejestruj"):
-            if register_user(new_user, new_pass):
-                st.success("Zarejestrowano! Możesz się teraz zalogować.")
+    with st.container():
+        if st.session_state.register_mode:
+            st.header("📝 Rejestracja")
+            new_user = st.text_input("Nazwa użytkownika")
+            new_pass = st.text_input("Hasło", type="password")
+            if st.button("Zarejestruj"):
+                if register_user(new_user, new_pass):
+                    st.success("Zarejestrowano! Możesz się teraz zalogować.")
+                    st.session_state.register_mode = False
+                else:
+                    st.error("Użytkownik już istnieje!")
+            if st.button("← Masz już konto? Zaloguj się"):
                 st.session_state.register_mode = False
-            else:
-                st.error("Użytkownik już istnieje!")
-        if st.button("← Masz już konto? Zaloguj się"):
-            st.session_state.register_mode = False
-    else:
-        st.header("🔐 Logowanie")
-        user = st.text_input("Nazwa użytkownika")
-        passwd = st.text_input("Hasło", type="password")
-        if st.button("Zaloguj"):
-            if authenticate_user(user, passwd):
-                st.session_state.logged_in = True
-                st.session_state.username = user
-                st.success("Zalogowano jako " + user)
-            else:
-                st.error("Nieprawidłowy login lub hasło")
-        if st.button("Nie masz konta? Zarejestruj się →"):
-            st.session_state.register_mode = True
+        else:
+            st.header("🔐 Logowanie")
+            user = st.text_input("Nazwa użytkownika")
+            passwd = st.text_input("Hasło", type="password")
+            if st.button("Zaloguj"):
+                if authenticate_user(user, passwd):
+                    st.session_state.logged_in = True
+                    st.session_state.username = user
+                    st.success("Zalogowano jako " + user)
+                else:
+                    st.error("Nieprawidłowy login lub hasło")
+            if st.button("Nie masz konta? Zarejestruj się →"):
+                st.session_state.register_mode = True
 
 # === APLIKACJA ===
 if st.session_state.logged_in or st.session_state.analysis_count < 1:
