@@ -1,144 +1,50 @@
-import streamlit as st
-import fitz  # PyMuPDF
-import re
-from fpdf import FPDF
-from io import BytesIO
-import json
-import os
-from datetime import datetime
+import datetime
 
-st.set_page_config(layout="centered")
+# === Historia analiz ===
+history_file = "analizy.json"
 
-# === BAZA UŻYTKOWNIKÓW ===
-if not os.path.exists("users.json"):
-    with open("users.json", "w") as f:
+if not os.path.exists(history_file):
+    with open(history_file, "w") as f:
         json.dump({}, f)
 
-def load_users():
-    with open("users.json", "r") as f:
+def load_analysis_history():
+    with open(history_file, "r") as f:
         return json.load(f)
 
-def save_users(users):
-    with open("users.json", "w") as f:
-        json.dump(users, f)
+def save_analysis_history(history):
+    with open(history_file, "w") as f:
+        json.dump(history, f, indent=4)
 
-def register_user(username, password):
-    users = load_users()
-    if username in users:
-        return False
-    users[username] = password
-    save_users(users)
-    return True
-
-def authenticate_user(username, password):
-    users = load_users()
-    return username in users and users[username] == password
-
-# === HISTORIA ANALIZ ===
-HISTORIA_DIR = "historie"
-os.makedirs(HISTORIA_DIR, exist_ok=True)
-
-def save_analysis(username, typ_umowy, analiza, lang, content):
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    filename = f"{HISTORIA_DIR}/{username}_{timestamp}.txt"
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write(f"Typ umowy: {typ_umowy}\nTyp analizy: {analiza}\nJęzyk: {lang}\n\n{content}")
-
-def list_user_analyses(username):
-    return sorted([f for f in os.listdir(HISTORIA_DIR) if f.startswith(username)], reverse=True)
-
-def load_analysis_file(filename):
-    with open(f"{HISTORIA_DIR}/{filename}", "r", encoding="utf-8") as f:
-        return f.read()
-
-# === STAN SESJI ===
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-if "register_mode" not in st.session_state:
-    st.session_state.register_mode = False
-
-background_url = "https://images.unsplash.com/photo-1603575448361-18c1e4d5ecb3"
-
-# === LOGOWANIE/REJESTRACJA ===
-if not st.session_state.logged_in:
-    st.markdown(f"""
-    <style>
-    body {{
-        background: url('{background_url}') no-repeat center center;
-        background-size: cover;
-    }}
-    </style>
-    """, unsafe_allow_html=True)
-    st.image("https://images.unsplash.com/photo-1581091226825-b156c7ff8cde", use_container_width=True)
-    if st.session_state.register_mode:
-        st.header("📝 Rejestracja")
-        new_user = st.text_input("Nazwa użytkownika")
-        new_pass = st.text_input("Hasło", type="password")
-        if st.button("Zarejestruj"):
-            if register_user(new_user, new_pass):
-                st.success("Zarejestrowano! Możesz się teraz zalogować.")
-                st.session_state.register_mode = False
-            else:
-                st.error("Użytkownik już istnieje!")
-        if st.button("← Masz już konto? Zaloguj się"):
-            st.session_state.register_mode = False
-    else:
-        st.header("🔐 Logowanie")
-        user = st.text_input("Nazwa użytkownika")
-        passwd = st.text_input("Hasło", type="password")
-        if st.button("Zaloguj"):
-            if authenticate_user(user, passwd):
-                st.session_state.logged_in = True
-                st.session_state.username = user
-                st.success("Zalogowano jako " + user)
-            else:
-                st.error("Nieprawidłowy login lub hasło")
-        if st.button("Nie masz konta? Zarejestruj się →"):
-            st.session_state.register_mode = True
-
-# === APLIKACJA PO ZALOGOWANIU ===
-if st.session_state.logged_in:
-    st.markdown("""
-    <style>
-    body {
-        background: none !important;
+def add_analysis_entry(username, filename, typ_umowy, analiza, risks):
+    history = load_analysis_history()
+    if username not in history:
+        history[username] = []
+    entry = {
+        "plik": filename,
+        "typ_umowy": typ_umowy,
+        "typ_analizy": analiza,
+        "ryzyka": len(risks),
+        "data": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
-    </style>
-    """, unsafe_allow_html=True)
+    history[username].append(entry)
+    save_analysis_history(history)
 
-    st.header("🤖 UmowaAI – Ekspert od ryzyk prawnych")
+# Zapisz analizę do historii
+add_analysis_entry(
+    username=st.session_state.username,
+    filename=uploaded_file.name,
+    typ_umowy=typ_umowy,
+    analiza=analiza,
+    risks=risks
+)
 
-    dark_mode = st.toggle("🌗 Tryb ciemny/jasny", value=False)
+# Wyświetl historię analiz
+st.subheader("📚 Historia analiz")
+history = load_analysis_history()
+user_history = history.get(st.session_state.username, [])
 
-    if dark_mode:
-        st.markdown("""
-        <style>
-        body {
-            background-color: #1c1c1c;
-            color: white;
-        }
-        .risk-box {
-            background-color: rgba(44, 44, 44, 0.85);
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 10px;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-    else:
-        st.markdown("""
-        <style>
-        body {
-            background-color: #f2f2f2;
-            color: black;
-        }
-        .risk-box {
-            background-color: rgba(255, 255, 255, 0.85);
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 10px;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-
-    # ... (tutaj kontynuuj z resztą funkcji aplikacji)
+if user_history:
+    for h in reversed(user_history[-5:]):  # ostatnie 5 analiz
+        st.markdown(f"🗂️ **{h['plik']}** ({h['typ_umowy']}, {h['typ_analizy']}) – {h['ryzyka']} ryzyk – _{h['data']}_")
+else:
+    st.write("Brak zapisanych analiz.")
