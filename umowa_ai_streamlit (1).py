@@ -1,7 +1,4 @@
 import streamlit as st
-
-st.set_page_config(layout="wide", page_title="UmowaAI", page_icon="🤖")
-
 import fitz  # PyMuPDF
 import re
 from fpdf import FPDF
@@ -9,6 +6,9 @@ from io import BytesIO
 import json
 import os
 from datetime import datetime
+
+# === KONFIGURACJA STRONY ===
+st.set_page_config(layout="wide", page_title="UmowaAI", page_icon="🤖")
 
 # === BAZA UŻYTKOWNIKÓW ===
 if not os.path.exists("users.json"):
@@ -62,9 +62,9 @@ def add_analysis_to_history(username, filename, typ_umowy, analiza, risks):
     save_history(history)
 
 # === STAN SESJI ===
-for key in ["logged_in", "register_mode", "analysis_count", "page"]:
+for key in ["logged_in", "username", "page"]:
     if key not in st.session_state:
-        st.session_state[key] = "home" if key == "page" else (False if key != "analysis_count" else 0)
+        st.session_state[key] = False if key == "logged_in" else "Strona główna"
 
 # === STYL STRONY ===
 st.markdown("""
@@ -77,7 +77,6 @@ html, body, [class*="css"]  {
     color: white;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
-
 .block-container {
     padding: 2rem 3rem;
     background-color: rgba(255,255,255,0.06);
@@ -86,7 +85,6 @@ html, body, [class*="css"]  {
     margin: auto;
     box-shadow: 0 0 30px rgba(255, 255, 255, 0.05);
 }
-
 .risk-box {
     background-color: rgba(255, 255, 255, 0.1);
     padding: 1rem;
@@ -94,7 +92,6 @@ html, body, [class*="css"]  {
     border-radius: 10px;
     border-left: 4px solid #f39c12;
 }
-
 .header-bar {
     display: flex;
     justify-content: space-between;
@@ -104,17 +101,16 @@ html, body, [class*="css"]  {
     border-radius: 10px;
     margin-bottom: 1rem;
 }
-
-.header-left {
+.header-left a {
     font-size: 1.8rem;
     font-family: 'Georgia', serif;
     font-weight: bold;
+    color: white;
+    text-decoration: none;
 }
-
 .header-center {
     font-size: 1.5rem;
 }
-
 .header-right a {
     margin-left: 1rem;
     color: white;
@@ -127,19 +123,25 @@ html, body, [class*="css"]  {
 # === HEADER BAR ===
 st.markdown("""
 <div class="header-bar">
-    <div class="header-left">🏠 Strona główna</div>
+    <div class="header-left"><a href="/?page=Strona%20g%C5%82%C3%B3wna">🏠 Strona główna</a></div>
     <div class="header-center">Ekspert od ryzyk prawnych</div>
     <div class="header-right">
-        <a href="/">PL/ENG</a>
-        <a href="/?menu=Logowanie">Logowanie</a>
+        <a href="/?page=PL">PL/ENG</a>
+        <a href="/?page=Logowanie">Logowanie</a>
+        <a href="/?page=Rejestracja">Rejestracja</a>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-# === MENU ===
-menu = st.sidebar.radio("📂 Menu", ["Strona główna", "UmowaAI", "Logowanie", "Rejestracja"])
+# === ROUTING NA PODSTAWIE QUERY PARAMS ===
+params = st.experimental_get_query_params()
+if "page" in params:
+    st.session_state.page = params["page"][0]
 
-if menu == "Strona główna":
+# === PRZEŁĄCZANIE WIDOKÓW ===
+page = st.session_state.page
+
+if page == "Strona główna":
     st.title("🏠 Strona główna")
     st.markdown("""
     ### Witamy w UmowaAI!
@@ -152,4 +154,33 @@ if menu == "Strona główna":
     Aby rozpocząć, wybierz "UmowaAI" w menu.
     """)
 
-# [Reszta kodu aplikacji pozostaje bez zmian – zostaje rozwinięta dalej jak poprzednio...]
+elif page == "Logowanie":
+    st.header("🔐 Logowanie")
+    user = st.text_input("Nazwa użytkownika")
+    passwd = st.text_input("Hasło", type="password")
+    if st.button("Zaloguj"):
+        if authenticate_user(user, passwd):
+            st.session_state.logged_in = True
+            st.session_state.username = user
+            st.success("Zalogowano pomyślnie!")
+            st.experimental_set_query_params(page="UmowaAI")
+        else:
+            st.error("Nieprawidłowy login lub hasło")
+
+elif page == "Rejestracja":
+    st.header("📝 Rejestracja")
+    new_user = st.text_input("Nazwa użytkownika")
+    new_pass = st.text_input("Hasło", type="password")
+    if st.button("Zarejestruj"):
+        if register_user(new_user, new_pass):
+            st.success("Zarejestrowano! Możesz się teraz zalogować.")
+            st.experimental_set_query_params(page="Logowanie")
+        else:
+            st.error("Użytkownik już istnieje!")
+
+elif page == "UmowaAI":
+    if not st.session_state.logged_in:
+        st.warning("Musisz się zalogować, aby korzystać z analizy umów.")
+    else:
+        st.title("📄 UmowaAI – Analiza umowy")
+        # --- tutaj dalszy kod analizy (upload, analiza, wyniki itd.)
