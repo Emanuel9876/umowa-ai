@@ -17,6 +17,19 @@ body {
     background-attachment: fixed;
     font-family: 'Poppins', sans-serif;
     color: white;
+    margin: 0;
+    padding: 0;
+}
+
+[data-testid="stAppViewContainer"]::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: -1;
 }
 
 h1, h2, h3 {
@@ -34,10 +47,12 @@ h1, h2, h3 {
 }
 
 .nav-title {
-    font-size: 2.2rem;
+    font-size: 2.5rem;
     font-family: 'Poppins', sans-serif;
     font-weight: 800;
     text-shadow: 2px 2px 4px #000;
+    text-align: center;
+    flex-grow: 1;
 }
 
 .nav-left, .nav-right {
@@ -52,23 +67,14 @@ h1, h2, h3 {
   50% {background-position: 100% 50%;}
   100% {background-position: 0% 50%;}
 }
-body {
-    background: linear-gradient(-45deg, #1e3c72, #2a5298, #0f2027, #203a43);
-    background-size: 400% 400%;
-    animation: gradientBG 20s ease infinite;
-    font-family: 'Segoe UI', sans-serif;
-    color: white;
-}
+
 [data-testid="stAppViewContainer"] > .main {
     background-color: rgba(255, 255, 255, 0.04);
     backdrop-filter: blur(10px);
     padding: 2rem;
     border-radius: 16px;
 }
-h1, h2, h3 {
-    color: #ffffff;
-    text-shadow: 1px 1px 2px #000;
-}
+
 .stButton > button {
     border-radius: 0.75rem;
     padding: 0.8rem 1.6rem;
@@ -78,10 +84,12 @@ h1, h2, h3 {
     border: none;
     transition: 0.3s ease;
 }
+
 .stButton > button:hover {
     background: linear-gradient(to right, #ff4b2b, #ff416c);
     transform: scale(1.02);
 }
+
 .risk-box {
     background-color: rgba(255, 0, 0, 0.1);
     border-left: 4px solid #ff4b2b;
@@ -92,13 +100,16 @@ h1, h2, h3 {
     backdrop-filter: blur(3px);
     box-shadow: 0 0 10px rgba(255, 75, 43, 0.3);
 }
+
 .stSelectbox > div > div {
     background-color: #22222255;
     color: white;
 }
+
 .block-container {
     padding-top: 1rem;
 }
+
 .navbar {
     display: flex;
     justify-content: space-between;
@@ -109,6 +120,7 @@ h1, h2, h3 {
     border-radius: 12px;
     backdrop-filter: blur(5px);
 }
+
 .nav-left, .nav-right {
     display: flex;
     align-items: center;
@@ -116,14 +128,6 @@ h1, h2, h3 {
     color: white;
     font-weight: bold;
     font-size: 1.2rem;
-}
-.nav-title {
-    font-size: 1.5rem;
-    font-weight: bold;
-    text-align: center;
-    flex-grow: 1;
-    color: #ffda79;
-    text-shadow: 1px 1px 3px #000;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -133,13 +137,13 @@ st.markdown("""<div class='navbar'>
     <div class='nav-left'>🌐 """, unsafe_allow_html=True)
 lang = st.radio("", ["Polski", "English"], horizontal=True, label_visibility="collapsed")
 st.markdown("""</div>
-    <div class='nav-title'>STRONA GŁÓWNA</div>
+    <div class='nav-title'>STRONA GŁÓWNA / Analiza Umów</div>
     <div class='nav-right'>📄 Typ umowy</div>
 </div>""", unsafe_allow_html=True)
 is_pl = lang == "Polski"
 
 # === OBRAZ NAGŁÓWKA ===
-st.image("https://cdn.pixabay.com/photo/2022/01/30/11/23/ai-6983455_1280.jpg", use_container_width=True)
+st.image("/mnt/data/84fa4f41-724c-4375-a361-b6416c34eebe.png", use_container_width=True)
 
 # === TYTUŁ I OPIS ===
 st.title("🤖 UmowaAI – " + ("Ekspert od ryzyk prawnych" if is_pl else "AI Legal Risk Analyzer"))
@@ -235,4 +239,3 @@ if uploaded_file:
                            data=highlighted, file_name="analiza_umowy.txt")
 else:
     st.info("✍️ Wgraj umowę PDF, aby rozpocząć analizę." if is_pl else "✍️ Upload a PDF to begin analysis.")
-
