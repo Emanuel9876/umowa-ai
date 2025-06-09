@@ -92,11 +92,11 @@ h1, h2, h3 {
 
 st.markdown("""
 <div class="sidebar-fixed">
-    <a href="#strona-g\u0142\u00f3wna">\ud83c\udfe0 Strona g\u0142\u00f3wna</a>
-    <a href="#wgraj-pdf">\ud83d\udcc5 Wgraj PDF</a>
-    <a href="#wykryte-ryzyka">\ud83d\udea8 Ryzyka</a>
-    <a href="#tre\u015b\u0107-umowy">\ud83d\udcc4 Tre\u015b\u0107 umowy</a>
-    <a href="#pobierz">\ud83d\udcbe Pobierz</a>
+    <a href="#strona-główna">🏠 Strona główna</a>
+    <a href="#wgraj-pdf">🗓️ Wgraj PDF</a>
+    <a href="#wykryte-ryzyka">🚨 Ryzyka</a>
+    <a href="#treść-umowy">📄 Treść umowy</a>
+    <a href="#pobierz">💾 Pobierz</a>
 </div>
 """, unsafe_allow_html=True)
 
