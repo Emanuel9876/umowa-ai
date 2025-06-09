@@ -1,106 +1,153 @@
 import streamlit as st
-import fitz
+import fitz  # PyMuPDF
 import re
-from io import BytesIO
-from fpdf import FPDF
-import json, os
 
-# Konfiguracja strony
-st.set_page_config(page_title="UmowaAI", layout="wide")
+# === KONFIGURACJA STRONY ===
+st.set_page_config(page_title="UmowaAI – Legal Risk Detector", layout="wide")
 
-# Baza logowania
-if not os.path.exists("users.json"):
-    with open("users.json","w") as f: json.dump({}, f)
-def load_users(): return json.load(open("users.json"))
-def save_users(u): json.dump(u, open("users.json","w"))
-def register(u,p):
-    users = load_users()
-    if u in users: return False
-    users[u]=p; save_users(users); return True
-def auth(u,p):
-    users = load_users()
-    return u in users and users[u]==p
+# === INTERFEJS MULTI-JĘZYKOWY ===
+lang = st.sidebar.radio("🌐 Wybierz język / Select language:", ["Polski", "English"])
+is_pl = lang == "Polski"
 
-# Stan sesji
-if "page" not in st.session_state: st.session_state.page="home"
-if "logged" not in st.session_state: st.session_state.logged=False
-if "user" not in st.session_state: st.session_state.user=""
+# === MENU NAWIGACYJNE ===
+page = st.sidebar.radio("📚 Nawigacja:", [
+    "🏠 Strona główna",
+    "🗓️ Wgraj PDF",
+    "🚨 Ryzyka",
+    "📄 Wklej treść umowy",
+    "💾 Pobierz"
+])
 
-# Sidebar - logowanie/rejestracja
-st.sidebar.title("🔒 Konto")
-if not st.session_state.logged:
-    mode = st.sidebar.radio("Mode", ["Login", "Register"])
-    user = st.sidebar.text_input("Username", key="usr_inp")
-    pwd = st.sidebar.text_input("Password", type="password", key="pwd_inp")
-    if st.sidebar.button("Submit"):
-        if mode=="Register":
-            if register(user,pwd):
-                st.sidebar.success("Registered! You can now login.")
-            else:
-                st.sidebar.error("User exists.")
+# === OPCJE: TYP UMOWY I ANALIZY ===
+typ_umowy = st.sidebar.selectbox("📄 Typ umowy", ["Najmu", "O pracę", "Zlecenie", "Dzieło", "Sprzedaży"])
+selected_types = []
+if st.sidebar.checkbox("📌 Ryzyka prawne", value=True):
+    selected_types.append("Prawne")
+if st.sidebar.checkbox("💰 Ryzyka finansowe", value=True):
+    selected_types.append("Finansowe")
+if not selected_types:
+    st.sidebar.warning("⚠️ Wybierz przynajmniej jeden typ ryzyka.")
+
+# === FUNKCJE ===
+def extract_text_from_pdf(file):
+    doc = fitz.open(stream=file.read(), filetype="pdf")
+    text = ""
+    for page in doc:
+        text += page.get_text()
+    return text
+
+def find_risks(text, typ_umowy, typ_analizy):
+    wspolne = {
+        "⚠️ Kaucja": r"kaucj[ae]\s+.*?\d+[\s\w]*zł",
+        "⏳ Wypowiedzenie": r"wypowiedze?nie.*?(umowy|kontraktu)?",
+        "🚫 Kara umowna": r"kara\s+umowna.*?\d+[\s\w]*zł",
+    }
+    finansowe = {
+        "💸 Brak wynagrodzenia": r"(nie przysługuje|brak)\s+wynagrodzenia",
+        "📈 Podwyżki bez zgody": r"(automatyczn[aey]|jednostronn[aey])\s+(zmian[aey]|podwyżk)"
+    }
+    spec = {
+        "Najmu": {"🔐 Zakaz podnajmu": r"(zakaz|brak zgody).*?podnajm"},
+        "O pracę": {"💼 Nadgodziny niepłatne": r"nadgodzin(y|ach|om).*?nieodpłatn"},
+        "Zlecenie": {"🗖️ Terminy realizacji": r"termin.*?realizacj"},
+        "Dzieło": {"🛠️ Odpowiedzialność za wady": r"odpowiedzialno\w+.*?wady.*?dzieło"},
+        "Sprzedaży": {"🔍 Reklamacje": r"(reklamacj|odpowiedzialno\w+).*?towar"}
+    }
+
+    patterns = wspolne.copy()
+    if "Finansowe" in typ_analizy:
+        patterns.update(finansowe)
+    if typ_umowy in spec:
+        patterns.update(spec[typ_umowy])
+
+    results = []
+    for label, pattern in patterns.items():
+        for match in re.finditer(pattern, text, re.IGNORECASE):
+            results.append((label, match.group()))
+    return results
+
+def highlight_risks(text, risks):
+    for label, frag in risks:
+        frag_clean = re.escape(frag)
+        highlighted = f"<mark style='background-color:#ff4b2b33;padding:2px 4px;border-radius:4px'><b>{label}</b>: {frag}</mark>"
+        text = re.sub(frag_clean, highlighted, text, flags=re.IGNORECASE)
+    return text
+
+# === STRONY APLIKACJI ===
+
+# 🏠 STRONA GŁÓWNA
+if page == "🏠 Strona główna":
+    st.title("🤖 UmowaAI – " + ("Ekspert od ryzyk prawnych" if is_pl else "AI Legal Risk Analyzer"))
+    st.image("https://files.oaiusercontent.com/file-VDXu1R184nwGQa6ocn3h4F", use_container_width=True)
+    st.markdown("#### " + (
+        "Prześlij umowę PDF i AI znajdzie ryzykowne zapisy prawne, finansowe lub inne – automatycznie i zrozumiale."
+        if is_pl else
+        "Upload a contract PDF and AI will detect legal, financial, or other risk clauses – clearly and automatically."
+    ))
+    st.markdown("---")
+    st.info("📂 Użyj menu po lewej stronie, aby przejść do wgrywania pliku lub analizy.")
+
+# 🗓️ WGRAJ PDF
+elif page == "🗓️ Wgraj PDF":
+    st.header("📂 Wgraj PDF umowy")
+    uploaded_file = st.file_uploader("📄 Prześlij plik PDF", type="pdf")
+    if uploaded_file and selected_types:
+        with st.spinner("🔍 Analiza..."):
+            text = extract_text_from_pdf(uploaded_file)
+            risks = find_risks(text, typ_umowy, selected_types)
+            highlighted = highlight_risks(text, risks)
+
+        st.subheader("🚨 Wykryte ryzyka:")
+        if risks:
+            for label, frag in risks:
+                st.markdown(f"<b>{label}</b><br>{frag}", unsafe_allow_html=True)
         else:
-            if auth(user,pwd):
-                st.session_state.logged=True
-                st.session_state.user=user
-                st.sidebar.success("Logged in!")
-            else:
-                st.sidebar.error("Invalid credentials.")
-else:
-    st.sidebar.write(f"✅ Logged in as **{st.session_state.user}**")
-    if st.sidebar.button("Logout"):
-        st.session_state.logged=False
+            st.success("✅ Brak oczywistych ryzyk.")
+        
+        st.subheader("📄 Treść z oznaczeniami:")
+        st.markdown(highlighted[:3000], unsafe_allow_html=True)
+        if len(highlighted) > 3000:
+            with st.expander("🔽 Pokaż całość"):
+                st.markdown(highlighted, unsafe_allow_html=True)
+        
+        st.session_state["highlighted"] = highlighted
 
-# Sidebar - menu (tylko po zalogowaniu)
-if st.session_state.logged:
-    st.sidebar.markdown("---")
-    if st.sidebar.button("🏠 Strona główna"): st.session_state.page="home"
-    if st.sidebar.button("🗓️ Wgraj PDF"): st.session_state.page="upload"
-    if st.sidebar.button("🚨 Ryzyka"): st.session_state.page="risks"
-    if st.sidebar.button("📄 Treść umowy"): st.session_state.page="content"
-    if st.sidebar.button("💾 Pobierz"): st.session_state.page="download"
+# 🚨 RYZYKA
+elif page == "🚨 Ryzyka":
+    st.header("🛡️ Lista wykrywanych ryzyk")
+    st.write("Przykładowe reguły wykrywania:")
+    st.code(r"kaucj[ae]\s+.*?\d+[\s\w]*zł", language="regex")
+    st.code(r"kara\s+umowna.*?\d+[\s\w]*zł", language="regex")
+    st.info("W przyszłości możesz tu dodawać własne reguły!")
 
-# Podstrony
-st.header({
-    "home": "🏠 Strona główna",
-    "upload": "🗓️ Wgraj PDF",
-    "risks": "🚨 Ryzyka",
-    "content": "📄 Treść umowy",
-    "download": "💾 Pobierz analizę"
-}[st.session_state.page])
+# 📄 TREŚĆ WKLEJONA
+elif page == "📄 Wklej treść umowy":
+    st.header("✍️ Wklej treść umowy")
+    manual_text = st.text_area("Wklej tutaj umowę", height=300)
+    if manual_text and selected_types:
+        with st.spinner("🔍 Analiza..."):
+            risks = find_risks(manual_text, typ_umowy, selected_types)
+            highlighted = highlight_risks(manual_text, risks)
 
-if st.session_state.page=="home":
-    st.write("Witaj w UmowaAI!")
-elif st.session_state.page=="upload":
-    uploaded = st.file_uploader("Wgraj PDF", type="pdf")
-    if uploaded:
-        doc = fitz.open(stream=uploaded.read(), filetype="pdf")
-        txt="".join(page.get_text() for page in doc)
-        st.session_state.pdf_text = txt
-        st.success("PDF wczytany!")
-elif st.session_state.page=="risks":
-    if "pdf_text" not in st.session_state:
-        st.info("Najpierw wgraj PDF.")
+        st.subheader("🚨 Wykryte ryzyka:")
+        if risks:
+            for label, frag in risks:
+                st.markdown(f"<b>{label}</b><br>{frag}", unsafe_allow_html=True)
+        else:
+            st.success("✅ Brak oczywistych ryzyk.")
+
+        st.subheader("📄 Tekst z oznaczeniami:")
+        st.markdown(highlighted[:3000], unsafe_allow_html=True)
+        st.session_state["highlighted"] = highlighted
+
+# 💾 POBIERZ
+elif page == "💾 Pobierz":
+    st.header("💾 Pobierz analizę")
+    if "highlighted" in st.session_state:
+        st.download_button(
+            "📩 Pobierz analizę jako TXT",
+            data=st.session_state["highlighted"],
+            file_name="analiza_umowy.txt"
+        )
     else:
-        patterns = {
-            "⚠️ Kaucja": r"kaucj[ae]\s+.*?\d+[\s\w]*zł",
-            "⏳ Wypowiedzenie": r"wypowiedze?nie",
-            "🚫 Kara umowna": r"kara\s+umowna",
-            "💸 Brak wynagrodzenia": r"brak\s+wynagrodzenia"
-        }
-        st.write("Wykryte ryzyka:")
-        forlbl,pat in patterns.items():
-            for m in re.finditer(pat, st.session_state.pdf_text, re.IGNORECASE):
-                st.write(f"- **{lbl}**: {m.group()}")
-elif st.session_state.page=="content":
-    if "pdf_text" not in st.session_state:
-        st.info("Najpierw wgraj PDF.")
-    else:
-        t = st.session_state.pdf_text
-        highlighted = re.sub(r"(kaucj[ae]\s+.*?\d+[\s\w]*zł)", "<mark>⚠️ \\1</mark>", t, flags=re.IGNORECASE)
-        st.markdown(highlighted, unsafe_allow_html=True)
-elif st.session_state.page=="download":
-    if "pdf_text" not in st.session_state:
-        st.info("Najpierw wgraj PDF.")
-    else:
-        txt = st.session_state.pdf_text
-        st.download_button("📥 Pobierz jako TXT", data=txt, file_name="analiza.txt")
+        st.warning("⚠️ Najpierw wykonaj analizę pliku PDF lub wklejonego tekstu.")
