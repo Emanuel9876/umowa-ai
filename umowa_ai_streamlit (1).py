@@ -105,7 +105,6 @@ st.markdown("""
 st.markdown("""<div class='navbar'>
     <div class='nav-left'>🌐 """, unsafe_allow_html=True)
 lang = st.radio("", ["Polski", "English"], horizontal=True, label_visibility="collapsed")
-st.markdown("""</div>
     <div class='nav-title'>STRONA G\u0141\u00d3WNA / Analiza Um\u00f3w</div>
     <div class='nav-right'>\ud83d\udcc4 Typ umowy</div>
 </div>""", unsafe_allow_html=True)
