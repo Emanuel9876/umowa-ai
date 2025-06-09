@@ -134,9 +134,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # === ROUTING NA PODSTAWIE QUERY PARAMS ===
-params = st.experimental_get_query_params()
+params = st.query_params
 if "page" in params:
-    st.session_state.page = params["page"][0]
+    st.session_state.page = params["page"]
 
 # === PRZEŁĄCZANIE WIDOKÓW ===
 page = st.session_state.page
@@ -163,7 +163,7 @@ elif page == "Logowanie":
             st.session_state.logged_in = True
             st.session_state.username = user
             st.success("Zalogowano pomyślnie!")
-            st.experimental_set_query_params(page="UmowaAI")
+            st.query_params.page = "UmowaAI"
         else:
             st.error("Nieprawidłowy login lub hasło")
 
@@ -174,7 +174,7 @@ elif page == "Rejestracja":
     if st.button("Zarejestruj"):
         if register_user(new_user, new_pass):
             st.success("Zarejestrowano! Możesz się teraz zalogować.")
-            st.experimental_set_query_params(page="Logowanie")
+            st.query_params.page = "Logowanie"
         else:
             st.error("Użytkownik już istnieje!")
 
