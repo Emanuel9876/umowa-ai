@@ -100,6 +100,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+
 # === INTERFEJS MULTI-J\u0118ZYKOWY ===
 st.markdown("""<div class='navbar'>
     <div class='nav-left'>🌐 """, unsafe_allow_html=True)
