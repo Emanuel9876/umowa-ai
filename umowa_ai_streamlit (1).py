@@ -59,77 +59,45 @@ h1, h2, h3 {
     font-size: 1.1rem;
     font-family: 'Poppins', sans-serif;
 }
-</style>
 
-<style>
-@keyframes gradientBG {
-  0% {background-position: 0% 50%;}
-  50% {background-position: 100% 50%;}
-  100% {background-position: 0% 50%;}
+.sidebar-fixed {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    width: 220px;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 1rem;
+    border-radius: 12px;
+    z-index: 9999;
+    backdrop-filter: blur(5px);
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
 }
 
-[data-testid="stAppViewContainer"] > .main {
-    background-color: rgba(255, 255, 255, 0.04);
-    backdrop-filter: blur(10px);
-    padding: 2rem;
-    border-radius: 16px;
-}
-
-.stButton > button {
-    border-radius: 0.75rem;
-    padding: 0.8rem 1.6rem;
-    background: linear-gradient(to right, #ff416c, #ff4b2b);
+.sidebar-fixed a {
+    display: block;
     color: white;
     font-weight: bold;
-    border: none;
+    text-decoration: none;
+    margin-bottom: 1rem;
+    font-family: 'Poppins', sans-serif;
     transition: 0.3s ease;
 }
 
-.stButton > button:hover {
-    background: linear-gradient(to right, #ff4b2b, #ff416c);
-    transform: scale(1.02);
-}
-
-.risk-box {
-    background-color: rgba(255, 0, 0, 0.1);
-    border-left: 4px solid #ff4b2b;
-    padding: 1rem;
-    margin: 1rem 0;
-    border-radius: 12px;
-    font-size: 1rem;
-    backdrop-filter: blur(3px);
-    box-shadow: 0 0 10px rgba(255, 75, 43, 0.3);
-}
-
-.stSelectbox > div > div {
-    background-color: #22222255;
-    color: white;
-}
-
-.block-container {
-    padding-top: 1rem;
-}
-
-.navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding: 1rem;
-    background: rgba(0, 0, 0, 0.4);
-    border-radius: 12px;
-    backdrop-filter: blur(5px);
-}
-
-.nav-left, .nav-right {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    color: white;
-    font-weight: bold;
-    font-size: 1.2rem;
+.sidebar-fixed a:hover {
+    color: #ff4b2b;
+    transform: translateX(4px);
 }
 </style>
+""", unsafe_allow_html=True)
+
+st.markdown("""
+<div class="sidebar-fixed">
+    <a href="#strona-główna">🏠 Strona główna</a>
+    <a href="#wgraj-pdf">📥 Wgraj PDF</a>
+    <a href="#wykryte-ryzyka">🚨 Ryzyka</a>
+    <a href="#treść-umowy">📄 Treść umowy</a>
+    <a href="#pobierz">💾 Pobierz</a>
+</div>
 """, unsafe_allow_html=True)
 
 # === INTERFEJS MULTI-JĘZYKOWY ===
@@ -146,6 +114,7 @@ is_pl = lang == "Polski"
 st.image("/mnt/data/84fa4f41-724c-4375-a361-b6416c34eebe.png", use_container_width=True)
 
 # === TYTUŁ I OPIS ===
+st.markdown('<div id="strona-główna"></div>', unsafe_allow_html=True)
 st.title("🤖 UmowaAI – " + ("Ekspert od ryzyk prawnych" if is_pl else "AI Legal Risk Analyzer"))
 st.markdown("#### " + (
     "Prześlij umowę PDF i AI znajdzie ryzykowne zapisy prawne, finansowe lub inne – automatycznie i zrozumiale."
@@ -196,7 +165,7 @@ def find_risks(text, typ_umowy, typ_analizy):
             "💼 Nadgodziny niepłatne": r"nadgodzin(y|ach|om).*?nieodpłatn"
         },
         "Zlecenie": {
-            "📆 Terminy realizacji": r"termin.*?realizacj"
+            "🗖️ Terminy realizacji": r"termin.*?realizacj"
         },
         "Dzieło": {
             "🛠️ Odpowiedzialność za wady": r"odpowiedzialno\\w+.*?wady.*?dzie[łl]"
@@ -226,6 +195,7 @@ def highlight_risks(text, risks):
     return text
 
 # === ANALIZA ===
+st.markdown('<div id="wgraj-pdf"></div>', unsafe_allow_html=True)
 uploaded_file = st.file_uploader("📥 Wgraj PDF umowy / Upload contract PDF", type="pdf")
 if uploaded_file and selected_types:
     with st.spinner("🔍 Analiza... / Analyzing..."):
@@ -233,6 +203,7 @@ if uploaded_file and selected_types:
         risks = find_risks(text, typ_umowy, selected_types)
         highlighted = highlight_risks(text, risks)
 
+    st.markdown('<div id="wykryte-ryzyka"></div>', unsafe_allow_html=True)
     st.subheader("🚨 Wykryte ryzyka:" if is_pl else "🚨 Detected Risks")
     if risks:
         for label, frag in risks:
@@ -240,15 +211,17 @@ if uploaded_file and selected_types:
     else:
         st.success("✅ Brak oczywistych ryzyk." if is_pl else "✅ No obvious risks found.")
 
+    st.markdown('<div id="treść-umowy"></div>', unsafe_allow_html=True)
     st.subheader("📄 Treść umowy z oznaczeniami:" if is_pl else "📄 Contract with highlights")
     preview_len = 3000
     preview = highlighted[:preview_len]
     st.markdown(preview, unsafe_allow_html=True)
     if len(highlighted) > preview_len:
-        with st.expander("🔽 Zobacz całą umowę"):
+        with st.expander("🕽️ Zobacz całą umowę"):
             st.markdown(highlighted, unsafe_allow_html=True)
 
-    with st.expander("💾 Pobierz analizę / Download result"):
+    st.markdown('<div id="pobierz"></div>', unsafe_allow_html=True)
+    with st.expander("📀 Pobierz analizę / Download result"):
         st.download_button("📩 Pobierz jako TXT" if is_pl else "📩 Download as TXT",
                            data=highlighted, file_name="analiza_umowy.txt")
 else:
