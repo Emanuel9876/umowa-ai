@@ -62,9 +62,14 @@ def add_analysis_to_history(username, filename, typ_umowy, analiza, risks):
     save_history(history)
 
 # === STAN SESJI ===
-for key in ["logged_in", "username", "page"]:
+for key in ["logged_in", "username", "page", "lang"]:
     if key not in st.session_state:
-        st.session_state[key] = False if key == "logged_in" else "Strona główna"
+        if key == "logged_in":
+            st.session_state[key] = False
+        elif key == "lang":
+            st.session_state[key] = "PL"
+        else:
+            st.session_state[key] = "Strona główna"
 
 # === STYL STRONY ===
 st.markdown("""
@@ -121,29 +126,37 @@ html, body, [class*="css"]  {
 """, unsafe_allow_html=True)
 
 # === HEADER BAR ===
-st.markdown("""
+st.markdown(f"""
 <div class="header-bar">
     <div class="header-left"><a href="/?page=Strona%20g%C5%82%C3%B3wna">🏠 Strona główna</a></div>
     <div class="header-center">Ekspert od ryzyk prawnych</div>
     <div class="header-right">
-        <a href="/?page=PL">PL/ENG</a>
+        <a href="/?page=PL">PL</a> / <a href="/?page=ENG">ENG</a>
         <a href="/?page=Logowanie">Logowanie</a>
         <a href="/?page=Rejestracja">Rejestracja</a>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-# === ROUTING NA PODSTAWIE QUERY PARAMS ===
+# === ROUTING ===
 params = st.query_params
 if "page" in params:
     st.session_state.page = params["page"]
+
+if st.session_state.page in ["PL", "ENG"]:
+    st.session_state.lang = st.session_state.page
+    st.session_state.page = "Strona główna"
+
+# === FUNKCJA TŁUMACZEŃ ===
+def _(pl, eng):
+    return pl if st.session_state.lang == "PL" else eng
 
 # === PRZEŁĄCZANIE WIDOKÓW ===
 page = st.session_state.page
 
 if page == "Strona główna":
-    st.title("🏠 Strona główna")
-    st.markdown("""
+    st.title("🏠 " + _("Strona główna", "Home Page"))
+    st.markdown(_("""
     ### Witamy w UmowaAI!
     Narzędzie do analizy dokumentów prawnych i wykrywania ryzyk.
 
@@ -152,35 +165,44 @@ if page == "Strona główna":
     - 📥 Eksport PDF i TXT
 
     Aby rozpocząć, wybierz "UmowaAI" w menu.
-    """)
+    """, """
+    ### Welcome to UmowaAI!
+    A tool for legal document analysis and risk detection.
+
+    - 🔍 Detect unfavorable clauses
+    - 📊 Your analysis history
+    - 📥 Export to PDF and TXT
+
+    To get started, choose "UmowaAI" from the menu.
+    """))
 
 elif page == "Logowanie":
-    st.header("🔐 Logowanie")
-    user = st.text_input("Nazwa użytkownika")
+    st.header("🔐 " + _("Logowanie", "Login"))
+    user = st.text_input(_("Nazwa użytkownika", "Username"))
     passwd = st.text_input("Hasło", type="password")
-    if st.button("Zaloguj"):
+    if st.button(_("Zaloguj", "Login")):
         if authenticate_user(user, passwd):
             st.session_state.logged_in = True
             st.session_state.username = user
-            st.success("Zalogowano pomyślnie!")
+            st.success(_("Zalogowano pomyślnie!", "Login successful!"))
             st.query_params.page = "UmowaAI"
         else:
-            st.error("Nieprawidłowy login lub hasło")
+            st.error(_("Nieprawidłowy login lub hasło", "Invalid username or password"))
 
 elif page == "Rejestracja":
-    st.header("📝 Rejestracja")
-    new_user = st.text_input("Nazwa użytkownika")
+    st.header("📝 " + _("Rejestracja", "Register"))
+    new_user = st.text_input(_("Nazwa użytkownika", "Username"))
     new_pass = st.text_input("Hasło", type="password")
-    if st.button("Zarejestruj"):
+    if st.button(_("Zarejestruj", "Register")):
         if register_user(new_user, new_pass):
-            st.success("Zarejestrowano! Możesz się teraz zalogować.")
+            st.success(_("Zarejestrowano! Możesz się teraz zalogować.", "Registered! You can now log in."))
             st.query_params.page = "Logowanie"
         else:
-            st.error("Użytkownik już istnieje!")
+            st.error(_("Użytkownik już istnieje!", "User already exists!"))
 
 elif page == "UmowaAI":
     if not st.session_state.logged_in:
-        st.warning("Musisz się zalogować, aby korzystać z analizy umów.")
+        st.warning(_("Musisz się zalogować, aby korzystać z analizy umów.", "You must log in to use the contract analysis."))
     else:
-        st.title("📄 UmowaAI – Analiza umowy")
+        st.title("📄 " + _("UmowaAI – Analiza umowy", "UmowaAI – Contract Analysis"))
         # --- tutaj dalszy kod analizy (upload, analiza, wyniki itd.)
