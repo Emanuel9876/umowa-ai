@@ -17,6 +17,36 @@ page = st.sidebar.radio("📚 Nawigacja:", [
     "📄 Wklej treść umowy",
     "💾 Pobierz"
 ])
+if page == "🏠 Strona główna":
+    st.title("🏠 Strona główna")
+    st.markdown("Witaj w UmowaAI!")
+
+elif page == "🗓️ Wgraj PDF":
+    st.title("🗓️ Wgraj PDF")
+    uploaded_file = st.file_uploader("📄 Wgraj umowę (PDF)", type="pdf")
+    if uploaded_file:
+        text = extract_text_from_pdf(uploaded_file)
+        st.success("✅ Umowa została wczytana.")
+        st.text_area("📜 Tekst umowy:", text, height=300)
+
+elif page == "🚨 Ryzyka":
+    st.title("🚨 Analiza ryzyk")
+    st.markdown("Tu będą wykryte ryzyka, np. kara umowna, wypowiedzenie itd.")
+    # Możesz tu wykorzystać funkcję find_risks(text, typ_umowy, selected_types)
+
+elif page == "📄 Wklej treść umowy":
+    st.title("📄 Wklej treść umowy")
+    pasted_text = st.text_area("Wklej tekst do analizy:", height=300)
+    if pasted_text:
+        risks = find_risks(pasted_text, typ_umowy, selected_types)
+        highlighted = highlight_risks(pasted_text, risks)
+        st.markdown(highlighted, unsafe_allow_html=True)
+
+elif page == "💾 Pobierz":
+    st.title("💾 Pobierz analizę")
+    st.markdown("Tutaj możesz pobrać analizę w formacie TXT.")
+    if uploaded_file:
+        st.download_button("📩 Pobierz analizę", data=text, file_name="analiza.txt")
 
 # === OPCJE: TYP UMOWY I ANALIZY ===
 typ_umowy = st.sidebar.selectbox("📄 Typ umowy", ["Najmu", "O pracę", "Zlecenie", "Dzieło", "Sprzedaży"])
