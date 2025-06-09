@@ -1,0 +1,6 @@
+umowa_ai/
+├── Home.py
+├── Wgraj_PDF.py
+├── Ryzyka.py
+├── Tresc_Umowy.py
+├── Pobierz.py
