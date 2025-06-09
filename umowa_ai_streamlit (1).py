@@ -133,7 +133,7 @@ st.markdown(f"""
     <div class="header-left"><a href="/?page=Strona%20g%C5%82%C3%B3wna">Strona główna</a></div>
     <div class="header-center">Ekspert od ryzyk prawnych</div>
     <div class="header-right">
-        <a href="/?page=PL">PL</a> / <a href="/?page=ENG">ENG</a>
+        <a href="/?lang=PL">PL</a> / <a href="/?lang=ENG">ENG</a>
         <a href="/?page=Logowanie">Logowanie</a>
         <a href="/?page=Rejestracja">Rejestracja</a>
     </div>
@@ -144,10 +144,8 @@ st.markdown(f"""
 params = st.query_params
 if "page" in params:
     st.session_state.page = params["page"]
-
-if st.session_state.page in ["PL", "ENG"]:
-    st.session_state.lang = st.session_state.page
-    st.session_state.page = "Strona główna"
+if "lang" in params:
+    st.session_state.lang = params["lang"]
 
 # === FUNKCJA TŁUMACZEŃ ===
 def _(pl, eng):
@@ -180,8 +178,8 @@ if page == "Strona główna":
 
 elif page == "Logowanie":
     st.header("🔐 " + _("Logowanie", "Login"))
-    user = st.text_input(_("Nazwa użytkownika", "Username"))
-    passwd = st.text_input("Hasło", type="password")
+    user = st.text_input(_("Nazwa użytkownika", "Username"), key="login_user")
+    passwd = st.text_input("Hasło", type="password", key="login_pass")
     if st.button(_("Zaloguj", "Login")):
         if authenticate_user(user, passwd):
             st.session_state.logged_in = True
@@ -194,8 +192,8 @@ elif page == "Logowanie":
 
 elif page == "Rejestracja":
     st.header("📝 " + _( "Rejestracja", "Register"))
-    new_user = st.text_input(_("Nazwa użytkownika", "Username"))
-    new_pass = st.text_input("Hasło", type="password")
+    new_user = st.text_input(_("Nazwa użytkownika", "Username"), key="register_user")
+    new_pass = st.text_input("Hasło", type="password", key="register_pass")
     if st.button(_("Zarejestruj", "Register")):
         if register_user(new_user, new_pass):
             st.success(_("Zarejestrowano! Możesz się teraz zalogować.", "Registered! You can now log in."))
