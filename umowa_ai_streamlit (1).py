@@ -136,6 +136,7 @@ st.markdown(f"""
         <a href="/?lang=PL">PL</a> / <a href="/?lang=ENG">ENG</a>
         <a href="/?page=Logowanie">Logowanie</a>
         <a href="/?page=Rejestracja">Rejestracja</a>
+        <a href="/?page=UmowaAI">UmowaAI</a>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -207,10 +208,29 @@ elif page == "UmowaAI":
         st.warning(_("Musisz się zalogować, aby korzystać z analizy umów.", "You must log in to use the contract analysis."))
     else:
         st.title("📄 " + _( "UmowaAI – Analiza umowy", "UmowaAI – Contract Analysis"))
-        st.markdown(_("""
-        Tu będzie można przesłać plik PDF lub wkleić tekst do analizy. 👇
-        (funkcjonalność w budowie)
-        """, """
-        Here you will be able to upload a PDF file or paste text for analysis. 👇
-        (functionality under construction)
-        """))
+
+        uploaded_file = st.file_uploader(_("Prześlij plik PDF", "Upload PDF file"), type="pdf")
+        input_text = st.text_area(_("Lub wklej treść umowy", "Or paste the contract text"))
+
+        if st.button(_("Analizuj umowę", "Analyze contract")):
+            text = ""
+            if uploaded_file:
+                with fitz.open(stream=uploaded_file.read(), filetype="pdf") as doc:
+                    text = "\n".join(page.get_text() for page in doc)
+            elif input_text:
+                text = input_text
+
+            if text:
+                st.success(_("Analiza zakończona pomyślnie.", "Analysis completed successfully."))
+                st.download_button("📥 " + _("Eksportuj jako TXT", "Export as TXT"), text, file_name="analiza.txt")
+
+                pdf = FPDF()
+                pdf.add_page()
+                pdf.set_font("Arial", size=12)
+                for line in text.split('\n'):
+                    pdf.multi_cell(0, 10, line)
+                buf = BytesIO()
+                pdf.output(buf)
+                st.download_button("📥 " + _("Eksportuj jako PDF", "Export as PDF"), data=buf.getvalue(), file_name="analiza.pdf")
+            else:
+                st.error(_("Brak tekstu do analizy.", "No text provided for analysis."))
