@@ -128,7 +128,7 @@ html, body, [class*="css"]  {
 # === HEADER BAR ===
 st.markdown(f"""
 <div class="header-bar">
-    <div class="header-left"><a href="/?page=Strona%20g%C5%82%C3%B3wna">🏠 Strona główna</a></div>
+    <div class="header-left"><a href="/?page=UmowaAI">UmowaAI</a></div>
     <div class="header-center">Ekspert od ryzyk prawnych</div>
     <div class="header-right">
         <a href="/?page=PL">PL</a> / <a href="/?page=ENG">ENG</a>
@@ -185,18 +185,18 @@ elif page == "Logowanie":
             st.session_state.logged_in = True
             st.session_state.username = user
             st.success(_("Zalogowano pomyślnie!", "Login successful!"))
-            st.query_params.page = "UmowaAI"
+            st.session_state.page = "UmowaAI"
         else:
             st.error(_("Nieprawidłowy login lub hasło", "Invalid username or password"))
 
 elif page == "Rejestracja":
-    st.header("📝 " + _("Rejestracja", "Register"))
+    st.header("📝 " + _( "Rejestracja", "Register"))
     new_user = st.text_input(_("Nazwa użytkownika", "Username"))
     new_pass = st.text_input("Hasło", type="password")
     if st.button(_("Zarejestruj", "Register")):
         if register_user(new_user, new_pass):
             st.success(_("Zarejestrowano! Możesz się teraz zalogować.", "Registered! You can now log in."))
-            st.query_params.page = "Logowanie"
+            st.session_state.page = "Logowanie"
         else:
             st.error(_("Użytkownik już istnieje!", "User already exists!"))
 
@@ -204,5 +204,5 @@ elif page == "UmowaAI":
     if not st.session_state.logged_in:
         st.warning(_("Musisz się zalogować, aby korzystać z analizy umów.", "You must log in to use the contract analysis."))
     else:
-        st.title("📄 " + _("UmowaAI – Analiza umowy", "UmowaAI – Contract Analysis"))
+        st.title("📄 " + _( "UmowaAI – Analiza umowy", "UmowaAI – Contract Analysis"))
         # --- tutaj dalszy kod analizy (upload, analiza, wyniki itd.)
