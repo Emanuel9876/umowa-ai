@@ -100,24 +100,24 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-
-# === INTERFEJS MULTI-J\u0118ZYKOWY ===
+# === INTERFEJS MULTI-JĘZYKOWY ===
 st.markdown("""<div class='navbar'>
     <div class='nav-left'>🌐 """, unsafe_allow_html=True)
 lang = st.radio("", ["Polski", "English"], horizontal=True, label_visibility="collapsed")
-    <div class='nav-title'>STRONA G\u0141\u00d3WNA / Analiza Um\u00f3w</div>
-    <div class='nav-right'>\ud83d\udcc4 Typ umowy</div>
+st.markdown("""</div>
+    <div class='nav-title'>STRONA GŁÓWNA / Analiza Umów</div>
+    <div class='nav-right'>📄 Typ umowy</div>
 </div>""", unsafe_allow_html=True)
 is_pl = lang == "Polski"
 
-# === OBRAZ NAG\u0141\u00d3WKA ===
+# === OBRAZ NAGŁÓWKA ===
 st.image("https://files.oaiusercontent.com/file-VDXu1R184nwGQa6ocn3h4F", use_container_width=True)
 
-# === TYTU\u0141 I OPIS ===
-st.markdown('<div id="strona-g\u0142\u00f3wna"></div>', unsafe_allow_html=True)
+# === TYTUŁ I OPIS ===
+st.markdown('<div id="strona-główna"></div>', unsafe_allow_html=True)
 st.title("🤖 UmowaAI – " + ("Ekspert od ryzyk prawnych" if is_pl else "AI Legal Risk Analyzer"))
 st.markdown("#### " + (
-    "Prze\u015blij umow\u0119 PDF i AI znajdzie ryzykowne zapisy prawne, finansowe lub inne – automatycznie i zrozumiale."
+    "Prześlij umowę PDF i AI znajdzie ryzykowne zapisy prawne, finansowe lub inne – automatycznie i zrozumiale."
     if is_pl else
     "Upload a contract PDF and AI will detect legal, financial, or other risk clauses – clearly and automatically."
 ))
@@ -125,7 +125,7 @@ st.markdown("---")
 
 # === OPCJE: TYP UMOWY I TYP ANALIZY ===
 typ_umowy = st.selectbox("📄 Wybierz typ umowy / Select contract type", [
-    "Najmu", "O prac\u0119", "Zlecenie", "Dzie\u0142o", "Sprzeda\u017cy"
+    "Najmu", "O pracę", "Zlecenie", "Dzieło", "Sprzedaży"
 ])
 
 st.markdown("### 🔎 Wybierz typ analizy ryzyk:")
@@ -149,12 +149,12 @@ def extract_text_from_pdf(file):
 
 def find_risks(text, typ_umowy, typ_analizy):
     wspolne = {
-        "⚠️ Kaucja": r"kaucj[ae]\s+.*?\d+[\s\w]*z[\u0142l]",
+        "⚠️ Kaucja": r"kaucj[ae]\s+.*?\d+[\s\w]*zł",
         "⏳ Wypowiedzenie": r"wypowiedze?nie.*?(umowy|kontraktu)?",
-        "🚫 Kara umowna": r"kara\s+umowna.*?\d+[\s\w]*z[\u0142l]",
+        "🚫 Kara umowna": r"kara\s+umowna.*?\d+[\s\w]*zł",
     }
     finansowe = {
-        "💸 Brak wynagrodzenia": r"(nie przys\u0142uguje|brak)\s+wynagrodzenia",
+        "💸 Brak wynagrodzenia": r"(nie przysługuje|brak)\s+wynagrodzenia",
         "📈 Podwyżki bez zgody": r"(automatyczn[aey]|jednostronn[aey])\s+(zmian[aey]|podwyżk)"
     }
     spec = {
@@ -168,10 +168,10 @@ def find_risks(text, typ_umowy, typ_analizy):
             "🗖️ Terminy realizacji": r"termin.*?realizacj"
         },
         "Dzieło": {
-            "🛠️ Odpowiedzialność za wady": r"odpowiedzialno\\w+.*?wady.*?dzie[\u0142l]"
+            "🛠️ Odpowiedzialność za wady": r"odpowiedzialno\w+.*?wady.*?dzieło"
         },
         "Sprzedaży": {
-            "🔍 Reklamacje": r"(reklamacj|odpowiedzialno\\w+).*?towar"
+            "🔍 Reklamacje": r"(reklamacj|odpowiedzialno\w+).*?towar"
         }
     }
 
