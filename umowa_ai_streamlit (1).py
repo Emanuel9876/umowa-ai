@@ -1,236 +1,255 @@
 import streamlit as st
 import fitz  # PyMuPDF
 import re
-from fpdf import FPDF
-from io import BytesIO
-import json
-import os
-from datetime import datetime
 
 # === KONFIGURACJA STRONY ===
-st.set_page_config(layout="wide", page_title="UmowaAI", page_icon="🤖")
-
-# === BAZA UŻYTKOWNIKÓW ===
-if not os.path.exists("users.json"):
-    with open("users.json", "w") as f:
-        json.dump({}, f)
-
-def load_users():
-    with open("users.json", "r") as f:
-        return json.load(f)
-
-def save_users(users):
-    with open("users.json", "w") as f:
-        json.dump(users, f)
-
-def register_user(username, password):
-    users = load_users()
-    if username in users:
-        return False
-    users[username] = password
-    save_users(users)
-    return True
-
-def authenticate_user(username, password):
-    users = load_users()
-    return username in users and users[username] == password
-
-# === HISTORIA ANALIZ ===
-if not os.path.exists("history.json"):
-    with open("history.json", "w") as f:
-        json.dump({}, f)
-
-def load_history():
-    with open("history.json", "r") as f:
-        return json.load(f)
-
-def save_history(history):
-    with open("history.json", "w") as f:
-        json.dump(history, f)
-
-def add_analysis_to_history(username, filename, typ_umowy, analiza, risks):
-    history = load_history()
-    if username not in history:
-        history[username] = []
-    history[username].append({
-        "data": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "plik": filename,
-        "typ_umowy": typ_umowy,
-        "analiza": analiza,
-        "ryzyka": [label for label, _ in risks]
-    })
-    save_history(history)
-
-# === STAN SESJI ===
-for key in ["logged_in", "username", "page", "lang"]:
-    if key not in st.session_state:
-        if key == "logged_in":
-            st.session_state[key] = False
-        elif key == "lang":
-            st.session_state[key] = "PL"
-        else:
-            st.session_state[key] = "Strona główna"
+st.set_page_config(page_title="UmowaAI – Legal Risk Detector", layout="wide")
 
 # === STYL STRONY ===
 st.markdown("""
 <style>
-html, body, [class*="css"]  {
-    height: 100%;
-    margin: 0;
-    background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url('https://cdn.pixabay.com/photo/2016/12/10/07/13/law-1890714_1280.jpg') no-repeat center center fixed;
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
+
+body {
+    background-image: url("https://files.oaiusercontent.com/file-VDXu1R184nwGQa6ocn3h4F");
     background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    font-family: 'Poppins', sans-serif;
     color: white;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
 }
-.block-container {
-    padding: 2rem 3rem;
-    background-color: rgba(255,255,255,0.06);
-    border-radius: 20px;
-    max-width: 900px;
-    margin: auto;
-    box-shadow: 0 0 30px rgba(255, 255, 255, 0.05);
+
+[data-testid="stAppViewContainer"]::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: -1;
 }
+
+h1, h2, h3 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 800;
+    font-size: 2.5rem;
+    color: #ffffff;
+    text-shadow: 2px 2px 4px #000;
+    margin-top: 0.5rem;
+}
+
+.stButton > button {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.1rem;
+}
+
+.nav-title {
+    font-size: 2.5rem;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 800;
+    text-shadow: 2px 2px 4px #000;
+    text-align: center;
+    flex-grow: 1;
+}
+
+.nav-left, .nav-right {
+    font-size: 1.1rem;
+    font-family: 'Poppins', sans-serif;
+}
+</style>
+
+<style>
+@keyframes gradientBG {
+  0% {background-position: 0% 50%;}
+  50% {background-position: 100% 50%;}
+  100% {background-position: 0% 50%;}
+}
+
+[data-testid="stAppViewContainer"] > .main {
+    background-color: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(10px);
+    padding: 2rem;
+    border-radius: 16px;
+}
+
+.stButton > button {
+    border-radius: 0.75rem;
+    padding: 0.8rem 1.6rem;
+    background: linear-gradient(to right, #ff416c, #ff4b2b);
+    color: white;
+    font-weight: bold;
+    border: none;
+    transition: 0.3s ease;
+}
+
+.stButton > button:hover {
+    background: linear-gradient(to right, #ff4b2b, #ff416c);
+    transform: scale(1.02);
+}
+
 .risk-box {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 0, 0, 0.1);
+    border-left: 4px solid #ff4b2b;
     padding: 1rem;
     margin: 1rem 0;
-    border-radius: 10px;
-    border-left: 4px solid #f39c12;
+    border-radius: 12px;
+    font-size: 1rem;
+    backdrop-filter: blur(3px);
+    box-shadow: 0 0 10px rgba(255, 75, 43, 0.3);
 }
-.header-bar {
+
+.stSelectbox > div > div {
+    background-color: #22222255;
+    color: white;
+}
+
+.block-container {
+    padding-top: 1rem;
+}
+
+.navbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 2rem;
-    background-color: rgba(255, 255, 255, 0.05);
-    border-radius: 10px;
-    margin-bottom: 1rem;
+    margin-bottom: 20px;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 12px;
+    backdrop-filter: blur(5px);
 }
-.header-left a {
-    font-size: 2rem;
-    font-family: 'Georgia', serif;
-    font-weight: bold;
+
+.nav-left, .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
     color: white;
-    text-decoration: none;
-}
-.header-center {
-    font-size: 1.8rem;
     font-weight: bold;
-    color: white;
-}
-.header-right a {
-    margin-left: 1rem;
-    color: white;
-    text-decoration: none;
-    font-weight: bold;
+    font-size: 1.2rem;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# === HEADER BAR ===
-st.markdown(f"""
-<div class="header-bar">
-    <div class="header-left"><a href="/?page=Strona%20g%C5%82%C3%B3wna">Strona główna</a></div>
-    <div class="header-center">Ekspert od ryzyk prawnych</div>
-    <div class="header-right">
-        <a href="/?lang=PL">PL</a> / <a href="/?lang=ENG">ENG</a>
-        <a href="/?page=Logowanie">Logowanie</a>
-        <a href="/?page=Rejestracja">Rejestracja</a>
-        <a href="/?page=UmowaAI">UmowaAI</a>
-    </div>
-</div>
-""", unsafe_allow_html=True)
+# === INTERFEJS MULTI-JĘZYKOWY ===
+st.markdown("""<div class='navbar'>
+    <div class='nav-left'>🌐 """, unsafe_allow_html=True)
+lang = st.radio("", ["Polski", "English"], horizontal=True, label_visibility="collapsed")
+st.markdown("""</div>
+    <div class='nav-title'>STRONA GŁÓWNA / Analiza Umów</div>
+    <div class='nav-right'>📄 Typ umowy</div>
+</div>""", unsafe_allow_html=True)
+is_pl = lang == "Polski"
 
-# === ROUTING ===
-params = st.query_params
-if "page" in params:
-    st.session_state.page = params["page"]
-if "lang" in params:
-    st.session_state.lang = params["lang"]
+# === OBRAZ NAGŁÓWKA ===
+st.image("/mnt/data/84fa4f41-724c-4375-a361-b6416c34eebe.png", use_container_width=True)
 
-# === FUNKCJA TŁUMACZEŃ ===
-def _(pl, eng):
-    return pl if st.session_state.lang == "PL" else eng
+# === TYTUŁ I OPIS ===
+st.title("🤖 UmowaAI – " + ("Ekspert od ryzyk prawnych" if is_pl else "AI Legal Risk Analyzer"))
+st.markdown("#### " + (
+    "Prześlij umowę PDF i AI znajdzie ryzykowne zapisy prawne, finansowe lub inne – automatycznie i zrozumiale."
+    if is_pl else
+    "Upload a contract PDF and AI will detect legal, financial, or other risk clauses – clearly and automatically."
+))
+st.markdown("---")
 
-# === PRZEŁĄCZANIE WIDOKÓW ===
-page = st.session_state.page
+# === OPCJE: TYP UMOWY I TYP ANALIZY ===
+typ_umowy = st.selectbox("📄 Wybierz typ umowy / Select contract type", [
+    "Najmu", "O pracę", "Zlecenie", "Dzieło", "Sprzedaży"
+])
 
-if page == "Strona główna":
-    st.title("🏠 " + _("Strona główna", "Home Page"))
-    st.markdown(_("""
-    ### Witamy w UmowaAI!
-    Narzędzie do analizy dokumentów prawnych i wykrywania ryzyk.
+st.markdown("### 🔎 Wybierz typ analizy ryzyk:")
+col1, col2, col3 = st.columns(3)
+selected_types = []
+if col1.checkbox("📌 Ryzyka prawne", value=True):
+    selected_types.append("Prawne")
+if col2.checkbox("💰 Ryzyka finansowe", value=True):
+    selected_types.append("Finansowe")
 
-    - 🔍 Wykrywanie niekorzystnych zapisów
-    - 📊 Historia Twoich analiz
-    - 📥 Eksport PDF i TXT
+if not selected_types:
+    st.warning("⚠️ Wybierz przynajmniej jeden typ ryzyka do analizy.")
 
-    Aby rozpocząć, wybierz "UmowaAI" w menu.
-    """, """
-    ### Welcome to UmowaAI!
-    A tool for legal document analysis and risk detection.
+# === FUNKCJE ===
+def extract_text_from_pdf(file):
+    doc = fitz.open(stream=file.read(), filetype="pdf")
+    text = ""
+    for page in doc:
+        text += page.get_text()
+    return text
 
-    - 🔍 Detect unfavorable clauses
-    - 📊 Your analysis history
-    - 📥 Export to PDF and TXT
+def find_risks(text, typ_umowy, typ_analizy):
+    wspolne = {
+        "⚠️ Kaucja": r"kaucj[ae]\s+.*?\d+[\s\w]*z[łl]",
+        "⏳ Wypowiedzenie": r"wypowiedze?nie.*?(umowy|kontraktu)?",
+        "🚫 Kara umowna": r"kara\s+umowna.*?\d+[\s\w]*z[łl]",
+    }
+    finansowe = {
+        "💸 Brak wynagrodzenia": r"(nie przysługuje|brak)\s+wynagrodzenia",
+        "📈 Podwyżki bez zgody": r"(automatyczn[aey]|jednostronn[aey])\s+(zmian[aey]|podwyżk)"
+    }
+    spec = {
+        "Najmu": {
+            "🔐 Zakaz podnajmu": r"(zakaz|brak zgody).*?podnajm",
+        },
+        "O pracę": {
+            "💼 Nadgodziny niepłatne": r"nadgodzin(y|ach|om).*?nieodpłatn"
+        },
+        "Zlecenie": {
+            "📆 Terminy realizacji": r"termin.*?realizacj"
+        },
+        "Dzieło": {
+            "🛠️ Odpowiedzialność za wady": r"odpowiedzialno\\w+.*?wady.*?dzie[łl]"
+        },
+        "Sprzedaży": {
+            "🔍 Reklamacje": r"(reklamacj|odpowiedzialno\\w+).*?towar"
+        }
+    }
 
-    To get started, choose "UmowaAI" from the menu.
-    """))
+    patterns = wspolne.copy()
+    if "Finansowe" in typ_analizy:
+        patterns.update(finansowe)
+    if typ_umowy in spec:
+        patterns.update(spec[typ_umowy])
 
-elif page == "Logowanie":
-    st.header("🔐 " + _("Logowanie", "Login"))
-    user = st.text_input(_("Nazwa użytkownika", "Username"), key="login_user")
-    passwd = st.text_input("Hasło", type="password", key="login_pass")
-    if st.button(_("Zaloguj", "Login")):
-        if authenticate_user(user, passwd):
-            st.session_state.logged_in = True
-            st.session_state.username = user
-            st.success(_("Zalogowano pomyślnie!", "Login successful!"))
-            st.session_state.page = "UmowaAI"
-            st.rerun()
-        else:
-            st.error(_("Nieprawidłowy login lub hasło", "Invalid username or password"))
+    results = []
+    for label, pattern in patterns.items():
+        for match in re.finditer(pattern, text, re.IGNORECASE):
+            results.append((label, match.group()))
+    return results
 
-elif page == "Rejestracja":
-    st.header("📝 " + _( "Rejestracja", "Register"))
-    new_user = st.text_input(_("Nazwa użytkownika", "Username"), key="register_user")
-    new_pass = st.text_input("Hasło", type="password", key="register_pass")
-    if st.button(_("Zarejestruj", "Register")):
-        if register_user(new_user, new_pass):
-            st.success(_("Zarejestrowano! Możesz się teraz zalogować.", "Registered! You can now log in."))
-            st.session_state.page = "Logowanie"
-            st.rerun()
-        else:
-            st.error(_("Użytkownik już istnieje!", "User already exists!"))
+def highlight_risks(text, risks):
+    for label, frag in risks:
+        frag_clean = re.escape(frag)
+        highlighted = f"<mark style='background-color:#ff4b2b33;padding:2px 4px;border-radius:4px'><b>{label}</b>: {frag}</mark>"
+        text = re.sub(frag_clean, highlighted, text, flags=re.IGNORECASE)
+    return text
 
-elif page == "UmowaAI":
-    if not st.session_state.logged_in:
-        st.warning(_("Musisz się zalogować, aby korzystać z analizy umów.", "You must log in to use the contract analysis."))
+# === ANALIZA ===
+uploaded_file = st.file_uploader("📥 Wgraj PDF umowy / Upload contract PDF", type="pdf")
+if uploaded_file and selected_types:
+    with st.spinner("🔍 Analiza... / Analyzing..."):
+        text = extract_text_from_pdf(uploaded_file)
+        risks = find_risks(text, typ_umowy, selected_types)
+        highlighted = highlight_risks(text, risks)
+
+    st.subheader("🚨 Wykryte ryzyka:" if is_pl else "🚨 Detected Risks")
+    if risks:
+        for label, frag in risks:
+            st.markdown(f"<div class='risk-box'><b>{label}</b><br>{frag}</div>", unsafe_allow_html=True)
     else:
-        st.title("📄 " + _( "UmowaAI – Analiza umowy", "UmowaAI – Contract Analysis"))
+        st.success("✅ Brak oczywistych ryzyk." if is_pl else "✅ No obvious risks found.")
 
-        uploaded_file = st.file_uploader(_("Prześlij plik PDF", "Upload PDF file"), type="pdf")
-        input_text = st.text_area(_("Lub wklej treść umowy", "Or paste the contract text"))
+    st.subheader("📄 Treść umowy z oznaczeniami:" if is_pl else "📄 Contract with highlights")
+    preview_len = 3000
+    preview = highlighted[:preview_len]
+    st.markdown(preview, unsafe_allow_html=True)
+    if len(highlighted) > preview_len:
+        with st.expander("🔽 Zobacz całą umowę"):
+            st.markdown(highlighted, unsafe_allow_html=True)
 
-        if st.button(_("Analizuj umowę", "Analyze contract")):
-            text = ""
-            if uploaded_file:
-                with fitz.open(stream=uploaded_file.read(), filetype="pdf") as doc:
-                    text = "\n".join(page.get_text() for page in doc)
-            elif input_text:
-                text = input_text
-
-            if text:
-                st.success(_("Analiza zakończona pomyślnie.", "Analysis completed successfully."))
-                st.download_button("📥 " + _("Eksportuj jako TXT", "Export as TXT"), text, file_name="analiza.txt")
-
-                pdf = FPDF()
-                pdf.add_page()
-                pdf.set_font("Arial", size=12)
-                for line in text.split('\n'):
-                    pdf.multi_cell(0, 10, line)
-                buf = BytesIO()
-                pdf.output(buf)
-                st.download_button("📥 " + _("Eksportuj jako PDF", "Export as PDF"), data=buf.getvalue(), file_name="analiza.pdf")
-            else:
-                st.error(_("Brak tekstu do analizy.", "No text provided for analysis."))
+    with st.expander("💾 Pobierz analizę / Download result"):
+        st.download_button("📩 Pobierz jako TXT" if is_pl else "📩 Download as TXT",
+                           data=highlighted, file_name="analiza_umowy.txt")
+else:
+    st.info("✍️ Wgraj umowę PDF, aby rozpocząć analizę." if is_pl else "✍️ Upload a PDF to begin analysis.")
