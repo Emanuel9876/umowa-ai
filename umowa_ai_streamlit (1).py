@@ -92,32 +92,32 @@ h1, h2, h3 {
 
 st.markdown("""
 <div class="sidebar-fixed">
-    <a href="#strona-główna">🏠 Strona główna</a>
-    <a href="#wgraj-pdf">📥 Wgraj PDF</a>
-    <a href="#wykryte-ryzyka">🚨 Ryzyka</a>
-    <a href="#treść-umowy">📄 Treść umowy</a>
-    <a href="#pobierz">💾 Pobierz</a>
+    <a href="#strona-g\u0142\u00f3wna">\ud83c\udfe0 Strona g\u0142\u00f3wna</a>
+    <a href="#wgraj-pdf">\ud83d\udcc5 Wgraj PDF</a>
+    <a href="#wykryte-ryzyka">\ud83d\udea8 Ryzyka</a>
+    <a href="#tre\u015b\u0107-umowy">\ud83d\udcc4 Tre\u015b\u0107 umowy</a>
+    <a href="#pobierz">\ud83d\udcbe Pobierz</a>
 </div>
 """, unsafe_allow_html=True)
 
-# === INTERFEJS MULTI-JĘZYKOWY ===
+# === INTERFEJS MULTI-J\u0118ZYKOWY ===
 st.markdown("""<div class='navbar'>
     <div class='nav-left'>🌐 """, unsafe_allow_html=True)
 lang = st.radio("", ["Polski", "English"], horizontal=True, label_visibility="collapsed")
 st.markdown("""</div>
-    <div class='nav-title'>STRONA GŁÓWNA / Analiza Umów</div>
-    <div class='nav-right'>📄 Typ umowy</div>
+    <div class='nav-title'>STRONA G\u0141\u00d3WNA / Analiza Um\u00f3w</div>
+    <div class='nav-right'>\ud83d\udcc4 Typ umowy</div>
 </div>""", unsafe_allow_html=True)
 is_pl = lang == "Polski"
 
-# === OBRAZ NAGŁÓWKA ===
-st.image("/mnt/data/84fa4f41-724c-4375-a361-b6416c34eebe.png", use_container_width=True)
+# === OBRAZ NAG\u0141\u00d3WKA ===
+st.image("https://files.oaiusercontent.com/file-VDXu1R184nwGQa6ocn3h4F", use_container_width=True)
 
-# === TYTUŁ I OPIS ===
-st.markdown('<div id="strona-główna"></div>', unsafe_allow_html=True)
+# === TYTU\u0141 I OPIS ===
+st.markdown('<div id="strona-g\u0142\u00f3wna"></div>', unsafe_allow_html=True)
 st.title("🤖 UmowaAI – " + ("Ekspert od ryzyk prawnych" if is_pl else "AI Legal Risk Analyzer"))
 st.markdown("#### " + (
-    "Prześlij umowę PDF i AI znajdzie ryzykowne zapisy prawne, finansowe lub inne – automatycznie i zrozumiale."
+    "Prze\u015blij umow\u0119 PDF i AI znajdzie ryzykowne zapisy prawne, finansowe lub inne – automatycznie i zrozumiale."
     if is_pl else
     "Upload a contract PDF and AI will detect legal, financial, or other risk clauses – clearly and automatically."
 ))
@@ -125,7 +125,7 @@ st.markdown("---")
 
 # === OPCJE: TYP UMOWY I TYP ANALIZY ===
 typ_umowy = st.selectbox("📄 Wybierz typ umowy / Select contract type", [
-    "Najmu", "O pracę", "Zlecenie", "Dzieło", "Sprzedaży"
+    "Najmu", "O prac\u0119", "Zlecenie", "Dzie\u0142o", "Sprzeda\u017cy"
 ])
 
 st.markdown("### 🔎 Wybierz typ analizy ryzyk:")
@@ -149,12 +149,12 @@ def extract_text_from_pdf(file):
 
 def find_risks(text, typ_umowy, typ_analizy):
     wspolne = {
-        "⚠️ Kaucja": r"kaucj[ae]\s+.*?\d+[\s\w]*z[łl]",
+        "⚠️ Kaucja": r"kaucj[ae]\s+.*?\d+[\s\w]*z[\u0142l]",
         "⏳ Wypowiedzenie": r"wypowiedze?nie.*?(umowy|kontraktu)?",
-        "🚫 Kara umowna": r"kara\s+umowna.*?\d+[\s\w]*z[łl]",
+        "🚫 Kara umowna": r"kara\s+umowna.*?\d+[\s\w]*z[\u0142l]",
     }
     finansowe = {
-        "💸 Brak wynagrodzenia": r"(nie przysługuje|brak)\s+wynagrodzenia",
+        "💸 Brak wynagrodzenia": r"(nie przys\u0142uguje|brak)\s+wynagrodzenia",
         "📈 Podwyżki bez zgody": r"(automatyczn[aey]|jednostronn[aey])\s+(zmian[aey]|podwyżk)"
     }
     spec = {
@@ -168,7 +168,7 @@ def find_risks(text, typ_umowy, typ_analizy):
             "🗖️ Terminy realizacji": r"termin.*?realizacj"
         },
         "Dzieło": {
-            "🛠️ Odpowiedzialność za wady": r"odpowiedzialno\\w+.*?wady.*?dzie[łl]"
+            "🛠️ Odpowiedzialność za wady": r"odpowiedzialno\\w+.*?wady.*?dzie[\u0142l]"
         },
         "Sprzedaży": {
             "🔍 Reklamacje": r"(reklamacj|odpowiedzialno\\w+).*?towar"
@@ -196,7 +196,7 @@ def highlight_risks(text, risks):
 
 # === ANALIZA ===
 st.markdown('<div id="wgraj-pdf"></div>', unsafe_allow_html=True)
-uploaded_file = st.file_uploader("📥 Wgraj PDF umowy / Upload contract PDF", type="pdf")
+uploaded_file = st.file_uploader("📅 Wgraj PDF umowy / Upload contract PDF", type="pdf")
 if uploaded_file and selected_types:
     with st.spinner("🔍 Analiza... / Analyzing..."):
         text = extract_text_from_pdf(uploaded_file)
@@ -217,7 +217,7 @@ if uploaded_file and selected_types:
     preview = highlighted[:preview_len]
     st.markdown(preview, unsafe_allow_html=True)
     if len(highlighted) > preview_len:
-        with st.expander("🕽️ Zobacz całą umowę"):
+        with st.expander("🔽️ Zobacz całą umowę"):
             st.markdown(highlighted, unsafe_allow_html=True)
 
     st.markdown('<div id="pobierz"></div>', unsafe_allow_html=True)
