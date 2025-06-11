@@ -4,53 +4,34 @@ from PyPDF2 import PdfReader
 from reportlab.pdfgen import canvas
 import io
 
+# Ustawienia strony
 st.set_page_config(page_title="Umowa AI", layout="wide")
 st.markdown("""
     <style>
-        body {
-            background-color: #dbeafe;
-            font-family: 'Segoe UI', sans-serif;
-        }
         .stApp {
-            background-color: #e0f2fe;
+            background-color: #f0f4f8;
+            font-family: 'Segoe UI', sans-serif;
         }
         .highlight {
             font-weight: bold;
             font-size: 20px;
-            color: #111827;
+            color: #0f172a;
             font-family: 'Georgia', serif;
         }
         .content-text {
             font-size: 18px;
             color: #1e293b;
         }
-        .login-box {
-            position: absolute;
-            top: 1rem;
-            right: 2rem;
-            padding: 1rem;
-            background-color: #ffffff33;
-            border-radius: 10px;
-            box-shadow: 0px 2px 4px rgba(0,0,0,0.1);
-        }
-        .login-box input {
-            margin: 0.2rem 0;
+        .risk-bar {
+            height: 20px;
+            background: linear-gradient(90deg, #22c55e, #facc15, #ef4444);
+            border-radius: 5px;
+            margin-top: 10px;
         }
     </style>
 """, unsafe_allow_html=True)
 
-with st.container():
-    st.markdown("""
-    <div class="login-box">
-        <form>
-            <input type="text" placeholder="Login" name="login"><br>
-            <input type="password" placeholder="Hasło" name="password"><br>
-            <button type="submit">Zaloguj</button>
-            <button type="submit">Rejestracja</button>
-        </form>
-    </div>
-    """, unsafe_allow_html=True)
-
+# Analiza tekstu
 def analyze_text(text):
     summary = ""
     if re.search(r'odstąpienie|rozwiązanie.*umow', text, re.IGNORECASE):
@@ -89,18 +70,26 @@ def generate_pdf(text):
     buffer.seek(0)
     return buffer
 
+# MENU
 st.sidebar.title("Menu")
 menu = st.sidebar.selectbox("Wybierz opcję", ["Strona Główna", "Analiza Umowy", "Ryzyka"])
 
 if menu == "Strona Główna":
-    st.title("Asystent AI do analizy umów")
+    st.title("📄 Umowa AI – Twój osobisty analityk umów")
     st.markdown("""
         <div class="content-text">
-        Witaj w aplikacji wspierającej analizę umów cywilnoprawnych. Nasz system AI wykrywa potencjalne ryzyka w zapisach umowy.<br><br>
+        Nasza aplikacja wspierana sztuczną inteligencją pomaga identyfikować ryzykowne zapisy w umowach cywilnoprawnych.<br><br>
+        ✅ Zastosowanie:<br>
+        - Analiza zapisów umów (PDF / tekst)<br>
+        - Wykrywanie kluczowych ryzyk<br>
+        - Automatyczne podsumowanie z możliwością pobrania PDF<br><br>
 
-        - Wgraj swoją umowę jako plik PDF lub wklej jej treść<br>
-        - Uzyskaj automatyczne podsumowanie ryzyk<br>
-        - Skorzystaj z interaktywnych narzędzi do pogłębionej analizy<br>
+        📌 Jak korzystać:<br>
+        - Przejdź do zakładki "Analiza Umowy"<br>
+        - Wgraj plik lub wklej tekst<br>
+        - Otrzymasz raport ryzyk oraz ich liczbę<br><br>
+
+        🛡️ Zadbaj o swoje bezpieczeństwo prawne z pomocą AI!
         </div>
     """, unsafe_allow_html=True)
 
@@ -118,8 +107,16 @@ elif menu == "Analiza Umowy":
         if contract_text:
             summary, score = analyze_text(contract_text)
             st.subheader("📌 Podsumowanie ryzyk:")
-            st.markdown(summary)
+            st.markdown(summary, unsafe_allow_html=True)
             st.metric("Liczba wykrytych ryzyk", score)
+
+            # Pasek ryzyka
+            st.markdown("##### Poziom ryzyka:")
+            risk_color = "#22c55e" if score <= 2 else "#facc15" if score <= 4 else "#ef4444"
+            st.markdown(f"""
+                <div style="background-color:{risk_color}; width:{score*14+10}%; height:20px; border-radius:6px;"></div>
+            """, unsafe_allow_html=True)
+
             pdf_data = generate_pdf(summary)
             st.download_button(label="📥 Pobierz analizę jako PDF", data=pdf_data, file_name="analiza_umowy.pdf")
 
@@ -128,24 +125,24 @@ elif menu == "Ryzyka":
     st.markdown("""
         <div class="content-text">
         <span class="highlight">Utrudnione odstąpienie od umowy:</span><br>
-        Umowy często zawierają zapisy, które utrudniają lub uniemożliwiają odstąpienie od umowy, nawet jeśli jej warunki okazują się niekorzystne.<br><br>
+        Umowy często zawierają zapisy, które utrudniają lub uniemożliwiają odstąpienie od umowy.<br><br>
 
         <span class="highlight">Dodatkowe obowiązki:</span><br>
         Możesz być zobowiązany do spełnienia dodatkowych czynności lub płatności, o których nie miałeś pojęcia.<br><br>
 
         <span class="highlight">Dodatkowe opłaty:</span><br>
-        Nieuważne czytanie umowy może prowadzić do konieczności zapłaty dodatkowych opłat, które nie były wliczone w pierwotne koszty.<br><br>
+        Możesz być obciążony kosztami, które nie są jasno przedstawione.<br><br>
 
         <span class="highlight">Nieważność umowy:</span><br>
-        Niektóre umowy mogą być uznane za nieważne, jeśli zawierają niezgodne z prawem lub zasadami współżycia społecznego postanowienia.<br><br>
+        Niektóre postanowienia mogą być sprzeczne z prawem i powodować nieważność całej umowy.<br><br>
 
         <span class="highlight">Konsekwencje finansowe:</span><br>
-        Jeśli w umowie znajdują się niekorzystne zapisy dotyczące płatności, odsetek lub kar umownych, możesz ponieść znaczne straty finansowe.<br><br>
+        Niektóre zapisy mogą wiązać się z karami, odsetkami lub stratami finansowymi.<br><br>
 
         <span class="highlight">Skutki prawne:</span><br>
-        Nieważność umowy może prowadzić do konieczności zwrotu świadczeń lub dochodzenia odszkodowania, jeśli jedna ze stron poniosła szkody w wyniku jej zawarcia.<br><br>
+        Możliwość procesów sądowych lub innych komplikacji prawnych.<br><br>
 
         <span class="highlight">Niewywiązanie się z umowy:</span><br>
-        Jeśli nie rozumiesz swoich obowiązków wynikających z umowy, możesz nieświadomie ich nie wykonać, co może skutkować karami umownymi lub innymi konsekwencjami prawnymi.
+        Możliwe konsekwencje wynikające z nieznajomości własnych obowiązków.<br><br>
         </div>
     """, unsafe_allow_html=True)
