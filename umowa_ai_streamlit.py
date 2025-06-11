@@ -5,17 +5,21 @@ import re
 # === KONFIGURACJA STRONY ===
 st.set_page_config(page_title="UmowaAI – Analiza PDF", layout="wide")
 
-# === NAGŁÓWEK ===
-st.title("📄 UmowaAI – Wykrywanie Ryzyk i Analiza PDF")
+# === STYL GLOBALNY ===
 st.markdown("""
 <style>
+    body {
+        background-color: #eef2f7;
+        font-family: 'Segoe UI', sans-serif;
+    }
     .block-container {
         padding-top: 2rem;
     }
     .css-18e3th9 {
-        background-color: #f0f4fa;
+        background-color: #ffffff;
         border-radius: 12px;
         padding: 2rem;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
     }
     .risk-section strong {
         font-size: 1.5em;
@@ -32,6 +36,9 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
+# === NAGŁÓWEK ===
+st.title("📄 UmowaAI – Wykrywanie Ryzyk i Analiza PDF")
 
 # === MENU ===
 menu = st.sidebar.radio("📌 Nawigacja:", [
@@ -75,25 +82,25 @@ def show_risks():
     st.subheader("🛡️ Możliwe Ryzyka w Umowie")
     st.markdown("""
 <div class="risk-section">
-<strong>Utrudnione odstąpienie od umowy:</strong>
+<strong style='font-family: Georgia; color: #c62828;'>Utrudnione odstąpienie od umowy:</strong>
 <p>Umowy często zawierają zapisy, które utrudniają lub uniemożliwiają odstąpienie od umowy, nawet jeśli jej warunki okazują się niekorzystne.</p>
 
-<strong>Dodatkowe obowiązki:</strong>
+<strong style='font-family: Georgia; color: #c62828;'>Dodatkowe obowiązki:</strong>
 <p>Możesz być zobowiązany do spełnienia dodatkowych czynności lub płatności, o których nie miałeś pojęcia.</p>
 
-<strong>Dodatkowe opłaty:</strong>
+<strong style='font-family: Georgia; color: #c62828;'>Dodatkowe opłaty:</strong>
 <p>Nieuważne czytanie umowy może prowadzić do konieczności zapłaty dodatkowych opłat, które nie były wliczone w pierwotne koszty.</p>
 
-<strong>Nieważność umowy:</strong>
+<strong style='font-family: Georgia; color: #c62828;'>Nieważność umowy:</strong>
 <p>Niektóre umowy mogą być uznane za nieważne, jeśli zawierają niezgodne z prawem lub zasadami współżycia społecznego postanowienia.</p>
 
-<strong>Konsekwencje finansowe:</strong>
+<strong style='font-family: Georgia; color: #c62828;'>Konsekwencje finansowe:</strong>
 <p>Jeśli w umowie znajdują się niekorzystne zapisy dotyczące płatności, odsetek lub kar umownych, możesz ponieść znaczne straty finansowe.</p>
 
-<strong>Skutki prawne:</strong>
+<strong style='font-family: Georgia; color: #c62828;'>Skutki prawne:</strong>
 <p>Nieważność umowy może prowadzić do konieczności zwrotu świadczeń lub dochodzenia odszkodowania, jeśli jedna ze stron poniosła szkody w wyniku jej zawarcia.</p>
 
-<strong>Niewywiązanie się z umowy:</strong>
+<strong style='font-family: Georgia; color: #c62828;'>Niewywiązanie się z umowy:</strong>
 <p>Jeśli nie rozumiesz swoich obowiązków wynikających z umowy, możesz nieświadomie ich nie wykonać, co może skutkować karami umownymi lub innymi konsekwencjami prawnymi.</p>
 </div>
 """, unsafe_allow_html=True)
@@ -101,10 +108,46 @@ def show_risks():
 # === STRONY ===
 if menu == "Strona główna":
     st.markdown("""
-### 👋 Witaj w UmowaAI
-Twoje narzędzie do analizy PDF i wykrywania ryzyk w umowach.
-Zacznij od przesłania pliku lub wklejenia treści.
-    """)
+    <div style='text-align: center; padding: 2rem 0;'>
+        <h1 style='font-size: 3em;'>🤖 UmowaAI – Twoja Osobista AI do Analizy Umów</h1>
+        <p style='font-size: 1.3em;'>Pozwól sztucznej inteligencji sprawdzić Twoją umowę zanim ją podpiszesz.</p>
+    </div>
+
+    <div style='display: flex; justify-content: space-around; padding: 1.5rem 0;'>
+        <div style='flex: 1; margin: 1rem; padding: 1rem; border-radius: 12px; background-color: #f9f9f9;'>
+            <h3>📤 Wgraj PDF</h3>
+            <p>Automatycznie przetworzymy Twoją umowę i zidentyfikujemy potencjalne zagrożenia.</p>
+        </div>
+        <div style='flex: 1; margin: 1rem; padding: 1rem; border-radius: 12px; background-color: #f9f9f9;'>
+            <h3>🛡️ Sprawdź ryzyka</h3>
+            <p>Poznaj najczęstsze pułapki prawne ukryte w dokumentach.</p>
+        </div>
+        <div style='flex: 1; margin: 1rem; padding: 1rem; border-radius: 12px; background-color: #f9f9f9;'>
+            <h3>🔍 Zrozum treść</h3>
+            <p>Otrzymaj przejrzyste podsumowanie najważniejszych punktów.</p>
+        </div>
+    </div>
+
+    <hr style='margin: 2rem 0;'>
+
+    <h2 style='text-align: center;'>📌 Jak to działa?</h2>
+    <ol style='font-size: 1.1em; line-height: 1.6;'>
+        <li>📂 Prześlij plik PDF lub wklej treść umowy</li>
+        <li>🤖 AI analizuje dokument i szuka ryzyk</li>
+        <li>📋 Otrzymujesz podsumowanie oraz ocenę bezpieczeństwa</li>
+    </ol>
+
+    <h2 style='text-align: center; margin-top: 3rem;'>💡 Dlaczego warto?</h2>
+    <ul style='font-size: 1.1em; line-height: 1.6;'>
+        <li>🔎 Wykrywasz ukryte zapisy i dodatkowe obowiązki</li>
+        <li>⚖️ Zyskujesz świadomość swoich praw</li>
+        <li>⏱️ Oszczędzasz czas – analiza zajmuje kilka sekund</li>
+    </ul>
+
+    <div style='text-align: center; margin-top: 2.5rem;'>
+        <a href='#' style='background-color: #0073e6; color: white; padding: 1rem 2rem; text-decoration: none; border-radius: 8px; font-size: 1.2em;'>Zacznij analizować</a>
+    </div>
+    """, unsafe_allow_html=True)
 
 elif menu == "🔐 Logowanie / Rejestracja":
     with st.form("login_form"):
