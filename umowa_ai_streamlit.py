@@ -65,10 +65,10 @@ st.title("📄 UmowaAI – Wykrywanie Ryzyk i Analiza PDF")
 menu = st.sidebar.radio("📌 Nawigacja:", [
     "Strona główna",
     "🔐 Logowanie / Rejestracja",
-    "📤 Wgraj PDF",
+    "📄 Wgraj PDF",
     "📋 Wklej tekst",
     "🛡️ Ryzyka",
-    "📥 Pobierz analizę",
+    "📅 Pobierz analizę",
     "📚 Dodatkowe Funkcje"
 ])
 
@@ -117,18 +117,51 @@ def show_risks():
     st.subheader("🛡️ Możliwe Ryzyka w Umowie")
     st.markdown("""
     <div class="risk-section">
-    ... (oryginalne ryzyka – bez zmian)
+    <strong>1. Utrudnione odstąpienie od umowy</strong>
+    <p>Nieprecyzyjne lub rygorystyczne warunki odstąpienia mogą utrudnić rezygnację z umowy.</p>
+
+    <strong>2. Ukryte koszty</strong>
+    <p>Wzmianki o dodatkowych opłatach, karach umownych lub kosztach mogą nie być widoczne na pierwszy rzut oka.</p>
+
+    <strong>3. Niekorzystne warunki finansowe</strong>
+    <p>Zbyt wysokie odsetki, opłaty za opóźnienie lub niejasne warunki finansowe mogą narazić użytkownika na straty.</p>
+
+    <strong>4. Ograniczenie odpowiedzialności drugiej strony</strong>
+    <p>Zapisy ograniczające odpowiedzialność kontrahenta za błędy lub szkody.</p>
+
+    <strong>5. Wymuszone zobowiązania</strong>
+    <p>Postanowienia mogą nakładać na użytkownika obowiązki, które nie są oczywiste przy podpisywaniu umowy.</p>
+
+    <strong>6. Klauzule niedozwolone (abuzywne)</strong>
+    <p>Nieuczciwe postanowienia, które mogą być niezgodne z prawem konsumenckim.</p>
+
+    <strong>7. Brak możliwości negocjacji</strong>
+    <p>Umowy "take-it-or-leave-it", w których jedna strona nie ma realnego wpływu na treść dokumentu.</p>
     </div>
     """, unsafe_allow_html=True)
 
 if menu == "Strona główna":
-    st.markdown("... (oryginalna strona główna – bez zmian)", unsafe_allow_html=True)
+    st.markdown("""
+    ### Witaj w UmowaAI!
+    
+    Aplikacja do automatycznej analizy umów i wykrywania potencjalnych zagrożeń. 
+    
+    - 🔹 Wgraj plik PDF lub wklej tekst umowy
+    - 🔹 Skanuj dokument w poszukiwaniu ryzyk
+    - 🔹 Generuj raport w formacie PDF
+    
+    **Dlaczego warto?**
+
+    🔗 Łatwa obsługa · 🔍 Inteligentna analiza · 📈 Szybkie wyniki
+    
+    ---
+    """, unsafe_allow_html=True)
 
 elif menu == "🔐 Logowanie / Rejestracja":
     with st.form("login_form"):
         ...
 
-elif menu == "📤 Wgraj PDF":
+elif menu == "📄 Wgraj PDF":
     uploaded_file = st.file_uploader("Wgraj plik PDF", type="pdf")
     if uploaded_file:
         text = extract_text_from_pdf(uploaded_file)
@@ -154,7 +187,7 @@ elif menu == "📋 Wklej tekst":
 elif menu == "🛡️ Ryzyka":
     show_risks()
 
-elif menu == "📥 Pobierz analizę":
+elif menu == "📅 Pobierz analizę":
     st.info("🔧 Funkcja eksportu PDF z analizą dostępna w zakładce 'Wgraj PDF' lub 'Wklej tekst'.")
 
 elif menu == "📚 Dodatkowe Funkcje":
@@ -162,9 +195,6 @@ elif menu == "📚 Dodatkowe Funkcje":
     st.markdown("""
     1. 🔍 **Podświetlanie ryzyk w tekście** – już wkrótce zobaczysz dokładnie, które fragmenty umowy są ryzykowne.
     2. 📄 **Profesjonalny raport PDF** – z logo, datą, listą ryzyk i podsumowaniem.
-    3. 📊 **Wskaźnik ryzyka** – ocena procentowa ryzyka w umowie.
+    3. 📈 **Wskaźnik ryzyka** – ocena procentowa ryzyka w umowie.
     4. 🤖 **Tryb Smart Advisor** – porozmawiaj z AI na temat konkretnej umowy.
-    5. 📬 **Wyślij raport na e-mail** – otrzymaj analizę bezpośrednio na swoją skrzynkę.
-    6. 📚 **Baza wiedzy** – poradniki, przykładowe umowy i często zadawane pytania.
-    7. 🎯 **System oceniania umowy** – klasyfikacja: bezpieczna / średnie ryzyko / wysokie ryzyko.
-    """)
+    5. �\udce...
