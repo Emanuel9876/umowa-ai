@@ -16,11 +16,13 @@ st.markdown("""
         }
         .highlight {
             font-weight: bold;
-            font-size: 18px;
-            color: #cc0000;
+            font-size: 20px;
+            color: #000000;
+            font-family: 'Courier New', monospace;
         }
         .content-text {
             font-size: 18px;
+            color: #111111;
         }
     </style>
 """, unsafe_allow_html=True)
