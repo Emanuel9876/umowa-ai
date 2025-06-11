@@ -8,24 +8,48 @@ st.set_page_config(page_title="Umowa AI", layout="wide")
 st.markdown("""
     <style>
         body {
-            background-color: #e5e7eb;
+            background-color: #dbeafe;
             font-family: 'Segoe UI', sans-serif;
         }
         .stApp {
-            background-color: #f0f4f8;
+            background-color: #e0f2fe;
         }
         .highlight {
             font-weight: bold;
             font-size: 20px;
-            color: #0f172a;
-            font-family: 'Courier New', monospace;
+            color: #111827;
+            font-family: 'Georgia', serif;
         }
         .content-text {
             font-size: 18px;
-            color: #1f2937;
+            color: #1e293b;
+        }
+        .login-box {
+            position: absolute;
+            top: 1rem;
+            right: 2rem;
+            padding: 1rem;
+            background-color: #ffffff33;
+            border-radius: 10px;
+            box-shadow: 0px 2px 4px rgba(0,0,0,0.1);
+        }
+        .login-box input {
+            margin: 0.2rem 0;
         }
     </style>
 """, unsafe_allow_html=True)
+
+with st.container():
+    st.markdown("""
+    <div class="login-box">
+        <form>
+            <input type="text" placeholder="Login" name="login"><br>
+            <input type="password" placeholder="Hasło" name="password"><br>
+            <button type="submit">Zaloguj</button>
+            <button type="submit">Rejestracja</button>
+        </form>
+    </div>
+    """, unsafe_allow_html=True)
 
 def analyze_text(text):
     summary = ""
@@ -72,11 +96,11 @@ if menu == "Strona Główna":
     st.title("Asystent AI do analizy umów")
     st.markdown("""
         <div class="content-text">
-        Witaj w aplikacji wspierającej analizę umów cywilnoprawnych. Nasz system AI wykrywa potencjalne ryzyka w zapisach umowy.
+        Witaj w aplikacji wspierającej analizę umów cywilnoprawnych. Nasz system AI wykrywa potencjalne ryzyka w zapisach umowy.<br><br>
 
-        - Wgraj swoją umowę jako plik PDF lub wklej jej treść
-        - Uzyskaj automatyczne podsumowanie ryzyk
-        - Skorzystaj z interaktywnych narzędzi do pogłębionej analizy
+        - Wgraj swoją umowę jako plik PDF lub wklej jej treść<br>
+        - Uzyskaj automatyczne podsumowanie ryzyk<br>
+        - Skorzystaj z interaktywnych narzędzi do pogłębionej analizy<br>
         </div>
     """, unsafe_allow_html=True)
 
