@@ -18,12 +18,17 @@ st.markdown("""
         padding: 2rem;
     }
     .risk-section strong {
-        font-size: 1.3em;
+        font-size: 1.5em;
         display: block;
-        margin-top: 1rem;
+        margin-top: 1.2rem;
+        font-family: 'Arial Black', sans-serif;
+        color: #b30000;
+        text-decoration: underline;
     }
     .risk-section p {
-        font-size: 1.1em;
+        font-size: 1.2em;
+        line-height: 1.6;
+        text-align: justify;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -50,19 +55,19 @@ def extract_text_from_pdf(file):
 def analyze_text(text):
     summary = ""
     if re.search(r'odstąpienie|rozwiązanie.*umow', text, re.IGNORECASE):
-        summary += "\n- Możliwe ograniczenia w odstąpieniu od umowy."
+        summary += "\n- **Utrudnione odstąpienie od umowy**: możliwe ograniczenia w odstąpieniu od umowy."
     if re.search(r'obowiąz(e|ą)zki|zobowiązany', text, re.IGNORECASE):
-        summary += "\n- Dodatkowe obowiązki użytkownika."
+        summary += "\n- **Dodatkowe obowiązki**: możliwe zobowiązania użytkownika."
     if re.search(r'opłata|koszt|zapłaty', text, re.IGNORECASE):
-        summary += "\n- Potencjalne dodatkowe opłaty."
+        summary += "\n- **Dodatkowe opłaty**: potencjalne ukryte koszty."
     if re.search(r'nieważn|unieważn', text, re.IGNORECASE):
-        summary += "\n- Możliwe zapisy prowadzące do nieważności umowy."
+        summary += "\n- **Nieważność umowy**: zapisy mogą prowadzić do nieważności."
     if re.search(r'kara|odsetki|strata|szkoda', text, re.IGNORECASE):
-        summary += "\n- Ryzyko konsekwencji finansowych."
+        summary += "\n- **Konsekwencje finansowe**: ryzyko dodatkowych kosztów."
     if re.search(r'prawne|pozew|sąd', text, re.IGNORECASE):
-        summary += "\n- Możliwe skutki prawne."
+        summary += "\n- **Skutki prawne**: potencjalne problemy prawne."
     if re.search(r'niewywiązuje|niewykona|zaniedbanie', text, re.IGNORECASE):
-        summary += "\n- Ryzyko niewywiązania się z umowy."
+        summary += "\n- **Niewywiązanie się z umowy**: ryzyko niewykonania obowiązków."
     return summary.strip()
 
 # === FUNKCJA: RYZYKA (stałe opisy) ===
