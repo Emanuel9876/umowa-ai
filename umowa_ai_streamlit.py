@@ -9,7 +9,7 @@ st.set_page_config(page_title="UmowaAI – Analiza PDF", layout="wide")
 st.markdown("""
 <style>
     body {
-        background-color: #eef2f7;
+        background-color: #f4f8fb;
         font-family: 'Segoe UI', sans-serif;
     }
     .block-container {
@@ -22,17 +22,25 @@ st.markdown("""
         box-shadow: 0 4px 8px rgba(0,0,0,0.05);
     }
     .risk-section strong {
-        font-size: 1.5em;
+        font-size: 1.6em;
         display: block;
-        margin-top: 1.2rem;
-        font-family: 'Arial Black', sans-serif;
-        color: #b30000;
+        margin-top: 1.5rem;
+        font-family: 'Verdana', sans-serif;
+        color: #a80000;
         text-decoration: underline;
     }
     .risk-section p {
-        font-size: 1.2em;
-        line-height: 1.6;
+        font-size: 1.3em;
+        line-height: 1.7;
         text-align: justify;
+    }
+    h1, h2, h3, h4 {
+        color: #003366;
+    }
+    .stButton > button {
+        background-color: #004d99;
+        color: white;
+        font-weight: bold;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -114,15 +122,15 @@ if menu == "Strona główna":
     </div>
 
     <div style='display: flex; justify-content: space-around; padding: 1.5rem 0;'>
-        <div style='flex: 1; margin: 1rem; padding: 1rem; border-radius: 12px; background-color: #f9f9f9;'>
+        <div style='flex: 1; margin: 1rem; padding: 1rem; border-radius: 12px; background-color: #f1f5fb;'>
             <h3>📤 Wgraj PDF</h3>
             <p>Automatycznie przetworzymy Twoją umowę i zidentyfikujemy potencjalne zagrożenia.</p>
         </div>
-        <div style='flex: 1; margin: 1rem; padding: 1rem; border-radius: 12px; background-color: #f9f9f9;'>
+        <div style='flex: 1; margin: 1rem; padding: 1rem; border-radius: 12px; background-color: #f1f5fb;'>
             <h3>🛡️ Sprawdź ryzyka</h3>
             <p>Poznaj najczęstsze pułapki prawne ukryte w dokumentach.</p>
         </div>
-        <div style='flex: 1; margin: 1rem; padding: 1rem; border-radius: 12px; background-color: #f9f9f9;'>
+        <div style='flex: 1; margin: 1rem; padding: 1rem; border-radius: 12px; background-color: #f1f5fb;'>
             <h3>🔍 Zrozum treść</h3>
             <p>Otrzymaj przejrzyste podsumowanie najważniejszych punktów.</p>
         </div>
