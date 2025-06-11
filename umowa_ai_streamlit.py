@@ -8,21 +8,21 @@ st.set_page_config(page_title="Umowa AI", layout="wide")
 st.markdown("""
     <style>
         body {
-            background-color: #f3f4f6;
+            background-color: #e5e7eb;
             font-family: 'Segoe UI', sans-serif;
         }
         .stApp {
-            background-color: #ffffff;
+            background-color: #f0f4f8;
         }
         .highlight {
             font-weight: bold;
             font-size: 20px;
-            color: #000000;
+            color: #0f172a;
             font-family: 'Courier New', monospace;
         }
         .content-text {
             font-size: 18px;
-            color: #111111;
+            color: #1f2937;
         }
     </style>
 """, unsafe_allow_html=True)
