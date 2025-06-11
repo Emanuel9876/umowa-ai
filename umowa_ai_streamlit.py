@@ -17,6 +17,14 @@ st.markdown("""
         border-radius: 12px;
         padding: 2rem;
     }
+    .risk-section strong {
+        font-size: 1.3em;
+        display: block;
+        margin-top: 1rem;
+    }
+    .risk-section p {
+        font-size: 1.1em;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -38,31 +46,52 @@ def extract_text_from_pdf(file):
         text += page.get_text()
     return text
 
+# === FUNKCJA: ANALIZA TEKSTU ===
+def analyze_text(text):
+    summary = ""
+    if re.search(r'odstąpienie|rozwiązanie.*umow', text, re.IGNORECASE):
+        summary += "\n- Możliwe ograniczenia w odstąpieniu od umowy."
+    if re.search(r'obowiąz(e|ą)zki|zobowiązany', text, re.IGNORECASE):
+        summary += "\n- Dodatkowe obowiązki użytkownika."
+    if re.search(r'opłata|koszt|zapłaty', text, re.IGNORECASE):
+        summary += "\n- Potencjalne dodatkowe opłaty."
+    if re.search(r'nieważn|unieważn', text, re.IGNORECASE):
+        summary += "\n- Możliwe zapisy prowadzące do nieważności umowy."
+    if re.search(r'kara|odsetki|strata|szkoda', text, re.IGNORECASE):
+        summary += "\n- Ryzyko konsekwencji finansowych."
+    if re.search(r'prawne|pozew|sąd', text, re.IGNORECASE):
+        summary += "\n- Możliwe skutki prawne."
+    if re.search(r'niewywiązuje|niewykona|zaniedbanie', text, re.IGNORECASE):
+        summary += "\n- Ryzyko niewywiązania się z umowy."
+    return summary.strip()
+
 # === FUNKCJA: RYZYKA (stałe opisy) ===
 def show_risks():
     st.subheader("🛡️ Możliwe Ryzyka w Umowie")
     st.markdown("""
-**Utrudnione odstąpienie od umowy:**\
-Umowy często zawierają zapisy, które utrudniają lub uniemożliwiają odstąpienie od umowy, nawet jeśli jej warunki okazują się niekorzystne.
+<div class="risk-section">
+<strong>Utrudnione odstąpienie od umowy:</strong>
+<p>Umowy często zawierają zapisy, które utrudniają lub uniemożliwiają odstąpienie od umowy, nawet jeśli jej warunki okazują się niekorzystne.</p>
 
-**Dodatkowe obowiązki:**\
-Możesz być zobowiązany do spełnienia dodatkowych czynności lub płatności, o których nie miałeś pojęcia.
+<strong>Dodatkowe obowiązki:</strong>
+<p>Możesz być zobowiązany do spełnienia dodatkowych czynności lub płatności, o których nie miałeś pojęcia.</p>
 
-**Dodatkowe opłaty:**\
-Nieuważne czytanie umowy może prowadzić do konieczności zapłaty dodatkowych opłat, które nie były wliczone w pierwotne koszty.
+<strong>Dodatkowe opłaty:</strong>
+<p>Nieuważne czytanie umowy może prowadzić do konieczności zapłaty dodatkowych opłat, które nie były wliczone w pierwotne koszty.</p>
 
-**Nieważność umowy:**\
-Niektóre umowy mogą być uznane za nieważne, jeśli zawierają niezgodne z prawem lub zasadami współżycia społecznego postanowienia.
+<strong>Nieważność umowy:</strong>
+<p>Niektóre umowy mogą być uznane za nieważne, jeśli zawierają niezgodne z prawem lub zasadami współżycia społecznego postanowienia.</p>
 
-**Konsekwencje finansowe:**\
-Jeśli w umowie znajdują się niekorzystne zapisy dotyczące płatności, odsetek lub kar umownych, możesz ponieść znaczne straty finansowe.
+<strong>Konsekwencje finansowe:</strong>
+<p>Jeśli w umowie znajdują się niekorzystne zapisy dotyczące płatności, odsetek lub kar umownych, możesz ponieść znaczne straty finansowe.</p>
 
-**Skutki prawne:**\
-Nieważność umowy może prowadzić do konieczności zwrotu świadczeń lub dochodzenia odszkodowania, jeśli jedna ze stron poniosła szkody w wyniku jej zawarcia.
+<strong>Skutki prawne:</strong>
+<p>Nieważność umowy może prowadzić do konieczności zwrotu świadczeń lub dochodzenia odszkodowania, jeśli jedna ze stron poniosła szkody w wyniku jej zawarcia.</p>
 
-**Niewywiązanie się z umowy:**\
-Jeśli nie rozumiesz swoich obowiązków wynikających z umowy, możesz nieświadomie ich nie wykonać, co może skutkować karami umownymi lub innymi konsekwencjami prawnymi.
-""")
+<strong>Niewywiązanie się z umowy:</strong>
+<p>Jeśli nie rozumiesz swoich obowiązków wynikających z umowy, możesz nieświadomie ich nie wykonać, co może skutkować karami umownymi lub innymi konsekwencjami prawnymi.</p>
+</div>
+""", unsafe_allow_html=True)
 
 # === STRONY ===
 if menu == "Strona główna":
@@ -87,11 +116,15 @@ elif menu == "📤 Wgraj PDF":
     if uploaded_file:
         text = extract_text_from_pdf(uploaded_file)
         st.text_area("📄 Zawartość pliku:", text, height=300)
+        st.markdown("### 📌 Podsumowanie analizy:")
+        st.info(analyze_text(text))
 
 elif menu == "📋 Wklej tekst":
     user_text = st.text_area("Wklej tekst umowy:", height=300)
     if user_text:
         st.success("✅ Tekst zapisany do analizy")
+        st.markdown("### 📌 Podsumowanie analizy:")
+        st.info(analyze_text(user_text))
 
 elif menu == "🛡️ Ryzyka":
     show_risks()
