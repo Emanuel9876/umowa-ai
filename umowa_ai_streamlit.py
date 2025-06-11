@@ -9,24 +9,24 @@ st.set_page_config(page_title="UmowaAI – Analiza PDF", layout="wide")
 st.markdown("""
 <style>
     body {
-        background-color: #f4f8fb;
+        background-color: #0f1117;
         font-family: 'Segoe UI', sans-serif;
     }
     .block-container {
         padding-top: 2rem;
     }
     .css-18e3th9 {
-        background-color: #ffffff;
+        background-color: #1c1f26;
         border-radius: 12px;
         padding: 2rem;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
     .risk-section strong {
         font-size: 1.6em;
         display: block;
         margin-top: 1.5rem;
         font-family: 'Verdana', sans-serif;
-        color: #a80000;
+        color: #ff4b4b;
         text-decoration: underline;
     }
     .risk-section p {
@@ -35,12 +35,23 @@ st.markdown("""
         text-align: justify;
     }
     h1, h2, h3, h4 {
-        color: #003366;
+        color: #ffffff;
     }
     .stButton > button {
-        background-color: #004d99;
+        background-color: #0073e6;
         color: white;
         font-weight: bold;
+        border-radius: 6px;
+        padding: 0.5rem 1.2rem;
+    }
+    .home-card {
+        background: linear-gradient(135deg, #1f2a3a, #2f3e4f);
+        color: #ffffff;
+        transition: transform 0.3s ease;
+        border: 1px solid #3c4f64;
+    }
+    .home-card:hover {
+        transform: scale(1.03);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -118,19 +129,19 @@ if menu == "Strona główna":
     st.markdown("""
     <div style='text-align: center; padding: 2rem 0;'>
         <h1 style='font-size: 3em;'>🤖 UmowaAI – Twoja Osobista AI do Analizy Umów</h1>
-        <p style='font-size: 1.3em;'>Pozwól sztucznej inteligencji sprawdzić Twoją umowę zanim ją podpiszesz.</p>
+        <p style='font-size: 1.3em; color: #cccccc;'>Pozwól sztucznej inteligencji sprawdzić Twoją umowę zanim ją podpiszesz.</p>
     </div>
 
     <div style='display: flex; justify-content: space-around; padding: 1.5rem 0;'>
-        <div style='flex: 1; margin: 1rem; padding: 1rem; border-radius: 12px; background-color: #f1f5fb;'>
+        <div class='home-card' style='flex: 1; margin: 1rem; padding: 1rem; border-radius: 12px;'>
             <h3>📤 Wgraj PDF</h3>
             <p>Automatycznie przetworzymy Twoją umowę i zidentyfikujemy potencjalne zagrożenia.</p>
         </div>
-        <div style='flex: 1; margin: 1rem; padding: 1rem; border-radius: 12px; background-color: #f1f5fb;'>
+        <div class='home-card' style='flex: 1; margin: 1rem; padding: 1rem; border-radius: 12px;'>
             <h3>🛡️ Sprawdź ryzyka</h3>
             <p>Poznaj najczęstsze pułapki prawne ukryte w dokumentach.</p>
         </div>
-        <div style='flex: 1; margin: 1rem; padding: 1rem; border-radius: 12px; background-color: #f1f5fb;'>
+        <div class='home-card' style='flex: 1; margin: 1rem; padding: 1rem; border-radius: 12px;'>
             <h3>🔍 Zrozum treść</h3>
             <p>Otrzymaj przejrzyste podsumowanie najważniejszych punktów.</p>
         </div>
@@ -139,14 +150,14 @@ if menu == "Strona główna":
     <hr style='margin: 2rem 0;'>
 
     <h2 style='text-align: center;'>📌 Jak to działa?</h2>
-    <ol style='font-size: 1.1em; line-height: 1.6;'>
+    <ol style='font-size: 1.1em; line-height: 1.6; color: #dddddd;'>
         <li>📂 Prześlij plik PDF lub wklej treść umowy</li>
         <li>🤖 AI analizuje dokument i szuka ryzyk</li>
         <li>📋 Otrzymujesz podsumowanie oraz ocenę bezpieczeństwa</li>
     </ol>
 
     <h2 style='text-align: center; margin-top: 3rem;'>💡 Dlaczego warto?</h2>
-    <ul style='font-size: 1.1em; line-height: 1.6;'>
+    <ul style='font-size: 1.1em; line-height: 1.6; color: #dddddd;'>
         <li>🔎 Wykrywasz ukryte zapisy i dodatkowe obowiązki</li>
         <li>⚖️ Zyskujesz świadomość swoich praw</li>
         <li>⏱️ Oszczędzasz czas – analiza zajmuje kilka sekund</li>
