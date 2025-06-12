@@ -66,7 +66,7 @@ if not session_state.logged_in:
             if username in users and users[username] == hash_password(password):
                 session_state.logged_in = True
                 session_state.username = username
-                st.experimental_rerun()
+                st.rerun()
             else:
                 st.sidebar.error("Błędny login lub hasło.")
     st.stop()
