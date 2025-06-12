@@ -4,50 +4,49 @@ from PyPDF2 import PdfReader
 from reportlab.pdfgen import canvas
 import io
 
-# Ustawienia aplikacji
 st.set_page_config(page_title="Umowa AI", layout="wide")
-
-# Styl — ciemniejsze tło + lepszy kontrast
 st.markdown("""
     <style>
-        .stApp {
-            background-color: #f0f4f8;
+        body {
+            background-color: #dbeafe;
             font-family: 'Segoe UI', sans-serif;
         }
-        .content-text {
-            font-size: 18px;
-            color: #0f172a;
-            line-height: 1.6;
+        .stApp {
+            background-color: #dbeafe;
         }
         .highlight {
             font-weight: bold;
-            color: #1e3a8a;
+            font-size: 20px;
+            color: #111827;
+            font-family: 'Georgia', serif;
+        }
+        .content-text {
+            font-size: 18px;
+            color: #1e293b;
         }
     </style>
 """, unsafe_allow_html=True)
 
-# Funkcja analizy treści
 def analyze_text(text):
     summary = ""
     if re.search(r'odstąpienie|rozwiązanie.*umow', text, re.IGNORECASE):
-        summary += "\n- **Trudność w odstąpieniu**: zapisy ograniczające możliwość wypowiedzenia umowy."
+        summary += "\n- **Utrudnione odstąpienie od umowy**: możliwe ograniczenia w odstąpieniu od umowy."
     if re.search(r'obowiąz(e|ą)zki|zobowiązany', text, re.IGNORECASE):
-        summary += "\n- **Zobowiązania stron**: konieczność wykonania obowiązków dodatkowych."
+        summary += "\n- **Dodatkowe obowiązki**: możliwe zobowiązania użytkownika."
     if re.search(r'opłata|koszt|zapłaty', text, re.IGNORECASE):
-        summary += "\n- **Dodatkowe opłaty**: możliwe koszty nieujęte w głównej treści."
+        summary += "\n- **Dodatkowe opłaty**: potencjalne ukryte koszty."
     if re.search(r'nieważn|unieważn', text, re.IGNORECASE):
-        summary += "\n- **Ryzyko nieważności**: umowa może zawierać zapisy niezgodne z prawem."
+        summary += "\n- **Nieważność umowy**: zapisy mogą prowadzić do nieważności."
     if re.search(r'kara|odsetki|strata|szkoda', text, re.IGNORECASE):
-        summary += "\n- **Kary finansowe**: niekorzystne zapisy finansowe."
+        summary += "\n- **Konsekwencje finansowe**: ryzyko dodatkowych kosztów."
     if re.search(r'prawne|pozew|sąd', text, re.IGNORECASE):
-        summary += "\n- **Konsekwencje prawne**: możliwość postępowań sądowych."
+        summary += "\n- **Skutki prawne**: potencjalne problemy prawne."
     if re.search(r'niewywiązuje|niewykona|zaniedbanie', text, re.IGNORECASE):
-        summary += "\n- **Naruszenie obowiązków**: ryzyko niezrealizowania zobowiązań."
+        summary += "\n- **Niewywiązanie się z umowy**: ryzyko niewykonania obowiązków."
 
     score = summary.count('- **')
     return summary.strip(), score
 
-# Funkcja ekstrakcji tekstu z PDF
 def extract_text_from_pdf(uploaded_file):
     reader = PdfReader(uploaded_file)
     text = ""
@@ -55,7 +54,6 @@ def extract_text_from_pdf(uploaded_file):
         text += page.extract_text()
     return text
 
-# Generowanie PDF z analizą
 def generate_pdf(text):
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer)
@@ -67,41 +65,73 @@ def generate_pdf(text):
     buffer.seek(0)
     return buffer
 
-# MENU
-st.sidebar.title("📁 Nawigacja")
+st.sidebar.title("Menu")
 menu = st.sidebar.selectbox("Wybierz opcję", ["Strona Główna", "Analiza Umowy", "Ryzyka"])
 
-# STRONA GŁÓWNA
 if menu == "Strona Główna":
-    st.title("🤖 UmowaAI – Twój asystent do analizy umów")
-    st.markdown("""
-        <div class="content-text">
-        Nasza aplikacja wspiera Cię w bezpiecznym przeglądaniu, analizie i rozumieniu treści umów cywilnoprawnych.<br><br>
+    st.markdown(
+        """
+        <style>
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+            background-color: #dbeafe;
+            border-radius: 10px;
+        }
+        .title {
+            font-size: 36px;
+            font-weight: bold;
+            color: #1e3a8a;
+            margin-bottom: 1rem;
+        }
+        .content {
+            max-width: 900px;
+            font-size: 18px;
+            color: #0f172a;
+            line-height: 1.7;
+            text-align: center;
+        }
+        .section {
+            margin-top: 2rem;
+            background-color: #e0f2fe;
+            padding: 1.5rem;
+            border-radius: 10px;
+        }
+        </style>
+        <div class="main-container">
+            <div class="title">🤖 UmowaAI – Twój inteligentny doradca od umów</div>
+            <div class="content">
+                Witaj! Nasza aplikacja pomoże Ci bezpiecznie analizować treść umów cywilnoprawnych, zanim je podpiszesz. 
+                Dzięki sztucznej inteligencji możesz w kilka sekund dowiedzieć się, czy dokument zawiera ryzykowne zapisy. <br><br>
 
-        <span class="highlight">🔍 Co potrafi aplikacja?</span><br>
-        • Przeskanuj umowę i sprawdź, czy zawiera niebezpieczne zapisy.<br>
-        • Wykryj kluczowe ryzyka prawne, finansowe i operacyjne.<br>
-        • Pobierz PDF z raportem, który możesz wykorzystać jako załącznik lub archiwum.<br><br>
+                🔹 Wgraj plik PDF lub wklej tekst<br>
+                🔹 Otrzymaj podsumowanie zagrożeń<br>
+                🔹 Pobierz raport w formacie PDF<br>
+            </div>
 
-        <span class="highlight">📂 Jak to działa?</span><br>
-        • Prześlij plik PDF lub wklej tekst umowy.<br>
-        • Algorytmy językowe sprawdzą treść pod kątem ryzyk.<br>
-        • Zobaczysz podsumowanie oraz liczbę wykrytych ryzyk.<br><br>
-
-        <span class="highlight">🔐 Dlaczego warto?</span><br>
-        • Aplikacja pomaga chronić Twoje interesy przed nieuczciwymi zapisami.<br>
-        • Oszczędzasz czas – nie musisz czytać całej umowy samodzielnie.<br>
-        • Możesz podejmować świadome decyzje przy zawieraniu umowy.<br><br>
+            <div class="section">
+                <div class="title" style="font-size: 24px;">💼 Dlaczego warto zaufać UmowieAI?</div>
+                <div class="content" style="text-align: left;">
+                    ✅ Oszczędzasz czas – analiza trwa kilka sekund<br>
+                    ✅ Bezpieczne dane – nic nie jest zapisywane<br>
+                    ✅ Intuicyjny interfejs – nawet dla osób bez wiedzy prawniczej<br>
+                    ✅ Oparty o reguły języka prawniczego i AI<br>
+                </div>
+            </div>
         </div>
-    """, unsafe_allow_html=True)
+        """,
+        unsafe_allow_html=True
+    )
 
-# ANALIZA
 elif menu == "Analiza Umowy":
-    st.title("📑 Prześlij umowę do analizy")
-    uploaded_file = st.file_uploader("Wgraj plik PDF", type="pdf")
+    st.title("🔍 Analiza treści umowy")
+    uploaded_file = st.file_uploader("Wgraj plik PDF umowy", type="pdf")
     text_input = st.text_area("Lub wklej treść umowy:", height=300)
 
-    if st.button("🔍 Analizuj"):
+    if st.button("Analizuj"):
         if uploaded_file:
             contract_text = extract_text_from_pdf(uploaded_file)
         else:
@@ -109,31 +139,35 @@ elif menu == "Analiza Umowy":
 
         if contract_text:
             summary, score = analyze_text(contract_text)
-            st.subheader("📌 Wykryte ryzyka:")
+            st.subheader("📌 Podsumowanie ryzyk:")
             st.markdown(summary)
-            st.metric("Liczba ryzyk", score)
+            st.metric("Liczba wykrytych ryzyk", score)
             pdf_data = generate_pdf(summary)
-            st.download_button("📥 Pobierz raport PDF", pdf_data, "analiza_umowy.pdf")
+            st.download_button(label="📥 Pobierz analizę jako PDF", data=pdf_data, file_name="analiza_umowy.pdf")
 
-# RYZYKA
 elif menu == "Ryzyka":
-    st.title("⚠️ Typowe ryzyka w umowach")
+    st.title("⚠️ Możliwe ryzyka w umowach")
     st.markdown("""
         <div class="content-text">
-        Zebraliśmy najczęstsze ryzyka, które pojawiają się w umowach:<br><br>
+        <span class="highlight">Utrudnione odstąpienie od umowy:</span><br>
+        Umowy często zawierają zapisy, które utrudniają lub uniemożliwiają odstąpienie od umowy, nawet jeśli jej warunki okazują się niekorzystne.<br><br>
 
-        <span class="highlight">🛑 Utrudnione odstąpienie:</span> brak możliwości rozwiązania umowy w razie problemów.<br><br>
+        <span class="highlight">Dodatkowe obowiązki:</span><br>
+        Możesz być zobowiązany do spełnienia dodatkowych czynności lub płatności, o których nie miałeś pojęcia.<br><br>
 
-        <span class="highlight">📄 Dodatkowe obowiązki:</span> ukryte zapisy zmuszające Cię do działań, których się nie spodziewasz.<br><br>
+        <span class="highlight">Dodatkowe opłaty:</span><br>
+        Nieuważne czytanie umowy może prowadzić do konieczności zapłaty dodatkowych opłat, które nie były wliczone w pierwotne koszty.<br><br>
 
-        <span class="highlight">💸 Ukryte opłaty:</span> zapisy wymagające dodatkowych płatności lub opłat manipulacyjnych.<br><br>
+        <span class="highlight">Nieważność umowy:</span><br>
+        Niektóre umowy mogą być uznane za nieważne, jeśli zawierają niezgodne z prawem lub zasadami współżycia społecznego postanowienia.<br><br>
 
-        <span class="highlight">⚖️ Konsekwencje prawne:</span> groźba pozwów lub innych sankcji prawnych.<br><br>
+        <span class="highlight">Konsekwencje finansowe:</span><br>
+        Jeśli w umowie znajdują się niekorzystne zapisy dotyczące płatności, odsetek lub kar umownych, możesz ponieść znaczne straty finansowe.<br><br>
 
-        <span class="highlight">🧾 Kara umowna:</span> zapisy przewidujące wysokie kary za niewielkie uchybienia.<br><br>
+        <span class="highlight">Skutki prawne:</span><br>
+        Nieważność umowy może prowadzić do konieczności zwrotu świadczeń lub dochodzenia odszkodowania, jeśli jedna ze stron poniosła szkody w wyniku jej zawarcia.<br><br>
 
-        <span class="highlight">⛔ Nieważność umowy:</span> błędy formalne, które mogą skutkować nieważnością całego dokumentu.<br><br>
-
-        <span class="highlight">📉 Utrata kontroli:</span> przeniesienie pełnej odpowiedzialności na jedną stronę.
+        <span class="highlight">Niewywiązanie się z umowy:</span><br>
+        Jeśli nie rozumiesz swoich obowiązków wynikających z umowy, możesz nieświadomie ich nie wykonać, co może skutkować karami umownymi lub innymi konsekwencjami prawnymi.
         </div>
     """, unsafe_allow_html=True)
