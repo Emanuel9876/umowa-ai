@@ -72,55 +72,70 @@ if menu == "Strona Główna":
     st.markdown(
         """
         <style>
-        .main-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 3rem;
-            background-color: #dbeafe;
-            border-radius: 10px;
-        }
-        .title {
-            font-size: 36px;
-            font-weight: bold;
-            color: #1e3a8a;
-            margin-bottom: 1rem;
-        }
-        .content {
-            max-width: 900px;
-            font-size: 18px;
-            color: #0f172a;
-            line-height: 1.7;
-            text-align: center;
-        }
-        .section {
-            margin-top: 2rem;
-            background-color: #e0f2fe;
-            padding: 1.5rem;
-            border-radius: 10px;
-        }
+            .hero {
+                background-color: #e0f2fe;
+                padding: 4rem 2rem;
+                border-radius: 12px;
+                text-align: center;
+                margin: auto;
+                max-width: 1000px;
+                box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            }
+            .hero h1 {
+                font-size: 3rem;
+                color: #1e3a8a;
+                margin-bottom: 1.5rem;
+                font-family: 'Segoe UI', sans-serif;
+            }
+            .hero p {
+                font-size: 1.25rem;
+                color: #1e293b;
+                line-height: 1.8;
+            }
+            .benefits {
+                margin-top: 3rem;
+                background-color: #dbeafe;
+                border-left: 8px solid #3b82f6;
+                padding: 2rem;
+                border-radius: 12px;
+                max-width: 900px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+            .benefits h2 {
+                color: #1e3a8a;
+                font-size: 1.75rem;
+                margin-bottom: 1rem;
+            }
+            .benefits ul {
+                text-align: left;
+                padding-left: 1.5rem;
+                font-size: 1.1rem;
+                line-height: 1.8;
+                color: #0f172a;
+            }
         </style>
-        <div class="main-container">
-            <div class="title">🤖 UmowaAI – Twój inteligentny doradca od umów</div>
-            <div class="content">
-                Witaj! Nasza aplikacja pomoże Ci bezpiecznie analizować treść umów cywilnoprawnych, zanim je podpiszesz. 
-                Dzięki sztucznej inteligencji możesz w kilka sekund dowiedzieć się, czy dokument zawiera ryzykowne zapisy. <br><br>
 
+        <div class="hero">
+            <h1>🤖 UmowaAI – Twój inteligentny doradca od umów</h1>
+            <p>
+                Witaj w aplikacji, która pomoże Ci bezpiecznie analizować treść umów cywilnoprawnych, zanim je podpiszesz. <br><br>
+                Dzięki technologii AI sprawdzisz w kilka sekund, czy dokument zawiera ryzykowne zapisy.
+                <br><br>
                 🔹 Wgraj plik PDF lub wklej tekst<br>
                 🔹 Otrzymaj podsumowanie zagrożeń<br>
-                🔹 Pobierz raport w formacie PDF<br>
-            </div>
+                🔹 Pobierz raport PDF
+            </p>
+        </div>
 
-            <div class="section">
-                <div class="title" style="font-size: 24px;">💼 Dlaczego warto zaufać UmowieAI?</div>
-                <div class="content" style="text-align: left;">
-                    ✅ Oszczędzasz czas – analiza trwa kilka sekund<br>
-                    ✅ Bezpieczne dane – nic nie jest zapisywane<br>
-                    ✅ Intuicyjny interfejs – nawet dla osób bez wiedzy prawniczej<br>
-                    ✅ Oparty o reguły języka prawniczego i AI<br>
-                </div>
-            </div>
+        <div class="benefits">
+            <h2>💼 Dlaczego warto zaufać UmowieAI?</h2>
+            <ul>
+                <li>✅ Oszczędzasz czas – analiza trwa kilka sekund</li>
+                <li>✅ Bezpieczne dane – nic nie jest zapisywane</li>
+                <li>✅ Intuicyjny interfejs – nawet dla osób bez wiedzy prawniczej</li>
+                <li>✅ Wsparcie sztucznej inteligencji i reguł języka prawniczego</li>
+            </ul>
         </div>
         """,
         unsafe_allow_html=True
