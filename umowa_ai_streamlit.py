@@ -82,21 +82,22 @@ if not session_state.logged_in:
 # Stylizacja
 st.markdown("""
     <style>
-        body { background-color: #dbeafe; font-family: 'Segoe UI', sans-serif; }
-        .stApp { background-color: #dbeafe; }
-        .highlight { font-weight: bold; font-size: 20px; color: #0c0c0c; font-family: 'Georgia', serif; }
-        .content-text { font-size: 18px; color: #0c0c0c; }
-        .custom-label { font-size: 20px; color: #1d4ed8; font-weight: bold; margin-top: 20px; }
+        body { background-color: #1e3a8a; font-family: 'Segoe UI', sans-serif; }
+        .stApp { background-color: #1e3a8a; }
+        .highlight { font-weight: bold; font-size: 20px; color: #ffffff; font-family: 'Georgia', serif; }
+        .content-text { font-size: 18px; color: #ffffff; }
+        .custom-label { font-size: 20px; color: #ffffff; font-weight: bold; margin-top: 20px; }
         .summary-section { text-align: center; }
         .block-container { padding: 3rem 4rem 3rem 4rem; }
-        h1, h2, h3 { text-align: center; color: #1e293b; }
+        h1, h2, h3 { text-align: center; color: #ffffff; }
         .element-container p, .element-container div {
-            color: #0c0c0c !important;
+            color: #ffffff !important;
+        }
+        .stSelectbox label, .stRadio label, .stTextInput label, .stSidebar h1, .stSidebar h2, .stSidebar h3, .stSidebar p, .stSidebar div, .stSidebar label {
+            color: white !important;
         }
     </style>
 """, unsafe_allow_html=True)
-
-# (pozostała część kodu zostaje bez zmian – logika analizy itd.)
 
 # Menu główne
 st.sidebar.title("Menu")
