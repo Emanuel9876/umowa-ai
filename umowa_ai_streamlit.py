@@ -74,12 +74,14 @@ if not session_state.logged_in:
 # Stylizacja
 st.markdown("""
     <style>
-        body { background-color: #dbeafe; font-family: 'Segoe UI', sans-serif; }
-        .stApp { background-color: #dbeafe; }
+        body { background-color: #e0f2fe; font-family: 'Segoe UI', sans-serif; }
+        .stApp { background-color: #e0f2fe; }
         .highlight { font-weight: bold; font-size: 20px; color: #111827; font-family: 'Georgia', serif; }
         .content-text { font-size: 18px; color: #1e293b; }
-        .custom-label { font-size: 20px; color: #1e3a8a; font-weight: bold; margin-top: 20px; }
+        .custom-label { font-size: 20px; color: #1d4ed8; font-weight: bold; margin-top: 20px; }
         .summary-section { text-align: center; }
+        .block-container { padding: 3rem 4rem 3rem 4rem; }
+        h1, h2, h3 { text-align: center; color: #0f172a; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -134,13 +136,25 @@ menu = st.sidebar.selectbox("Wybierz opcję", ["Strona Główna", "Analiza Umowy
 if menu == "Strona Główna":
     st.title("🤖 UmowaAI – Twój inteligentny doradca od umów")
     st.markdown("""
-    ### Co potrafimy?
-    - Analiza treści umów
-    - Wykrywanie ryzyk
-    - Pobieranie raportów
-    - Interfejs wielojęzyczny
-    - Historia Twoich analiz (tylko dla zalogowanych)
-    """)
+    <div style='text-align: center; font-size: 22px;'>
+        Witamy w aplikacji <b>UmowaAI</b> – Twoim osobistym asystencie do analizy umów! <br><br>
+        💼 Automatycznie analizujemy dokumenty prawne, wykrywamy potencjalne ryzyka <br>
+        i prezentujemy je w czytelnej formie – tak, abyś wiedział, co podpisujesz.<br><br>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.subheader("📑 Analiza treści")
+        st.markdown("Zbadaj dokładnie treść dowolnej umowy – automatycznie i natychmiastowo.")
+    with col2:
+        st.subheader("🚨 Wykrywanie ryzyk")
+        st.markdown("Sprawdzamy kluczowe zapisy pod kątem niebezpieczeństw prawnych i finansowych.")
+    with col3:
+        st.subheader("📊 Historia analiz")
+        st.markdown("Zalogowani użytkownicy mają dostęp do pełnej historii swoich analiz.")
 
 elif menu == "Analiza Umowy":
     st.title("🔍 Analiza treści umowy")
@@ -172,14 +186,16 @@ elif menu == "Analiza Umowy":
 elif menu == "Ryzyka":
     st.title("⚠️ Możliwe ryzyka w umowach")
     st.markdown("""
-    - Utrudnione odstąpienie od umowy
-    - Dodatkowe obowiązki
-    - Dodatkowe opłaty
-    - Nieważność umowy
-    - Konsekwencje finansowe
-    - Skutki prawne
-    - Niewywiązanie się z umowy
-    """)
+    <div style='text-align: center;'>
+        - Utrudnione odstąpienie od umowy<br>
+        - Dodatkowe obowiązki<br>
+        - Dodatkowe opłaty<br>
+        - Nieważność umowy<br>
+        - Konsekwencje finansowe<br>
+        - Skutki prawne<br>
+        - Niewywiązanie się z umowy
+    </div>
+    """, unsafe_allow_html=True)
 
 elif menu == "Moje Analizy":
     st.title("📂 Historia analiz")
