@@ -24,6 +24,15 @@ st.markdown("""
             font-size: 18px;
             color: #1e293b;
         }
+        .custom-label {
+            font-size: 20px;
+            color: #1e3a8a;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        .summary-section {
+            text-align: center;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -47,6 +56,14 @@ def analyze_text(text):
     score = summary.count('- **')
     return summary.strip(), score
 
+def ocena_poziomu_ryzyka(score):
+    if score <= 1:
+        return "Niskie", "🟢", "Umowa wydaje się bezpieczna. Zalecamy jednak przeczytanie całego dokumentu."
+    elif 2 <= score <= 3:
+        return "Średnie", "🟡", "Zidentyfikowano kilka potencjalnych ryzyk. Warto skonsultować się z doradcą."
+    else:
+        return "Wysokie", "🔴", "Umowa zawiera wiele niepokojących zapisów. Zalecamy ostrożność i konsultację prawną."
+
 def extract_text_from_pdf(uploaded_file):
     reader = PdfReader(uploaded_file)
     text = ""
@@ -69,8 +86,7 @@ st.sidebar.title("Menu")
 menu = st.sidebar.selectbox("Wybierz opcję", ["Strona Główna", "Analiza Umowy", "Ryzyka"])
 
 if menu == "Strona Główna":
-    st.markdown(
-        """
+    st.markdown("""
         <style>
             .hero {
                 background-color: #e0f2fe;
@@ -137,14 +153,15 @@ if menu == "Strona Główna":
                 <li>✅ Wsparcie sztucznej inteligencji i reguł języka prawniczego</li>
             </ul>
         </div>
-        """,
-        unsafe_allow_html=True
-    )
+        """, unsafe_allow_html=True)
 
 elif menu == "Analiza Umowy":
     st.title("🔍 Analiza treści umowy")
-    uploaded_file = st.file_uploader("Wgraj plik PDF umowy", type="pdf")
-    text_input = st.text_area("Lub wklej treść umowy:", height=300)
+    st.markdown('<p class="custom-label">Wgraj plik PDF umowy:</p>', unsafe_allow_html=True)
+    uploaded_file = st.file_uploader("", type="pdf")
+
+    st.markdown('<p class="custom-label">Lub wklej treść umowy:</p>', unsafe_allow_html=True)
+    text_input = st.text_area("", height=300)
 
     if st.button("Analizuj"):
         if uploaded_file:
@@ -154,9 +171,15 @@ elif menu == "Analiza Umowy":
 
         if contract_text:
             summary, score = analyze_text(contract_text)
+            ocena, kolor, komentarz = ocena_poziomu_ryzyka(score)
+            st.markdown('<div class="summary-section">', unsafe_allow_html=True)
             st.subheader("📌 Podsumowanie ryzyk:")
             st.markdown(summary)
             st.metric("Liczba wykrytych ryzyk", score)
+            st.subheader(f"🎯 Ocena poziomu ryzyka: {kolor} {ocena}")
+            st.info(komentarz)
+            st.progress(min(score / 6, 1.0))
+            st.markdown('</div>', unsafe_allow_html=True)
             pdf_data = generate_pdf(summary)
             st.download_button(label="📥 Pobierz analizę jako PDF", data=pdf_data, file_name="analiza_umowy.pdf")
 
