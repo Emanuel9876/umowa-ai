@@ -3,4 +3,3 @@ PyPDF2
 reportlab
 matplotlib
 seaborn
-sqlite3
