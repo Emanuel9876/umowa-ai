@@ -94,15 +94,15 @@ if not session_state.logged_in:
 st.markdown("""
     <style>
         .stApp {
-            background: linear-gradient(to right, #1f4037, #99f2c8);
+            background: linear-gradient(to right, #2c3e50, #3498db);
             font-family: 'Segoe UI', sans-serif;
         }
         html, body, [class*="css"] {
             background-color: transparent !important;
-            color: #000000 !important;
+            color: #ffffff !important;
         }
         h1, h2, h3, h4, h5, h6, p, div, span, label {
-            color: #000000 !important;
+            color: #ffffff !important;
         }
         .highlight {
             font-weight: bold;
