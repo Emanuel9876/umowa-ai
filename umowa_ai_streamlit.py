@@ -93,20 +93,49 @@ if not session_state.logged_in:
 # Stylizacja
 st.markdown("""
     <style>
-        body { background-color: #dbeafe; font-family: 'Segoe UI', sans-serif; }
-        .stApp { background-color: #dbeafe; }
-        .highlight { font-weight: bold; font-size: 20px; color: #0c0c0c; font-family: 'Georgia', serif; }
-        .content-text { font-size: 18px; color: #0c0c0c; }
-        .custom-label { font-size: 20px; color: #1d4ed8; font-weight: bold; margin-top: 20px; }
-        .summary-section { text-align: center; }
-        .block-container { padding: 3rem 4rem 3rem 4rem; }
-        h1, h2, h3 { text-align: center; color: #1e293b; }
-        .element-container p, .element-container div {
-            color: #0c0c0c !important;
+        body {
+            background-color: #0033cc;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .stApp {
+            background-color: #0033cc;
+        }
+        html, body, [class*="css"] {
+            background-color: #0033cc !important;
+            color: #ffffff !important;
+        }
+        h1, h2, h3, h4, h5, h6, p, div, span, label {
+            color: #ffffff !important;
+        }
+        .stSelectbox label, .stRadio label, .stTextInput label,
+        .stSidebar h1, .stSidebar h2, .stSidebar h3, .stSidebar p,
+        .stSidebar div, .stSidebar label {
+            color: #ffffff !important;
+        }
+        .highlight {
+            font-weight: bold;
+            font-size: 22px;
+            color: #ffffff;
+            font-family: 'Georgia', serif;
+        }
+        .content-text {
+            font-size: 18px;
+            color: #ffffff;
+        }
+        .custom-label {
+            font-size: 20px;
+            color: #ffffff;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        .summary-section {
+            text-align: center;
+        }
+        .block-container {
+            padding: 3rem 4rem;
         }
     </style>
 """, unsafe_allow_html=True)
-
 
 # Menu główne
 st.sidebar.title("Menu")
