@@ -52,9 +52,6 @@ if "logged_in" not in session_state:
 if "language" not in session_state:
     session_state.language = "PL"
 
-if "theme" not in session_state:
-    session_state.theme = "dark"
-
 lang_options = {"PL": "Polski", "EN": "English", "DE": "Deutsch"}
 translations = {
     "Strona Główna": {"PL": "Strona Główna", "EN": "Home", "DE": "Startseite"},
@@ -70,39 +67,22 @@ translations = {
 selected_lang = st.sidebar.selectbox("\U0001F310 Wybierz język / Select Language / Sprache wählen", list(lang_options.keys()), format_func=lambda x: lang_options[x])
 session_state.language = selected_lang
 
-# Theme switch
-if st.sidebar.checkbox("\U0001F319 Tryb ciemny / jasny"):
-    session_state.theme = "light" if session_state.theme == "dark" else "dark"
-
-if session_state.theme == "dark":
-    st.markdown("""
-        <style>
-            .stApp {
-                background: linear-gradient(to right, #2c3e50, #3498db);
-                font-family: 'Segoe UI', sans-serif;
-            }
-            html, body, [class*="css"] {
-                background-color: transparent !important;
-                color: #ffffff !important;
-            }
-            h1, h2, h3, h4, h5, h6, p, div, span, label {
-                color: #ffffff !important;
-            }
-        </style>
-    """, unsafe_allow_html=True)
-else:
-    st.markdown("""
-        <style>
-            .stApp {
-                background: #f9f9f9;
-                font-family: 'Segoe UI', sans-serif;
-            }
-            html, body, [class*="css"] {
-                background-color: transparent !important;
-                color: #000000 !important;
-            }
-        </style>
-    """, unsafe_allow_html=True)
+# Styl ciemny na stałe
+st.markdown("""
+    <style>
+        .stApp {
+            background: linear-gradient(to right, #2c3e50, #3498db);
+            font-family: 'Segoe UI', sans-serif;
+        }
+        html, body, [class*="css"] {
+            background-color: transparent !important;
+            color: #ffffff !important;
+        }
+        h1, h2, h3, h4, h5, h6, p, div, span, label {
+            color: #ffffff !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
 if not session_state.logged_in:
     st.sidebar.subheader("\U0001F510 Logowanie / Rejestracja")
@@ -145,18 +125,22 @@ plain_choice = [label for label, icon in menu_options][translated_menu.index(men
 
 # Treści stron
 if plain_choice == "Strona Główna":
-    st.title("\U0001F916 UmowaAI")
-    st.markdown("## Witaj w aplikacji do analizy umów")
     st.markdown("""
-        **Czym jest UmowaAI?**
-
-        UmowaAI to Twój inteligentny asystent, który:
-        - automatycznie analizuje przesłane pliki PDF,
-        - ocenia ryzyko zawarte w dokumentach,
-        - prezentuje podsumowanie i historię Twoich analiz.
-    """)
-    st.markdown("---")
-    st.markdown("### Rozpocznij od przesłania swojej pierwszej umowy w zakładce *Analiza Umowy*.")
+        <div style='text-align: center; padding: 50px;'>
+            <h1 style='font-size: 4em;'>🤖 UmowaAI</h1>
+            <p style='font-size: 1.5em;'>Twój inteligentny asystent do analizy umów</p>
+            <hr style='border: 1px solid white; width: 60%; margin: auto;'>
+            <p style='margin-top: 30px;'>
+                <b>UmowaAI</b> to aplikacja, która:
+                <ul style='text-align: left; max-width: 600px; margin: auto;'>
+                    <li>automatycznie analizuje dokumenty PDF,</li>
+                    <li>identyfikuje ryzyka w umowach,</li>
+                    <li>tworzy przejrzyste podsumowania,</li>
+                    <li>pozwala przeglądać historię analiz.</li>
+                </ul>
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
 
 elif plain_choice == "Analiza Umowy":
     st.header("Analiza AI")
