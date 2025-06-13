@@ -9,6 +9,9 @@ import hashlib
 import os
 from datetime import datetime
 import matplotlib.pyplot as plt
+import seaborn as sns
+import matplotlib
+matplotlib.use('Agg')
 
 st.set_page_config(page_title="Umowa AI", layout="wide")
 
@@ -49,6 +52,9 @@ if "logged_in" not in session_state:
 if "language" not in session_state:
     session_state.language = "PL"
 
+if "theme" not in session_state:
+    session_state.theme = "dark"
+
 lang_options = {"PL": "Polski", "EN": "English", "DE": "Deutsch"}
 translations = {
     "Strona Główna": {"PL": "Strona Główna", "EN": "Home", "DE": "Startseite"},
@@ -63,6 +69,40 @@ translations = {
 
 selected_lang = st.sidebar.selectbox("\U0001F310 Wybierz język / Select Language / Sprache wählen", list(lang_options.keys()), format_func=lambda x: lang_options[x])
 session_state.language = selected_lang
+
+# Theme switch
+if st.sidebar.checkbox("\U0001F319 Tryb ciemny / jasny"):
+    session_state.theme = "light" if session_state.theme == "dark" else "dark"
+
+if session_state.theme == "dark":
+    st.markdown("""
+        <style>
+            .stApp {
+                background: linear-gradient(to right, #2c3e50, #3498db);
+                font-family: 'Segoe UI', sans-serif;
+            }
+            html, body, [class*="css"] {
+                background-color: transparent !important;
+                color: #ffffff !important;
+            }
+            h1, h2, h3, h4, h5, h6, p, div, span, label {
+                color: #ffffff !important;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+else:
+    st.markdown("""
+        <style>
+            .stApp {
+                background: #f9f9f9;
+                font-family: 'Segoe UI', sans-serif;
+            }
+            html, body, [class*="css"] {
+                background-color: transparent !important;
+                color: #000000 !important;
+            }
+        </style>
+    """, unsafe_allow_html=True)
 
 if not session_state.logged_in:
     st.sidebar.subheader("\U0001F510 Logowanie / Rejestracja")
@@ -90,50 +130,21 @@ if not session_state.logged_in:
                 st.sidebar.error("Błędny login lub hasło.")
     st.stop()
 
-# Stylizacja
-st.markdown("""
-    <style>
-        .stApp {
-            background: linear-gradient(to right, #2c3e50, #3498db);
-            font-family: 'Segoe UI', sans-serif;
-        }
-        html, body, [class*="css"] {
-            background-color: transparent !important;
-            color: #ffffff !important;
-        }
-        h1, h2, h3, h4, h5, h6, p, div, span, label {
-            color: #ffffff !important;
-        }
-        .highlight {
-            font-weight: bold;
-            font-size: 22px;
-            font-family: 'Georgia', serif;
-        }
-        .content-text {
-            font-size: 18px;
-        }
-        .custom-label {
-            font-size: 20px;
-            font-weight: bold;
-            margin-top: 20px;
-        }
-        .summary-section {
-            text-align: center;
-        }
-        .block-container {
-            padding: 3rem 4rem;
-        }
-    </style>
-""", unsafe_allow_html=True)
-
-# Menu główne
-st.sidebar.title("Menu")
-menu_options = ["Strona Główna", "Analiza Umowy", "Ryzyka", "Moje Analizy"]
-translated_menu = [translations[opt][session_state.language] for opt in menu_options]
+# Menu główne z ikonkami
+menu_options = [
+    ("Strona Główna", "\U0001F3E0"),
+    ("Analiza Umowy", "\U0001F4C4"),
+    ("Ryzyka", "\u26A0"),
+    ("Moje Analizy", "\U0001F4CB")
+]
+translated_menu = [f"{icon} {translations[label][session_state.language]}" for label, icon in menu_options]
 menu_choice = st.sidebar.selectbox("Wybierz opcję", translated_menu)
 
+# Rozpoznawanie wyboru bez ikon
+plain_choice = [label for label, icon in menu_options][translated_menu.index(menu_choice)]
+
 # Treści stron
-if menu_choice == translations["Strona Główna"][session_state.language]:
+if plain_choice == "Strona Główna":
     st.title("\U0001F916 UmowaAI")
     st.markdown("## Witaj w aplikacji do analizy umów")
     st.markdown("""
@@ -147,7 +158,7 @@ if menu_choice == translations["Strona Główna"][session_state.language]:
     st.markdown("---")
     st.markdown("### Rozpocznij od przesłania swojej pierwszej umowy w zakładce *Analiza Umowy*.")
 
-elif menu_choice == translations["Analiza Umowy"][session_state.language]:
+elif plain_choice == "Analiza Umowy":
     st.header("Analiza AI")
     uploaded_file = st.file_uploader("Prześlij plik PDF do analizy", type="pdf")
     if uploaded_file:
@@ -156,33 +167,43 @@ elif menu_choice == translations["Analiza Umowy"][session_state.language]:
         summary = full_text[:500] + "..."
         st.text_area("Treść umowy:", full_text, height=300)
         st.text_area("Podsumowanie:", summary, height=150)
-        score = len(full_text) % 10  # przykład: analiza punktowa
+        score = len(full_text) % 10
         cursor.execute("INSERT INTO analiza (user, tekst, podsumowanie, score, timestamp) VALUES (?, ?, ?, ?, ?)",
                        (session_state.username, full_text, summary, score, datetime.now().isoformat()))
         conn.commit()
         st.success("Analiza zapisana.")
 
-elif menu_choice == translations["Ryzyka"][session_state.language]:
+elif plain_choice == "Ryzyka":
     st.header("Wykrywanie Ryzyk")
     cursor.execute("SELECT score, timestamp FROM analiza WHERE user = ? ORDER BY timestamp DESC LIMIT 5", (session_state.username,))
     data = cursor.fetchall()
     if data:
         scores, times = zip(*data)
-        fig, ax = plt.subplots()
-        ax.plot(times, scores, marker='o', color='red')
+        fig, ax = plt.subplots(figsize=(10, 4))
+        sns.set_style("darkgrid")
+        sns.lineplot(x=times, y=scores, marker='o', color='crimson', ax=ax)
         ax.set_title("Ocena ryzyk w czasie")
         ax.set_xlabel("Data")
         ax.set_ylabel("Ryzyko (0-10)")
+        plt.xticks(rotation=30)
         st.pyplot(fig)
     else:
         st.info("Brak analiz do pokazania wykresu.")
 
-elif menu_choice == translations["Moje Analizy"][session_state.language]:
+elif plain_choice == "Moje Analizy":
     st.header("Historia Twoich analiz")
-    cursor.execute("SELECT tekst, podsumowanie, score, timestamp FROM analiza WHERE user = ? ORDER BY timestamp DESC", (session_state.username,))
+    cursor.execute("SELECT id, tekst, podsumowanie, score, timestamp FROM analiza WHERE user = ? ORDER BY timestamp DESC", (session_state.username,))
     rows = cursor.fetchall()
-    for tekst, podsumowanie, score, timestamp in rows:
-        st.markdown("---")
-        st.markdown(f"**Data:** {timestamp}")
-        st.markdown(f"**Ocena ryzyka:** {score}/10")
-        st.markdown(f"**Podsumowanie:** {podsumowanie[:300]}...")
+
+    if not rows:
+        st.info("Brak zapisanych analiz.")
+    else:
+        for row in rows:
+            analiza_id, tekst, podsumowanie, score, timestamp = row
+            with st.expander(f"Analiza z dnia {timestamp} (Ryzyko: {score}/10)"):
+                st.markdown(f"**Podsumowanie:** {podsumowanie[:500]}...")
+                if st.button(f"🗑️ Usuń analizę {analiza_id}", key=f"delete_{analiza_id}"):
+                    cursor.execute("DELETE FROM analiza WHERE id = ? AND user = ?", (analiza_id, session_state.username))
+                    conn.commit()
+                    st.success(f"Usunięto analizę z {timestamp}.")
+                    st.experimental_rerun()
