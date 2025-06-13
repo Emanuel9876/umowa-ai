@@ -3,3 +3,4 @@ PyPDF2
 reportlab
 matplotlib
 seaborn
+openai
