@@ -67,7 +67,7 @@ translations = {
 selected_lang = st.sidebar.selectbox("\U0001F310 Wybierz język / Select Language / Sprache wählen", list(lang_options.keys()), format_func=lambda x: lang_options[x])
 session_state.language = selected_lang
 
-# Styl ciemny na stałe
+# Styl nowoczesny z gradientem
 st.markdown("""
     <style>
         .stApp {
@@ -80,6 +80,17 @@ st.markdown("""
         }
         h1, h2, h3, h4, h5, h6, p, div, span, label {
             color: #ffffff !important;
+        }
+        .top-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+        ul {
+            list-style-type: disc;
+            padding-left: 2rem;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -126,7 +137,7 @@ plain_choice = [label for label, icon in menu_options][translated_menu.index(men
 # Treści stron
 if plain_choice == "Strona Główna":
     st.markdown("""
-        <div style='text-align: center; padding: 50px;'>
+        <div class='top-card' style='text-align: center;'>
             <h1 style='font-size: 4em;'>🤖 UmowaAI</h1>
             <p style='font-size: 1.5em;'>Twój inteligentny asystent do analizy umów</p>
             <hr style='border: 1px solid white; width: 60%; margin: auto;'>
@@ -186,32 +197,8 @@ elif plain_choice == "Moje Analizy":
             analiza_id, tekst, podsumowanie, score, timestamp = row
             with st.expander(f"Analiza z dnia {timestamp} (Ryzyko: {score}/10)"):
                 st.markdown(f"**Podsumowanie:** {podsumowanie[:500]}...")
-                if st.button(f"🗑️ Usuń analizę {analiza_id}", key=f"delete_{analiza_id}"):
+                if st.button(f"\U0001F5D1️ Usuń analizę {analiza_id}", key=f"delete_{analiza_id}"):
                     cursor.execute("DELETE FROM analiza WHERE id = ? AND user = ?", (analiza_id, session_state.username))
                     conn.commit()
                     st.success(f"Usunięto analizę z {timestamp}.")
                     st.experimental_rerun()
-
-elif menu == "O projekcie":
-    st.title("ℹ️ O projekcie")
-    st.markdown("""
-        <div class="content-text">
-        Projekt <strong>Umowa AI</strong> powstał jako narzędzie wspomagające analizę umów cywilnoprawnych w języku polskim.<br><br>
-
-        Aplikacja wykorzystuje podstawowe reguły języka prawniczego oraz przeszukiwanie słów kluczowych w celu identyfikacji potencjalnych ryzyk, takich jak:
-        <ul>
-            <li>trudności w odstąpieniu od umowy,</li>
-            <li>nieoczywiste obowiązki,</li>
-            <li>dodatkowe opłaty,</li>
-            <li>zapisy skutkujące nieważnością,</li>
-            <li>konsekwencje finansowe,</li>
-            <li>i inne aspekty prawne.</li>
-        </ul>
-        <br>
-
-        <strong>Uwaga:</strong> narzędzie ma charakter informacyjny i nie zastępuje konsultacji z profesjonalnym prawnikiem.<br><br>
-
-        Kod źródłowy można znaleźć na platformie GitHub. Aplikacja została zbudowana z wykorzystaniem frameworka Streamlit.
-        </div>
-    """, unsafe_allow_html=True)
-
