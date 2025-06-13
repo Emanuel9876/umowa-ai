@@ -93,38 +93,27 @@ if not session_state.logged_in:
 # Stylizacja
 st.markdown("""
     <style>
-        body {
-            background-color: #0033cc;
+        .stApp {
+            background: linear-gradient(to right, #1f4037, #99f2c8);
             font-family: 'Segoe UI', sans-serif;
         }
-        .stApp {
-            background-color: #0033cc;
-        }
         html, body, [class*="css"] {
-            background-color: #0033cc !important;
-            color: #ffffff !important;
+            background-color: transparent !important;
+            color: #000000 !important;
         }
         h1, h2, h3, h4, h5, h6, p, div, span, label {
-            color: #ffffff !important;
-        }
-        .stSelectbox label, .stRadio label, .stTextInput label,
-        .stSidebar h1, .stSidebar h2, .stSidebar h3, .stSidebar p,
-        .stSidebar div, .stSidebar label {
-            color: #ffffff !important;
+            color: #000000 !important;
         }
         .highlight {
             font-weight: bold;
             font-size: 22px;
-            color: #ffffff;
             font-family: 'Georgia', serif;
         }
         .content-text {
             font-size: 18px;
-            color: #ffffff;
         }
         .custom-label {
             font-size: 20px;
-            color: #ffffff;
             font-weight: bold;
             margin-top: 20px;
         }
@@ -145,10 +134,18 @@ menu_choice = st.sidebar.selectbox("Wybierz opcję", translated_menu)
 
 # Treści stron
 if menu_choice == translations["Strona Główna"][session_state.language]:
-    st.title(f"\U0001F916 UmowaAI – {translations['Witaj w aplikacji'][session_state.language]}")
-    st.markdown(f"### {translations['Twoim asystencie do analizy umów'][session_state.language]}")
-    st.markdown(f"**\U0001F4BC {translations['Automatycznie analizujemy dokumenty'][session_state.language]}**")
-    st.markdown(f"{translations['i prezentujemy je w czytelnej formie'][session_state.language]}.")
+    st.title("\U0001F916 UmowaAI")
+    st.markdown("## Witaj w aplikacji do analizy umów")
+    st.markdown("""
+        **Czym jest UmowaAI?**
+
+        UmowaAI to Twój inteligentny asystent, który:
+        - automatycznie analizuje przesłane pliki PDF,
+        - ocenia ryzyko zawarte w dokumentach,
+        - prezentuje podsumowanie i historię Twoich analiz.
+    """)
+    st.markdown("---")
+    st.markdown("### Rozpocznij od przesłania swojej pierwszej umowy w zakładce *Analiza Umowy*.")
 
 elif menu_choice == translations["Analiza Umowy"][session_state.language]:
     st.header("Analiza AI")
