@@ -137,21 +137,37 @@ plain_choice = [label for label, icon in menu_options][translated_menu.index(men
 # Treści stron
 if plain_choice == "Strona Główna":
     st.markdown("""
-        <div class='top-card' style='text-align: center;'>
-            <h1 style='font-size: 4em;'>🤖 UmowaAI</h1>
-            <p style='font-size: 1.5em;'>Twój inteligentny asystent do analizy umów</p>
-            <hr style='border: 1px solid white; width: 60%; margin: auto;'>
-            <p style='margin-top: 30px;'>
-                <b>UmowaAI</b> to aplikacja, która:
-                <ul style='text-align: left; max-width: 600px; margin: auto;'>
-                    <li>automatycznie analizuje dokumenty PDF,</li>
-                    <li>identyfikuje ryzyka w umowach,</li>
-                    <li>tworzy przejrzyste podsumowania,</li>
-                    <li>pozwala przeglądać historię analiz.</li>
-                </ul>
-            </p>
+        <div style='text-align: center; padding: 5vh 2vw;'>
+            <h1 style='font-size: 4.5em; margin-bottom: 0;'>🤖 UmowaAI</h1>
+            <p style='font-size: 1.7em; margin-top: 0;'>Twój osobisty asystent do analizy umów i wykrywania ryzyk</p>
+        </div>
+
+        <div class='top-card' style='display: flex; flex-direction: row; justify-content: space-around; flex-wrap: wrap; gap: 2rem; padding: 2rem;'>
+            <div style='flex: 1; min-width: 250px; max-width: 400px;'>
+                <h2>📄 Analiza Umowy</h2>
+                <p>Automatycznie analizujemy umowy PDF i wyciągamy kluczowe informacje.</p>
+            </div>
+            <div style='flex: 1; min-width: 250px; max-width: 400px;'>
+                <h2>⚠️ Wykrywanie Ryzyk</h2>
+                <p>Wykrywamy nieoczywiste haczyki i ryzyka w zapisach umownych.</p>
+            </div>
+            <div style='flex: 1; min-width: 250px; max-width: 400px;'>
+                <h2>📊 Twoje Analizy</h2>
+                <p>Przeglądaj i porównuj wszystkie swoje wcześniejsze analizy w przejrzysty sposób.</p>
+            </div>
+        </div>
+
+        <div class='top-card' style='text-align: center; padding: 3rem; margin-top: 3rem;'>
+            <h2>🚀 Dlaczego UmowaAI?</h2>
+            <ul style='list-style: none; font-size: 1.2em; padding: 0;'>
+                <li>✅ Intuicyjny i nowoczesny interfejs</li>
+                <li>✅ Wysoka skuteczność wykrywania niekorzystnych zapisów</li>
+                <li>✅ Bezpieczeństwo i poufność danych</li>
+                <li>✅ Historia wszystkich Twoich analiz</li>
+            </ul>
         </div>
     """, unsafe_allow_html=True)
+
 
 elif plain_choice == "Analiza Umowy":
     st.header("Analiza AI")
