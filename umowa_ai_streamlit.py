@@ -262,4 +262,4 @@ elif plain_choice == "Moje Analizy":
                     cursor.execute("DELETE FROM analiza WHERE id = ? AND user = ?", (analiza_id, session_state.username))
                     conn.commit()
                     st.success(f"Usunięto analizę z {timestamp}.")
-                    st.experimental_rerun() teraz mam ten kod i jest ok zmienc w nim tylko to żeby na stronie główne powieksz przycisk "rozpocznij analize tera" i daj ją w ramke i spraw że po jej naciśnięciu przerzuci nas na analiza umowy 
+                    st.experimental_rerun() 
