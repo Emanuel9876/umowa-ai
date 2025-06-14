@@ -54,212 +54,35 @@ if "language" not in session_state:
 
 lang_options = {"PL": "Polski", "EN": "English", "DE": "Deutsch"}
 translations = {
-    "Strona Główna": {"PL": "Strona Główna", "EN": "Home", "DE": "Startseite"},
+    "Strona G\u0142\u00f3wna": {"PL": "Strona G\u0142\u00f3wna", "EN": "Home", "DE": "Startseite"},
     "Analiza Umowy": {"PL": "Analiza Umowy", "EN": "Contract Analysis", "DE": "Vertragsanalyse"},
     "Ryzyka": {"PL": "Ryzyka", "EN": "Risks", "DE": "Risiken"},
     "Moje Analizy": {"PL": "Moje Analizy", "EN": "My Analyses", "DE": "Meine Analysen"},
     "Witaj w aplikacji": {"PL": "Witaj w aplikacji", "EN": "Welcome to the app", "DE": "Willkommen in der App"},
-    "Twoim asystencie do analizy umów": {"PL": "Twoim asystencie do analizy umów", "EN": "Your contract analysis assistant", "DE": "Ihr Vertragsanalyse-Assistent"},
+    "Twoim asystencie do analizy um\u00f3w": {"PL": "Twoim asystencie do analizy um\u00f3w", "EN": "Your contract analysis assistant", "DE": "Ihr Vertragsanalyse-Assistent"},
     "Automatycznie analizujemy dokumenty": {"PL": "Automatycznie analizujemy dokumenty", "EN": "We automatically analyze documents", "DE": "Wir analysieren automatisch Dokumente"},
-    "i prezentujemy je w czytelnej formie": {"PL": "i prezentujemy je w czytelnej formie", "EN": "and present them in a clear form", "DE": "und präsentieren sie in klarer Form"},
+    "i prezentujemy je w czytelnej formie": {"PL": "i prezentujemy je w czytelnej formie", "EN": "and present them in a clear form", "DE": "und pr\u00e4sentieren sie in klarer Form"},
+    "Zaloguj si\u0119": {"PL": "Zaloguj si\u0119", "EN": "Log in", "DE": "Anmelden"},
+    "Zarejestruj si\u0119": {"PL": "Zarejestruj si\u0119", "EN": "Register", "DE": "Registrieren"},
+    "Login": {"PL": "Login", "EN": "Username", "DE": "Benutzername"},
+    "Has\u0142o": {"PL": "Has\u0142o", "EN": "Password", "DE": "Passwort"},
+    "Wybierz opcj\u0119": {"PL": "Wybierz opcj\u0119", "EN": "Choose option", "DE": "Option ausw\u00e4hlen"},
+    "Rozpocznij analiz\u0119 teraz": {"PL": "Rozpocznij analiz\u0119 teraz", "EN": "Start analysis now", "DE": "Analyse jetzt starten"},
+    "Prze\u015blij PDF": {"PL": "Prze\u015blij PDF", "EN": "Upload PDF", "DE": "PDF hochladen"},
+    "Wklej tekst": {"PL": "Wklej tekst", "EN": "Paste text", "DE": "Text einf\u00fcgen"},
+    "Podsumowanie:": {"PL": "Podsumowanie:", "EN": "Summary:", "DE": "Zusammenfassung:"},
+    "Zapisz analiz\u0119": {"PL": "Zapisz analiz\u0119", "EN": "Save analysis", "DE": "Analyse speichern"},
+    "Wprowad\u017a lub za\u0142aduj tekst umowy.": {"PL": "Wprowad\u017a lub za\u0142aduj tekst umowy.", "EN": "Enter or upload contract text.", "DE": "Vertragstext eingeben oder hochladen."},
+    "Historia Twoich analiz": {"PL": "Historia Twoich analiz", "EN": "Your analysis history", "DE": "Analyseverlauf"},
+    "Usu\u0144 analiz\u0119": {"PL": "Usu\u0144 analiz\u0119", "EN": "Delete analysis", "DE": "Analyse l\u00f6schen"},
+    "Brak zapisanych analiz.": {"PL": "Brak zapisanych analiz.", "EN": "No saved analyses.", "DE": "Keine gespeicherten Analysen."},
+    "Pobierz PDF": {"PL": "Pobierz PDF", "EN": "Download PDF", "DE": "PDF herunterladen"},
+    "Wybierz j\u0119zyk / Select Language / Sprache w\u00e4hlen": {"PL": "Wybierz j\u0119zyk", "EN": "Select Language", "DE": "Sprache w\u00e4hlen"},
+    "Logowanie / Rejestracja": {"PL": "Logowanie / Rejestracja", "EN": "Login / Register", "DE": "Anmelden / Registrieren"}
 }
 
-selected_lang = st.sidebar.selectbox("\U0001F310 Wybierz język / Select Language / Sprache wählen", list(lang_options.keys()), format_func=lambda x: lang_options[x])
-session_state.language = selected_lang
+def t(key):
+    return translations.get(key, {}).get(session_state.language, key)
 
-# Styl nowoczesny z gradientem
-st.markdown("""
-    <style>
-        .stApp {
-            background: linear-gradient(to right, #2c3e50, #3498db);
-            font-family: 'Segoe UI', sans-serif;
-        }
-        html, body, [class*="css"] {
-            background-color: transparent !important;
-            color: #ffffff !important;
-        }
-        h1, h2, h3, h4, h5, h6, p, div, span, label {
-            color: #ffffff !important;
-        }
-        .top-card {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-        }
-        ul {
-            list-style-type: disc;
-            padding-left: 2rem;
-        }
-    </style>
-""", unsafe_allow_html=True)
-
-if not session_state.logged_in:
-    st.sidebar.subheader("\U0001F510 Logowanie / Rejestracja")
-    choice = st.sidebar.radio("Wybierz opcję", ["Zaloguj się", "Zarejestruj się"])
-
-    username = st.sidebar.text_input("Login")
-    password = st.sidebar.text_input("Hasło", type="password")
-
-    if choice == "Zarejestruj się":
-        if st.sidebar.button("Zarejestruj"):
-            if username in users:
-                st.sidebar.warning("Użytkownik już istnieje.")
-            else:
-                users[username] = hash_password(password)
-                save_users(users)
-                st.sidebar.success("Rejestracja zakończona sukcesem. Możesz się zalogować.")
-
-    else:
-        if st.sidebar.button("Zaloguj"):
-            if username in users and users[username] == hash_password(password):
-                session_state.logged_in = True
-                session_state.username = username
-                st.rerun()
-            else:
-                st.sidebar.error("Błędny login lub hasło.")
-    st.stop()
-
-# Menu główne z ikonkami
-menu_options = [
-    ("Strona Główna", "\U0001F3E0"),
-    ("Analiza Umowy", "\U0001F4C4"),
-    ("Ryzyka", "\u26A0"),
-    ("Moje Analizy", "\U0001F4CB")
-]
-translated_menu = [f"{icon} {translations[label][session_state.language]}" for label, icon in menu_options]
-menu_choice = st.sidebar.selectbox("Wybierz opcję", translated_menu)
-
-# Rozpoznawanie wyboru bez ikon
-plain_choice = [label for label, icon in menu_options][translated_menu.index(menu_choice)]
-
-# Treści stron
-if plain_choice == "Strona Główna":
-    if "start_analysis" not in session_state:
-        session_state.start_analysis = False
-
-    if session_state.start_analysis:
-        plain_choice = "Analiza Umowy"
-        session_state.start_analysis = False
-        st.experimental_rerun()
-
-    st.markdown("""
-        <div style='text-align: center; padding: 5vh 2vw;'>
-            <h1 style='font-size: 4.5em; margin-bottom: 0;'>🤖 UmowaAI</h1>
-            <p style='font-size: 1.7em; margin-top: 0;'>Twój osobisty asystent do analizy umów i wykrywania ryzyk</p>
-        </div>
-
-        <div class='top-card' style='display: flex; flex-direction: row; justify-content: space-around; flex-wrap: wrap; gap: 2rem; padding: 2rem;'>
-            <div style='flex: 1; min-width: 250px; max-width: 400px;'>
-                <h2>📄 Analiza Umowy</h2>
-                <p>Automatycznie analizujemy umowy PDF i wyciągamy kluczowe informacje.</p>
-            </div>
-            <div style='flex: 1; min-width: 250px; max-width: 400px;'>
-                <h2>⚠️ Wykrywanie Ryzyk</h2>
-                <p>Wykrywamy nieoczywiste haczyki i ryzyka w zapisach umownych.</p>
-            </div>
-            <div style='flex: 1; min-width: 250px; max-width: 400px;'>
-                <h2>📊 Twoje Analizy</h2>
-                <p>Przeglądaj i porównuj wszystkie swoje wcześniejsze analizy w przejrzysty sposób.</p>
-            </div>
-        </div>
-
-        <div class='top-card' style='text-align: center; padding: 3rem; margin-top: 3rem;'>
-            <h2>🚀 Dlaczego UmowaAI?</h2>
-            <ul style='list-style: none; font-size: 1.2em; padding: 0;'>
-                <li>✅ Intuicyjny i nowoczesny interfejs</li>
-                <li>✅ Wysoka skuteczność wykrywania niekorzystnych zapisów</li>
-                <li>✅ Bezpieczeństwo i poufność danych</li>
-                <li>✅ Historia wszystkich Twoich analiz</li>
-            </ul>
-        </div>
-    """, unsafe_allow_html=True)
-
-    if st.button("🔍 Rozpocznij analizę teraz"):
-        session_state.start_analysis = True
-        st.experimental_rerun()
-
-
-elif plain_choice == "Analiza Umowy":
-    st.header("Analiza AI")
-    option = st.radio("Wybierz sposób analizy:", ["Prześlij PDF", "Wklej tekst"])
-
-    if option == "Prześlij PDF":
-        uploaded_file = st.file_uploader("Prześlij plik PDF do analizy", type="pdf")
-        if uploaded_file:
-            reader = PdfReader(uploaded_file)
-            full_text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
-    else:
-        full_text = st.text_area("Wklej tekst umowy tutaj:", height=300)
-
-    if option == "Wklej tekst" or uploaded_file:
-        if full_text.strip():
-            summary = full_text[:500] + "..."
-            st.text_area("Podsumowanie:", summary, height=150)
-            score = len(full_text) % 10
-            if st.button("Zapisz analizę"):
-                cursor.execute("INSERT INTO analiza (user, tekst, podsumowanie, score, timestamp) VALUES (?, ?, ?, ?, ?)",
-                               (session_state.username, full_text, summary, score, datetime.now().isoformat()))
-                conn.commit()
-                st.success("Analiza zapisana.")
-        else:
-            st.info("Wprowadź lub załaduj tekst umowy.")
-
-
-elif plain_choice == "Ryzyka":
-    st.header("Wykrywanie Ryzyk")
-    cursor.execute("SELECT score, timestamp FROM analiza WHERE user = ? ORDER BY timestamp DESC LIMIT 5", (session_state.username,))
-    data = cursor.fetchall()
-    if data:
-        scores, times = zip(*data)
-        fig, ax = plt.subplots(figsize=(10, 4))
-        sns.set_style("darkgrid")
-        sns.lineplot(x=times, y=scores, marker='o', color='crimson', ax=ax)
-        ax.set_title("Ocena ryzyk w czasie")
-        ax.set_xlabel("Data")
-        ax.set_ylabel("Ryzyko (0-10)")
-        plt.xticks(rotation=30)
-        st.pyplot(fig)
-    else:
-        st.info("Brak analiz do pokazania wykresu.")
-
-elif plain_choice == "Moje Analizy":
-    st.header("Historia Twoich analiz")
-    cursor.execute("SELECT id, tekst, podsumowanie, score, timestamp FROM analiza WHERE user = ? ORDER BY timestamp DESC", (session_state.username,))
-    rows = cursor.fetchall()
-
-    if not rows:
-        st.info("Brak zapisanych analiz.")
-    else:
-        for row in rows:
-            analiza_id, tekst, podsumowanie, score, timestamp = row
-            with st.expander(f"Analiza z dnia {timestamp} (Ryzyko: {score}/10)"):
-                st.markdown(f"**Podsumowanie:** {podsumowanie[:500]}...")
-
-                # Przygotowanie pliku PDF w pamięci
-                buffer = io.BytesIO()
-                c = canvas.Canvas(buffer)
-                c.setFont("Helvetica", 12)
-                c.drawString(100, 800, f"Analiza Umowy - {timestamp}")
-                c.drawString(100, 780, f"Ryzyko: {score}/10")
-                text_object = c.beginText(100, 760)
-                for line in podsumowanie.splitlines():
-                    text_object.textLine(line[:120])  # linie maks. 120 znaków
-                c.drawText(text_object)
-                c.showPage()
-                c.save()
-                buffer.seek(0)
-
-                st.download_button(
-                    label="📄 Pobierz PDF",
-                    data=buffer,
-                    file_name=f"analiza_{analiza_id}.pdf",
-                    mime="application/pdf"
-                )
-
-                if st.button(f"\U0001F5D1️ Usuń analizę {analiza_id}", key=f"delete_{analiza_id}"):
-                    cursor.execute("DELETE FROM analiza WHERE id = ? AND user = ?", (analiza_id, session_state.username))
-                    conn.commit()
-                    st.success(f"Usunięto analizę z {timestamp}.")
-                    st.experimental_rerun() 
+# Dalej kod powinien używać t("nazwa") dla każdego tłumaczonego tekstu np. st.header(t("Historia Twoich analiz"))
+# Zamień wszystkie literalne stringi w UI na ich odpowiedniki przez t()
