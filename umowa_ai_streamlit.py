@@ -92,10 +92,15 @@ st.markdown("""
             background-color: #ffffff;
             color: #2c3e50;
             border-radius: 12px;
-            padding: 1rem 2rem;
-            font-size: 1.5rem;
-            border: 2px solid #2c3e50;
+            padding: 1.2rem 2.5rem;
+            font-size: 1.7rem;
+            font-weight: bold;
+            border: 3px solid #2c3e50;
             cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .big-button:hover {
+            background-color: #ecf0f1;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -139,19 +144,12 @@ menu_choice = st.sidebar.selectbox("Wybierz opcję", translated_menu)
 plain_choice = [label for label, icon in menu_options][translated_menu.index(menu_choice)]
 
 if plain_choice == "Strona Główna":
-    if st.button("🔍 Rozpocznij analizę teraz", key="start_button"):
-        st.session_state["redirect_to_analysis"] = True
-
-    if st.session_state.get("redirect_to_analysis"):
-        plain_choice = "Analiza Umowy"
-        st.session_state["redirect_to_analysis"] = False
-
     st.markdown("""
         <div style='text-align: center; padding: 5vh 2vw;'>
             <h1 style='font-size: 4.5em; margin-bottom: 0;'>🤖 UmowaAI</h1>
             <p style='font-size: 1.7em; margin-top: 0;'>Twój osobisty asystent do analizy umów i wykrywania ryzyk</p>
             <div style='margin-top: 2rem;'>
-                <button onclick="window.location.href='/?Analiza%20Umowy'" class='big-button'>🔍 Rozpocznij analizę teraz</button>
+                <a href='/?Analiza%20Umowy'><button class='big-button'>🔍 Rozpocznij analizę teraz</button></a>
             </div>
         </div>
         <div class='top-card' style='display: flex; flex-direction: row; justify-content: space-around; flex-wrap: wrap; gap: 2rem; padding: 2rem;'>
