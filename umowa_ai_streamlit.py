@@ -220,37 +220,38 @@ elif plain_choice == "Moje Analizy":
     cursor.execute("SELECT id, tekst, podsumowanie, score, timestamp FROM analiza WHERE user = ? ORDER BY timestamp DESC", (session_state.username,))
     rows = cursor.fetchall()
 
-   if not rows:
-    st.info("Brak zapisanych analiz.")
-else:
-    for row in rows:
-        analiza_id, tekst, podsumowanie, score, timestamp = row
-        with st.expander(f"Analiza z dnia {timestamp} (Ryzyko: {score}/10)"):
-            st.markdown(f"**Podsumowanie:** {podsumowanie[:500]}...")
+    if not rows:
+        st.info("Brak zapisanych analiz.")
+    else:
+        for row in rows:
+            analiza_id, tekst, podsumowanie, score, timestamp = row
+            with st.expander(f"Analiza z dnia {timestamp} (Ryzyko: {score}/10)"):
+                st.markdown(f"**Podsumowanie:** {podsumowanie[:500]}...")
 
-            # Przygotowanie pliku PDF w pamięci
-            buffer = io.BytesIO()
-            c = canvas.Canvas(buffer)
-            c.setFont("Helvetica", 12)
-            c.drawString(100, 800, f"Analiza Umowy - {timestamp}")
-            c.drawString(100, 780, f"Ryzyko: {score}/10")
-            text_object = c.beginText(100, 760)
-            for line in podsumowanie.splitlines():
-                text_object.textLine(line[:120])  # linie maks. 120 znaków
-            c.drawText(text_object)
-            c.showPage()
-            c.save()
-            buffer.seek(0)
+                # Przygotowanie pliku PDF w pamięci
+                buffer = io.BytesIO()
+                c = canvas.Canvas(buffer)
+                c.setFont("Helvetica", 12)
+                c.drawString(100, 800, f"Analiza Umowy - {timestamp}")
+                c.drawString(100, 780, f"Ryzyko: {score}/10")
+                text_object = c.beginText(100, 760)
+                for line in podsumowanie.splitlines():
+                    text_object.textLine(line[:120])  # linie maks. 120 znaków
+                c.drawText(text_object)
+                c.showPage()
+                c.save()
+                buffer.seek(0)
 
-            st.download_button(
-                label="📄 Pobierz PDF",
-                data=buffer,
-                file_name=f"analiza_{analiza_id}.pdf",
-                mime="application/pdf"
-            )
+                st.download_button(
+                    label="📄 Pobierz PDF",
+                    data=buffer,
+                    file_name=f"analiza_{analiza_id}.pdf",
+                    mime="application/pdf"
+                )
 
-            if st.button(f"\U0001F5D1️ Usuń analizę {analiza_id}", key=f"delete_{analiza_id}"):
-                cursor.execute("DELETE FROM analiza WHERE id = ? AND user = ?", (analiza_id, session_state.username))
-                conn.commit()
-                st.success(f"Usunięto analizę z {timestamp}.")
-                st.experimental_rerun()
+                if st.button(f"\U0001F5D1️ Usuń analizę {analiza_id}", key=f"delete_{analiza_id}"):
+                    cursor.execute("DELETE FROM analiza WHERE id = ? AND user = ?", (analiza_id, session_state.username))
+                    conn.commit()
+                    st.success(f"Usunięto analizę z {timestamp}.")
+                    st.experimental_rerun()
+
