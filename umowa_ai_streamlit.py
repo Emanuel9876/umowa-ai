@@ -29,6 +29,7 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS analiza (
 conn.commit()
 
 # Użytkownicy
+
 def load_users():
     if os.path.exists("users.json"):
         with open("users.json", "r") as f:
@@ -54,35 +55,32 @@ if "language" not in session_state:
 
 lang_options = {"PL": "Polski", "EN": "English", "DE": "Deutsch"}
 translations = {
-    "Strona G\u0142\u00f3wna": {"PL": "Strona G\u0142\u00f3wna", "EN": "Home", "DE": "Startseite"},
+    "Strona Główna": {"PL": "Strona Główna", "EN": "Home", "DE": "Startseite"},
     "Analiza Umowy": {"PL": "Analiza Umowy", "EN": "Contract Analysis", "DE": "Vertragsanalyse"},
     "Ryzyka": {"PL": "Ryzyka", "EN": "Risks", "DE": "Risiken"},
     "Moje Analizy": {"PL": "Moje Analizy", "EN": "My Analyses", "DE": "Meine Analysen"},
     "Witaj w aplikacji": {"PL": "Witaj w aplikacji", "EN": "Welcome to the app", "DE": "Willkommen in der App"},
-    "Twoim asystencie do analizy um\u00f3w": {"PL": "Twoim asystencie do analizy um\u00f3w", "EN": "Your contract analysis assistant", "DE": "Ihr Vertragsanalyse-Assistent"},
+    "Twoim asystencie do analizy umów": {"PL": "Twoim asystencie do analizy umów", "EN": "Your contract analysis assistant", "DE": "Ihr Vertragsanalyse-Assistent"},
     "Automatycznie analizujemy dokumenty": {"PL": "Automatycznie analizujemy dokumenty", "EN": "We automatically analyze documents", "DE": "Wir analysieren automatisch Dokumente"},
-    "i prezentujemy je w czytelnej formie": {"PL": "i prezentujemy je w czytelnej formie", "EN": "and present them in a clear form", "DE": "und pr\u00e4sentieren sie in klarer Form"},
-    "Zaloguj si\u0119": {"PL": "Zaloguj si\u0119", "EN": "Log in", "DE": "Anmelden"},
-    "Zarejestruj si\u0119": {"PL": "Zarejestruj si\u0119", "EN": "Register", "DE": "Registrieren"},
-    "Login": {"PL": "Login", "EN": "Username", "DE": "Benutzername"},
-    "Has\u0142o": {"PL": "Has\u0142o", "EN": "Password", "DE": "Passwort"},
-    "Wybierz opcj\u0119": {"PL": "Wybierz opcj\u0119", "EN": "Choose option", "DE": "Option ausw\u00e4hlen"},
-    "Rozpocznij analiz\u0119 teraz": {"PL": "Rozpocznij analiz\u0119 teraz", "EN": "Start analysis now", "DE": "Analyse jetzt starten"},
-    "Prze\u015blij PDF": {"PL": "Prze\u015blij PDF", "EN": "Upload PDF", "DE": "PDF hochladen"},
-    "Wklej tekst": {"PL": "Wklej tekst", "EN": "Paste text", "DE": "Text einf\u00fcgen"},
-    "Podsumowanie:": {"PL": "Podsumowanie:", "EN": "Summary:", "DE": "Zusammenfassung:"},
-    "Zapisz analiz\u0119": {"PL": "Zapisz analiz\u0119", "EN": "Save analysis", "DE": "Analyse speichern"},
-    "Wprowad\u017a lub za\u0142aduj tekst umowy.": {"PL": "Wprowad\u017a lub za\u0142aduj tekst umowy.", "EN": "Enter or upload contract text.", "DE": "Vertragstext eingeben oder hochladen."},
-    "Historia Twoich analiz": {"PL": "Historia Twoich analiz", "EN": "Your analysis history", "DE": "Analyseverlauf"},
-    "Usu\u0144 analiz\u0119": {"PL": "Usu\u0144 analiz\u0119", "EN": "Delete analysis", "DE": "Analyse l\u00f6schen"},
-    "Brak zapisanych analiz.": {"PL": "Brak zapisanych analiz.", "EN": "No saved analyses.", "DE": "Keine gespeicherten Analysen."},
-    "Pobierz PDF": {"PL": "Pobierz PDF", "EN": "Download PDF", "DE": "PDF herunterladen"},
-    "Wybierz j\u0119zyk / Select Language / Sprache w\u00e4hlen": {"PL": "Wybierz j\u0119zyk", "EN": "Select Language", "DE": "Sprache w\u00e4hlen"},
-    "Logowanie / Rejestracja": {"PL": "Logowanie / Rejestracja", "EN": "Login / Register", "DE": "Anmelden / Registrieren"}
+    "i prezentujemy je w czytelnej formie": {"PL": "i prezentujemy je w czytelnej formie", "EN": "and present them in a clear form", "DE": "und präsentieren sie in klarer Form"},
+    "Logowanie / Rejestracja": {"PL": "Logowanie / Rejestracja", "EN": "Login / Register", "DE": "Anmelden / Registrieren"},
+    "Zaloguj się": {"PL": "Zaloguj się", "EN": "Login", "DE": "Anmelden"},
+    "Zarejestruj się": {"PL": "Zarejestruj się", "EN": "Register", "DE": "Registrieren"},
+    "Login": {"PL": "Login", "EN": "Login", "DE": "Login"},
+    "Hasło": {"PL": "Hasło", "EN": "Password", "DE": "Passwort"},
+    "Rejestracja zakończona sukcesem. Możesz się zalogować.": {"PL": "Rejestracja zakończona sukcesem. Możesz się zalogować.", "EN": "Registration successful. You can now log in.", "DE": "Registrierung erfolgreich. Sie können sich jetzt anmelden."},
+    "Użytkownik już istnieje.": {"PL": "Użytkownik już istnieje.", "EN": "User already exists.", "DE": "Benutzer existiert bereits."},
+    "Błędny login lub hasło.": {"PL": "Błędny login lub hasło.", "EN": "Invalid login or password.", "DE": "Ungültiger Benutzername oder Passwort."},
+    "Wybierz opcję": {"PL": "Wybierz opcję", "EN": "Choose option", "DE": "Option wählen"},
+    "Rozpocznij analizę teraz": {"PL": "Rozpocznij analizę teraz", "EN": "Start analysis now", "DE": "Analyse jetzt starten"}
 }
 
 def t(key):
     return translations.get(key, {}).get(session_state.language, key)
 
-# Dalej kod powinien używać t("nazwa") dla każdego tłumaczonego tekstu np. st.header(t("Historia Twoich analiz"))
-# Zamień wszystkie literalne stringi w UI na ich odpowiedniki przez t()
+selected_lang = st.sidebar.selectbox("\U0001F310 Wybierz język / Select Language / Sprache wählen", list(lang_options.keys()), format_func=lambda x: lang_options[x])
+session_state.language = selected_lang
+
+# Dalej używaj t("Klucz") zamiast dosłownych tekstów
+# Przykład: st.sidebar.subheader(t("Logowanie / Rejestracja"))
+# Dla każdego tekstu użyj t("..."), aby zapewnić tłumaczenie w całej aplikacji
