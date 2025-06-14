@@ -131,21 +131,25 @@ menu_options = [
 translated_menu = [f"{icon} {translations[label][session_state.language]}" for label, icon in menu_options]
 menu_choice = st.sidebar.selectbox("Wybierz opcję", translated_menu)
 
+# Rozpoznawanie wyboru bez ikon
 plain_choice = [label for label, icon in menu_options][translated_menu.index(menu_choice)]
 
+# Treści stron
 if plain_choice == "Strona Główna":
-    if st.button("🔍 Rozpocznij analizę teraz"):
-        st.session_state["redirect_to_analysis"] = True
+    if "start_analysis" not in session_state:
+        session_state.start_analysis = False
 
-    if st.session_state.get("redirect_to_analysis"):
+    if session_state.start_analysis:
         plain_choice = "Analiza Umowy"
-        st.session_state["redirect_to_analysis"] = False
+        session_state.start_analysis = False
+        st.experimental_rerun()
 
     st.markdown("""
         <div style='text-align: center; padding: 5vh 2vw;'>
             <h1 style='font-size: 4.5em; margin-bottom: 0;'>🤖 UmowaAI</h1>
             <p style='font-size: 1.7em; margin-top: 0;'>Twój osobisty asystent do analizy umów i wykrywania ryzyk</p>
         </div>
+
         <div class='top-card' style='display: flex; flex-direction: row; justify-content: space-around; flex-wrap: wrap; gap: 2rem; padding: 2rem;'>
             <div style='flex: 1; min-width: 250px; max-width: 400px;'>
                 <h2>📄 Analiza Umowy</h2>
@@ -160,6 +164,7 @@ if plain_choice == "Strona Główna":
                 <p>Przeglądaj i porównuj wszystkie swoje wcześniejsze analizy w przejrzysty sposób.</p>
             </div>
         </div>
+
         <div class='top-card' style='text-align: center; padding: 3rem; margin-top: 3rem;'>
             <h2>🚀 Dlaczego UmowaAI?</h2>
             <ul style='list-style: none; font-size: 1.2em; padding: 0;'>
@@ -169,31 +174,92 @@ if plain_choice == "Strona Główna":
                 <li>✅ Historia wszystkich Twoich analiz</li>
             </ul>
         </div>
-        <div style='margin-top: 5rem; text-align: center;'>
-            <video width='80%' autoplay muted loop>
-                <source src='https://www.w3schools.com/html/mov_bbb.mp4' type='video/mp4'>
-                Twoja przeglądarka nie wspiera odtwarzania wideo.
-            </video>
-        </div>
     """, unsafe_allow_html=True)
 
-if plain_choice == "Analiza Umowy":
+    if st.button("🔍 Rozpocznij analizę teraz"):
+        session_state.start_analysis = True
+        st.experimental_rerun()
+
+
+elif plain_choice == "Analiza Umowy":
     st.header("Analiza AI")
-    uploaded_file = st.file_uploader("Prześlij plik PDF do analizy", type="pdf")
-    text_input = st.text_area("Lub wklej treść umowy ręcznie:")
-    if uploaded_file or text_input.strip():
+    option = st.radio("Wybierz sposób analizy:", ["Prześlij PDF", "Wklej tekst"])
+
+    if option == "Prześlij PDF":
+        uploaded_file = st.file_uploader("Prześlij plik PDF do analizy", type="pdf")
         if uploaded_file:
             reader = PdfReader(uploaded_file)
             full_text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
-        else:
-            full_text = text_input
-        summary = full_text[:500] + "..."
-        st.text_area("Treść umowy:", full_text, height=300)
-        st.text_area("Podsumowanie:", summary, height=150)
-        score = len(full_text) % 10
-        cursor.execute("INSERT INTO analiza (user, tekst, podsumowanie, score, timestamp) VALUES (?, ?, ?, ?, ?)",
-                       (session_state.username, full_text, summary, score, datetime.now().isoformat()))
-        conn.commit()
-        st.success("Analiza zapisana.")
+    else:
+        full_text = st.text_area("Wklej tekst umowy tutaj:", height=300)
 
-# (Pozostała część kodu bez zmian)
+    if option == "Wklej tekst" or uploaded_file:
+        if full_text.strip():
+            summary = full_text[:500] + "..."
+            st.text_area("Podsumowanie:", summary, height=150)
+            score = len(full_text) % 10
+            if st.button("Zapisz analizę"):
+                cursor.execute("INSERT INTO analiza (user, tekst, podsumowanie, score, timestamp) VALUES (?, ?, ?, ?, ?)",
+                               (session_state.username, full_text, summary, score, datetime.now().isoformat()))
+                conn.commit()
+                st.success("Analiza zapisana.")
+        else:
+            st.info("Wprowadź lub załaduj tekst umowy.")
+
+
+elif plain_choice == "Ryzyka":
+    st.header("Wykrywanie Ryzyk")
+    cursor.execute("SELECT score, timestamp FROM analiza WHERE user = ? ORDER BY timestamp DESC LIMIT 5", (session_state.username,))
+    data = cursor.fetchall()
+    if data:
+        scores, times = zip(*data)
+        fig, ax = plt.subplots(figsize=(10, 4))
+        sns.set_style("darkgrid")
+        sns.lineplot(x=times, y=scores, marker='o', color='crimson', ax=ax)
+        ax.set_title("Ocena ryzyk w czasie")
+        ax.set_xlabel("Data")
+        ax.set_ylabel("Ryzyko (0-10)")
+        plt.xticks(rotation=30)
+        st.pyplot(fig)
+    else:
+        st.info("Brak analiz do pokazania wykresu.")
+
+elif plain_choice == "Moje Analizy":
+    st.header("Historia Twoich analiz")
+    cursor.execute("SELECT id, tekst, podsumowanie, score, timestamp FROM analiza WHERE user = ? ORDER BY timestamp DESC", (session_state.username,))
+    rows = cursor.fetchall()
+
+    if not rows:
+        st.info("Brak zapisanych analiz.")
+    else:
+        for row in rows:
+            analiza_id, tekst, podsumowanie, score, timestamp = row
+            with st.expander(f"Analiza z dnia {timestamp} (Ryzyko: {score}/10)"):
+                st.markdown(f"**Podsumowanie:** {podsumowanie[:500]}...")
+
+                # Przygotowanie pliku PDF w pamięci
+                buffer = io.BytesIO()
+                c = canvas.Canvas(buffer)
+                c.setFont("Helvetica", 12)
+                c.drawString(100, 800, f"Analiza Umowy - {timestamp}")
+                c.drawString(100, 780, f"Ryzyko: {score}/10")
+                text_object = c.beginText(100, 760)
+                for line in podsumowanie.splitlines():
+                    text_object.textLine(line[:120])  # linie maks. 120 znaków
+                c.drawText(text_object)
+                c.showPage()
+                c.save()
+                buffer.seek(0)
+
+                st.download_button(
+                    label="📄 Pobierz PDF",
+                    data=buffer,
+                    file_name=f"analiza_{analiza_id}.pdf",
+                    mime="application/pdf"
+                )
+
+                if st.button(f"\U0001F5D1️ Usuń analizę {analiza_id}", key=f"delete_{analiza_id}"):
+                    cursor.execute("DELETE FROM analiza WHERE id = ? AND user = ?", (analiza_id, session_state.username))
+                    conn.commit()
+                    st.success(f"Usunięto analizę z {timestamp}.")
+                    st.experimental_rerun()
