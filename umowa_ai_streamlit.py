@@ -136,6 +136,14 @@ plain_choice = [label for label, icon in menu_options][translated_menu.index(men
 
 # Treści stron
 if plain_choice == "Strona Główna":
+    if "start_analysis" not in session_state:
+        session_state.start_analysis = False
+
+    if session_state.start_analysis:
+        plain_choice = "Analiza Umowy"
+        session_state.start_analysis = False
+        st.experimental_rerun()
+
     st.markdown("""
         <div style='text-align: center; padding: 5vh 2vw;'>
             <h1 style='font-size: 4.5em; margin-bottom: 0;'>🤖 UmowaAI</h1>
@@ -166,37 +174,38 @@ if plain_choice == "Strona Główna":
                 <li>✅ Historia wszystkich Twoich analiz</li>
             </ul>
         </div>
-
-        <div style='text-align: center; margin-top: 3rem;'>
-            <a href='#Analiza_Umowy'>
-                <button style='font-size: 1.5em; padding: 1em 2em; background-color: #1abc9c; color: white; border: none; border-radius: 12px; cursor: pointer;'>
-                    🔍 Rozpocznij analizę teraz
-                </button>
-            </a>
-        </div>
-
-        <div style='margin-top: 5rem; text-align: center;'>
-            <video width='80%' autoplay muted loop>
-                <source src='https://www.w3schools.com/html/mov_bbb.mp4' type='video/mp4'>
-                Twoja przeglądarka nie wspiera odtwarzania wideo.
-            </video>
-        </div>
     """, unsafe_allow_html=True)
+
+    if st.button("🔍 Rozpocznij analizę teraz"):
+        session_state.start_analysis = True
+        st.experimental_rerun()
+
 
 elif plain_choice == "Analiza Umowy":
     st.header("Analiza AI")
-    uploaded_file = st.file_uploader("Prześlij plik PDF do analizy", type="pdf")
-    if uploaded_file:
-        reader = PdfReader(uploaded_file)
-        full_text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
-        summary = full_text[:500] + "..."
-        st.text_area("Treść umowy:", full_text, height=300)
-        st.text_area("Podsumowanie:", summary, height=150)
-        score = len(full_text) % 10
-        cursor.execute("INSERT INTO analiza (user, tekst, podsumowanie, score, timestamp) VALUES (?, ?, ?, ?, ?)",
-                       (session_state.username, full_text, summary, score, datetime.now().isoformat()))
-        conn.commit()
-        st.success("Analiza zapisana.")
+    option = st.radio("Wybierz sposób analizy:", ["Prześlij PDF", "Wklej tekst"])
+
+    if option == "Prześlij PDF":
+        uploaded_file = st.file_uploader("Prześlij plik PDF do analizy", type="pdf")
+        if uploaded_file:
+            reader = PdfReader(uploaded_file)
+            full_text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
+    else:
+        full_text = st.text_area("Wklej tekst umowy tutaj:", height=300)
+
+    if option == "Wklej tekst" or uploaded_file:
+        if full_text.strip():
+            summary = full_text[:500] + "..."
+            st.text_area("Podsumowanie:", summary, height=150)
+            score = len(full_text) % 10
+            if st.button("Zapisz analizę"):
+                cursor.execute("INSERT INTO analiza (user, tekst, podsumowanie, score, timestamp) VALUES (?, ?, ?, ?, ?)",
+                               (session_state.username, full_text, summary, score, datetime.now().isoformat()))
+                conn.commit()
+                st.success("Analiza zapisana.")
+        else:
+            st.info("Wprowadź lub załaduj tekst umowy.")
+
 
 elif plain_choice == "Ryzyka":
     st.header("Wykrywanie Ryzyk")
