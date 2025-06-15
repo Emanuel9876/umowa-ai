@@ -4,4 +4,3 @@ reportlab
 matplotlib
 seaborn
 openai
-email-validator
