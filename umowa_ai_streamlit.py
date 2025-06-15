@@ -81,6 +81,61 @@ def t(key):
 selected_lang = st.sidebar.selectbox("\U0001F310 Wybierz język / Select Language / Sprache wählen", list(lang_options.keys()), format_func=lambda x: lang_options[x])
 session_state.language = selected_lang
 
-# Dalej używaj t("Klucz") zamiast dosłownych tekstów
-# Przykład: st.sidebar.subheader(t("Logowanie / Rejestracja"))
-# Dla każdego tekstu użyj t("..."), aby zapewnić tłumaczenie w całej aplikacji
+# Interfejs aplikacji
+
+if session_state.logged_in:
+    menu = st.sidebar.radio("Menu", [t("Strona Główna"), t("Analiza Umowy"), t("Ryzyka"), t("Moje Analizy")])
+
+    if menu == t("Strona Główna"):
+        st.title(t("Witaj w aplikacji"))
+        st.subheader(t("Twoim asystencie do analizy umów"))
+        st.write(t("Automatycznie analizujemy dokumenty"))
+        st.write(t("i prezentujemy je w czytelnej formie"))
+
+    elif menu == t("Analiza Umowy"):
+        st.header(t("Analiza Umowy"))
+        uploaded_file = st.file_uploader("PDF", type="pdf")
+        if uploaded_file is not None:
+            reader = PdfReader(uploaded_file)
+            text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
+            st.text_area("Tekst umowy", text, height=300)
+            # TODO: Analiza NLP + zapisz do DB itd.
+
+    elif menu == t("Ryzyka"):
+        st.header(t("Ryzyka"))
+        st.write("(tu będą wykryte ryzyka z umów)")
+
+    elif menu == t("Moje Analizy"):
+        st.header(t("Moje Analizy"))
+        cursor.execute("SELECT tekst, podsumowanie, score, timestamp FROM analiza WHERE user = ?", (session_state.username,))
+        rows = cursor.fetchall()
+        for row in rows:
+            st.markdown(f"**{row[3]}** — Score: {row[2]}")
+            st.markdown(f"_Podsumowanie:_ {row[1]}")
+            st.markdown("---")
+
+else:
+    st.subheader(t("Logowanie / Rejestracja"))
+    tab1, tab2 = st.tabs([t("Zaloguj się"), t("Zarejestruj się")])
+
+    with tab1:
+        username = st.text_input(t("Login"))
+        password = st.text_input(t("Hasło"), type="password")
+        if st.button(t("Zaloguj się")):
+            if username in users and users[username] == hash_password(password):
+                session_state.logged_in = True
+                session_state.username = username
+                st.rerun()
+            else:
+                st.error(t("Błędny login lub hasło."))
+
+    with tab2:
+        new_username = st.text_input(t("Login"), key="new_login")
+        new_password = st.text_input(t("Hasło"), type="password", key="new_pass")
+        if st.button(t("Zarejestruj się")):
+            if new_username in users:
+                st.warning(t("Użytkownik już istnieje."))
+            else:
+                users[new_username] = hash_password(new_password)
+                save_users(users)
+                st.success(t("Rejestracja zakończona sukcesem. Możesz się zalogować."))
