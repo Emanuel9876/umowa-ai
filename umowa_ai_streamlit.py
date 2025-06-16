@@ -182,6 +182,9 @@ if plain_choice == "Strona Główna":
 
 
 elif plain_choice == "Analiza Umowy":
+    import openai
+    from datetime import date
+
     st.header("Analiza AI")
     option = st.radio("Wybierz sposób analizy:", ["Prześlij PDF", "Wklej tekst"])
 
@@ -193,18 +196,61 @@ elif plain_choice == "Analiza Umowy":
     else:
         full_text = st.text_area("Wklej tekst umowy tutaj:", height=300)
 
-    if option == "Wklej tekst" or uploaded_file:
-        if full_text.strip():
-            summary = full_text[:500] + "..."
-            st.text_area("Podsumowanie:", summary, height=150)
-            score = len(full_text) % 10
-            if st.button("Zapisz analizę"):
-                cursor.execute("INSERT INTO analiza (user, tekst, podsumowanie, score, timestamp) VALUES (?, ?, ?, ?, ?)",
-                               (session_state.username, full_text, summary, score, datetime.now().isoformat()))
-                conn.commit()
-                st.success("Analiza zapisana.")
-        else:
-            st.info("Wprowadź lub załaduj tekst umowy.")
+    if (option == "Wklej tekst" or uploaded_file) and full_text.strip():
+        # Sprawdzenie dziennego limitu
+        today = date.today().isoformat()
+        cursor.execute("SELECT COUNT(*) FROM analiza WHERE user = ? AND DATE(timestamp) = ?", (session_state.username, today))
+        daily_count = cursor.fetchone()[0]
+
+        remaining = 2 - daily_count
+        st.markdown(f"📅 Pozostało analiz dzisiaj: **{remaining}/2**")
+
+        if remaining <= 0:
+            st.warning("Osiągnięto dzienny limit 2 analiz. Spróbuj jutro.")
+            st.stop()
+
+        if st.button("🔍 Przeanalizuj umowę"):
+            with st.spinner("Analiza za pomocą AI..."):
+                try:
+                    openai.api_key = st.secrets["openai"]["api_key"]
+
+                    prompt = (
+                        "Przeanalizuj poniższą umowę i podaj:\n"
+                        "- krótkie podsumowanie (do 150 słów),\n"
+                        "- ocenę potencjalnego ryzyka w skali od 0 do 10.\n\n"
+                        f"{full_text}"
+                    )
+
+                    response = openai.ChatCompletion.create(
+                        model="gpt-4",
+                        messages=[
+                            {"role": "system", "content": "Jesteś ekspertem prawnym specjalizującym się w analizie umów."},
+                            {"role": "user", "content": prompt}
+                        ],
+                        temperature=0.4,
+                        max_tokens=800
+                    )
+
+                    output = response.choices[0].message.content.strip()
+
+                    # Wyciąganie score
+                    match = re.search(r"(ryzyko|ocena).*?(\d{1,2})", output.lower())
+                    score = int(match.group(2)) if match else 5
+                    score = min(max(score, 0), 10)
+
+                    st.text_area("📄 Podsumowanie:", output, height=250)
+
+                    if st.button("💾 Zapisz analizę"):
+                        cursor.execute(
+                            "INSERT INTO analiza (user, tekst, podsumowanie, score, timestamp) VALUES (?, ?, ?, ?, ?)",
+                            (session_state.username, full_text, output, score, datetime.now().isoformat())
+                        )
+                        conn.commit()
+                        st.success("✅ Analiza zapisana.")
+                except Exception as e:
+                    st.error(f"Wystąpił błąd podczas analizy: {e}")
+    else:
+        st.info("Wprowadź lub załaduj tekst umowy.")
 
 
 elif plain_choice == "Ryzyka":
