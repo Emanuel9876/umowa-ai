@@ -40,7 +40,20 @@ translations = {
         "DE": "Vertragstext eingeben oder hochladen."
     },
     "Logowanie / Rejestracja": {"PL": "Logowanie / Rejestracja", "EN": "Login / Register", "DE": "Anmeldung / Registrierung"},
-    "Wybierz opcję": {"PL": "Wybierz opcję", "EN": "Choose option", "DE": "Option wählen"}
+    "Wybierz opcję": {"PL": "Wybierz opcję", "EN": "Choose option", "DE": "Option wählen"},
+    "Użytkownik już istnieje.": {"PL": "Użytkownik już istnieje.", "EN": "User already exists.", "DE": "Benutzer existiert bereits."},
+    "Rejestracja zakończona sukcesem. Możesz się zalogować.": {
+        "PL": "Rejestracja zakończona sukcesem. Możesz się zalogować.",
+        "EN": "Registration successful. You can now log in.",
+        "DE": "Registrierung erfolgreich. Du kannst dich jetzt anmelden."
+    },
+    "Błędny login lub hasło.": {"PL": "Błędny login lub hasło.", "EN": "Incorrect username or password.", "DE": "Falscher Benutzername oder Passwort."},
+    "Analiza została zapisana.": {"PL": "Analiza została zapisana.", "EN": "Analysis has been saved.", "DE": "Analyse wurde gespeichert."},
+    "Zidentyfikowano {n} potencjalnych punktów ryzyka.": {
+        "PL": "Zidentyfikowano {n} potencjalnych punktów ryzyka.",
+        "EN": "Identified {n} potential risk points.",
+        "DE": "Es wurden {n} potenzielle Risikopunkte identifiziert."
+    }
 }
 
 def tr(phrase):
@@ -95,19 +108,19 @@ if not session_state.logged_in:
     if choice == tr("Zarejestruj się"):
         if st.sidebar.button(tr("Zarejestruj się")):
             if username in users:
-                st.sidebar.warning("Użytkownik już istnieje.")
+                st.sidebar.warning(tr("Użytkownik już istnieje."))
             else:
                 users[username] = hash_password(password)
                 save_users(users)
-                st.sidebar.success("Rejestracja zakończona sukcesem. Możesz się zalogować.")
+                st.sidebar.success(tr("Rejestracja zakończona sukcesem. Możesz się zalogować."))
     else:
         if st.sidebar.button(tr("Zaloguj się")):
             if username in users and users[username] == hash_password(password):
                 session_state.logged_in = True
                 session_state.username = username
-                st.rerun()
+                st.experimental_rerun()
             else:
-                st.sidebar.error("Błędny login lub hasło.")
+                st.sidebar.error(tr("Błędny login lub hasło."))
     st.stop()
 
 # --- ANALIZA ---
@@ -137,10 +150,11 @@ elif method == tr("Prześlij PDF"):
 
 # Analiza
 if text:
-    summary = ""
     risk_keywords = ["kara", "odpowiedzialność", "ryzyko", "opóźnienie", "grzywna"]
     score = sum(1 for word in risk_keywords if word in text.lower())
-    summary = f"Zidentyfikowano {score} potencjalnych punktów ryzyka."
+    
+    summary_template = tr("Zidentyfikowano {n} potencjalnych punktów ryzyka.")
+    summary = summary_template.format(n=score)
 
     st.subheader(tr("Podsumowanie:"))
     st.write(summary)
@@ -150,4 +164,4 @@ if text:
         cursor.execute("INSERT INTO analiza (user, tekst, podsumowanie, score, timestamp) VALUES (?, ?, ?, ?, ?)",
                        (session_state.username, text, summary, score, timestamp))
         conn.commit()
-        st.success("Analiza została zapisana.")
+        st.success(tr("Analiza została zapisana."))
