@@ -70,8 +70,58 @@ translations = {
     "Usuń analizę": {"PL": "Usuń analizę", "EN": "Delete analysis", "DE": "Analyse löschen"},
     "Analiza z dnia": {"PL": "Analiza z dnia", "EN": "Analysis from", "DE": "Analyse vom"},
     "Ryzyko": {"PL": "Ryzyko", "EN": "Risk", "DE": "Risiko"},
-    "Wprowadź lub załaduj tekst umowy.": {"PL": "Wprowadź lub załaduj tekst umowy.", "EN": "Enter or upload contract text.", "DE": "Vertragstext eingeben oder hochladen."}
+    "Wprowadź lub załaduj tekst umowy.": {"PL": "Wprowadź lub załaduj tekst umowy.", "EN": "Enter or upload contract text.", "DE": "Vertragstext eingeben oder hochladen."},
+    "Twój osobisty asystent do analizy umów i wykrywania ryzyk": {
+        "PL": "Twój osobisty asystent do analizy umów i wykrywania ryzyk",
+        "EN": "Your personal assistant for contract analysis and risk detection",
+        "DE": "Ihr persönlicher Assistent zur Vertragsanalyse und Risikobewertung"
+    },
+    "Co potrafi aplikacja:": {
+        "PL": "Co potrafi aplikacja:",
+        "EN": "What the app can do:",
+        "DE": "Was die App kann:"
+    },
+    "Analiza tekstu umowy lub pliku PDF": {
+        "PL": "Analiza tekstu umowy lub pliku PDF",
+        "EN": "Analyze contract text or PDF file",
+        "DE": "Analyse des Vertragstextes oder PDF-Datei"
+    },
+    "Ocena ryzyka w umowie": {
+        "PL": "Ocena ryzyka w umowie",
+        "EN": "Risk evaluation in the contract",
+        "DE": "Risikobewertung im Vertrag"
+    },
+    "Podsumowanie kluczowych punktów": {
+        "PL": "Podsumowanie kluczowych punktów",
+        "EN": "Summary of key points",
+        "DE": "Zusammenfassung der wichtigsten Punkte"
+    },
+    "Zarządzanie historią analiz": {
+        "PL": "Zarządzanie historią analiz",
+        "EN": "Manage analysis history",
+        "DE": "Analyseverlauf verwalten"
+    },
+    "Tłumaczenie interfejsu na 3 języki": {
+        "PL": "Tłumaczenie interfejsu na 3 języki",
+        "EN": "Interface translation in 3 languages",
+        "DE": "Oberfläche in 3 Sprachen übersetzen"
+    },
+    "Gotowy?": {
+        "PL": "Gotowy?",
+        "EN": "Ready?",
+        "DE": "Bereit?"
+    },
+    "Metoda:": {"PL": "Metoda:", "EN": "Method:", "DE": "Methode:"},
+    "Prześlij plik PDF": {"PL": "Prześlij plik PDF", "EN": "Upload PDF file", "DE": "PDF-Datei hochladen"},
+    "Tekst umowy:": {"PL": "Tekst umowy:", "EN": "Contract text:", "DE": "Vertragstext:"},
+    "Podsumowanie:": {"PL": "Podsumowanie:", "EN": "Summary:", "DE": "Zusammenfassung:"},
+    "Zapisz analizę": {"PL": "Zapisz analizę", "EN": "Save analysis", "DE": "Analyse speichern"},
+    "Wybierz język / Select Language / Sprache wählen": {
+        "PL": "Wybierz język", "EN": "Select Language", "DE": "Sprache wählen"
+    },
+    "Wybierz opcję": {"PL": "Wybierz opcję", "EN": "Choose option", "DE": "Option wählen"}
 }
+
 
 def t(text):
     return translations.get(text, {}).get(session_state.language, text)
