@@ -7,7 +7,7 @@ import sqlite3
 import json
 import hashlib
 import os
-from datetime import datetime
+from datetime import datetime, date
 import matplotlib.pyplot as plt
 import seaborn as sns
 import matplotlib
@@ -15,7 +15,46 @@ matplotlib.use('Agg')
 
 st.set_page_config(page_title="Umowa AI", layout="wide")
 
-# Baza danych SQLite
+# Funkcja tłumacząca
+translations = {
+    "Login": {"PL": "Login", "EN": "Username", "DE": "Benutzername"},
+    "Hasło": {"PL": "Hasło", "EN": "Password", "DE": "Passwort"},
+    "Zaloguj się": {"PL": "Zaloguj się", "EN": "Log In", "DE": "Anmelden"},
+    "Zarejestruj się": {"PL": "Zarejestruj się", "EN": "Register", "DE": "Registrieren"},
+    "Rozpocznij analizę teraz": {"PL": "Rozpocznij analizę teraz", "EN": "Start analysis now", "DE": "Analyse jetzt starten"},
+    "Wybierz sposób analizy:": {"PL": "Wybierz sposób analizy:", "EN": "Choose analysis method:", "DE": "Analysemethode wählen:"},
+    "Prześlij PDF": {"PL": "Prześlij PDF", "EN": "Upload PDF", "DE": "PDF hochladen"},
+    "Wklej tekst": {"PL": "Wklej tekst", "EN": "Paste text", "DE": "Text einfügen"},
+    "Podsumowanie:": {"PL": "Podsumowanie:", "EN": "Summary:", "DE": "Zusammenfassung:"},
+    "Zapisz analizę": {"PL": "Zapisz analizę", "EN": "Save analysis", "DE": "Analyse speichern"},
+    "Usuń analizę": {"PL": "Usuń analizę", "EN": "Delete analysis", "DE": "Analyse löschen"},
+    "Pozostało analiz dzisiaj:": {"PL": "Pozostało analiz dzisiaj:", "EN": "Analyses remaining today:", "DE": "Verbleibende Analysen heute:"},
+    "Osiągnięto dzienny limit 2 analiz. Spróbuj jutro.": {
+        "PL": "Osiągnięto dzienny limit 2 analiz. Spróbuj jutro.",
+        "EN": "Daily limit of 2 analyses reached. Try again tomorrow.",
+        "DE": "Tägliches Limit von 2 Analysen erreicht. Versuche es morgen erneut."
+    },
+    "Wprowadź lub załaduj tekst umowy.": {
+        "PL": "Wprowadź lub załaduj tekst umowy.",
+        "EN": "Enter or upload the contract text.",
+        "DE": "Vertragstext eingeben oder hochladen."
+    },
+    "Logowanie / Rejestracja": {"PL": "Logowanie / Rejestracja", "EN": "Login / Register", "DE": "Anmeldung / Registrierung"},
+    "Wybierz opcję": {"PL": "Wybierz opcję", "EN": "Choose option", "DE": "Option wählen"}
+}
+
+def tr(phrase):
+    return translations.get(phrase, {}).get(session_state.language, phrase)
+
+# Stan sesji i język
+session_state = st.session_state
+if "language" not in session_state:
+    session_state.language = "PL"
+lang_options = {"PL": "Polski", "EN": "English", "DE": "Deutsch"}
+selected_lang = st.sidebar.selectbox("\U0001F310 Wybierz język / Select Language / Sprache wählen", list(lang_options.keys()), format_func=lambda x: lang_options[x])
+session_state.language = selected_lang
+
+# Baza danych
 conn = sqlite3.connect("umowa_ai.db", check_same_thread=False)
 cursor = conn.cursor()
 cursor.execute('''CREATE TABLE IF NOT EXISTS analiza (
@@ -28,91 +67,41 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS analiza (
 )''')
 conn.commit()
 
-# Użytkownicy
+# Zarządzanie użytkownikami
+users = {}
 def load_users():
     if os.path.exists("users.json"):
         with open("users.json", "r") as f:
             return json.load(f)
     return {}
-
 def save_users(users):
     with open("users.json", "w") as f:
         json.dump(users, f)
-
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
 users = load_users()
-session_state = st.session_state
-
 if "logged_in" not in session_state:
     session_state.logged_in = False
     session_state.username = ""
 
-if "language" not in session_state:
-    session_state.language = "PL"
-
-lang_options = {"PL": "Polski", "EN": "English", "DE": "Deutsch"}
-translations = {
-    "Strona Główna": {"PL": "Strona Główna", "EN": "Home", "DE": "Startseite"},
-    "Analiza Umowy": {"PL": "Analiza Umowy", "EN": "Contract Analysis", "DE": "Vertragsanalyse"},
-    "Ryzyka": {"PL": "Ryzyka", "EN": "Risks", "DE": "Risiken"},
-    "Moje Analizy": {"PL": "Moje Analizy", "EN": "My Analyses", "DE": "Meine Analysen"},
-    "Witaj w aplikacji": {"PL": "Witaj w aplikacji", "EN": "Welcome to the app", "DE": "Willkommen in der App"},
-    "Twoim asystencie do analizy umów": {"PL": "Twoim asystencie do analizy umów", "EN": "Your contract analysis assistant", "DE": "Ihr Vertragsanalyse-Assistent"},
-    "Automatycznie analizujemy dokumenty": {"PL": "Automatycznie analizujemy dokumenty", "EN": "We automatically analyze documents", "DE": "Wir analysieren automatisch Dokumente"},
-    "i prezentujemy je w czytelnej formie": {"PL": "i prezentujemy je w czytelnej formie", "EN": "and present them in a clear form", "DE": "und präsentieren sie in klarer Form"},
-}
-
-selected_lang = st.sidebar.selectbox("\U0001F310 Wybierz język / Select Language / Sprache wählen", list(lang_options.keys()), format_func=lambda x: lang_options[x])
-session_state.language = selected_lang
-
-# Styl nowoczesny z gradientem
-st.markdown("""
-    <style>
-        .stApp {
-            background: linear-gradient(to right, #2c3e50, #3498db);
-            font-family: 'Segoe UI', sans-serif;
-        }
-        html, body, [class*="css"] {
-            background-color: transparent !important;
-            color: #ffffff !important;
-        }
-        h1, h2, h3, h4, h5, h6, p, div, span, label {
-            color: #ffffff !important;
-        }
-        .top-card {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-        }
-        ul {
-            list-style-type: disc;
-            padding-left: 2rem;
-        }
-    </style>
-""", unsafe_allow_html=True)
-
 if not session_state.logged_in:
-    st.sidebar.subheader("\U0001F510 Logowanie / Rejestracja")
-    choice = st.sidebar.radio("Wybierz opcję", ["Zaloguj się", "Zarejestruj się"])
+    st.sidebar.subheader(tr("Logowanie / Rejestracja"))
+    choice = st.sidebar.radio(tr("Wybierz opcję"), [tr("Zaloguj się"), tr("Zarejestruj się")])
 
-    username = st.sidebar.text_input("Login")
-    password = st.sidebar.text_input("Hasło", type="password")
+    username = st.sidebar.text_input(tr("Login"))
+    password = st.sidebar.text_input(tr("Hasło"), type="password")
 
-    if choice == "Zarejestruj się":
-        if st.sidebar.button("Zarejestruj"):
+    if choice == tr("Zarejestruj się"):
+        if st.sidebar.button(tr("Zarejestruj się")):
             if username in users:
                 st.sidebar.warning("Użytkownik już istnieje.")
             else:
                 users[username] = hash_password(password)
                 save_users(users)
                 st.sidebar.success("Rejestracja zakończona sukcesem. Możesz się zalogować.")
-
     else:
-        if st.sidebar.button("Zaloguj"):
+        if st.sidebar.button(tr("Zaloguj się")):
             if username in users and users[username] == hash_password(password):
                 session_state.logged_in = True
                 session_state.username = username
@@ -121,191 +110,44 @@ if not session_state.logged_in:
                 st.sidebar.error("Błędny login lub hasło.")
     st.stop()
 
-# Menu główne z ikonkami
-menu_options = [
-    ("Strona Główna", "\U0001F3E0"),
-    ("Analiza Umowy", "\U0001F4C4"),
-    ("Ryzyka", "\u26A0"),
-    ("Moje Analizy", "\U0001F4CB")
-]
-translated_menu = [f"{icon} {translations[label][session_state.language]}" for label, icon in menu_options]
-menu_choice = st.sidebar.selectbox("Wybierz opcję", translated_menu)
+# --- ANALIZA ---
 
-# Rozpoznawanie wyboru bez ikon
-plain_choice = [label for label, icon in menu_options][translated_menu.index(menu_choice)]
+st.header(tr("Rozpocznij analizę teraz"))
 
-# Treści stron
-if plain_choice == "Strona Główna":
-    if "start_analysis" not in session_state:
-        session_state.start_analysis = False
+# Sprawdzenie dziennego limitu analiz
+cursor.execute("SELECT COUNT(*) FROM analiza WHERE user=? AND date(timestamp)=?", (session_state.username, str(date.today())))
+count_today = cursor.fetchone()[0]
+limit_left = max(0, 2 - count_today)
+st.info(f"{tr('Pozostało analiz dzisiaj:')} {limit_left}")
+if limit_left == 0:
+    st.warning(tr("Osiągnięto dzienny limit 2 analiz. Spróbuj jutro."))
+    st.stop()
 
-    if session_state.start_analysis:
-        plain_choice = "Analiza Umowy"
-        session_state.start_analysis = False
-        st.experimental_rerun()
+# Wybór metody analizy
+method = st.radio(tr("Wybierz sposób analizy:"), [tr("Wklej tekst"), tr("Prześlij PDF")])
+text = ""
 
-    st.markdown("""
-        <div style='text-align: center; padding: 5vh 2vw;'>
-            <h1 style='font-size: 4.5em; margin-bottom: 0;'>🤖 UmowaAI</h1>
-            <p style='font-size: 1.7em; margin-top: 0;'>Twój osobisty asystent do analizy umów i wykrywania ryzyk</p>
-        </div>
+if method == tr("Wklej tekst"):
+    text = st.text_area(tr("Wprowadź lub załaduj tekst umowy."))
+elif method == tr("Prześlij PDF"):
+    uploaded_file = st.file_uploader(tr("Prześlij PDF"), type="pdf")
+    if uploaded_file:
+        reader = PdfReader(uploaded_file)
+        text = "\n".join(page.extract_text() for page in reader.pages if page.extract_text())
 
-        <div class='top-card' style='display: flex; flex-direction: row; justify-content: space-around; flex-wrap: wrap; gap: 2rem; padding: 2rem;'>
-            <div style='flex: 1; min-width: 250px; max-width: 400px;'>
-                <h2>📄 Analiza Umowy</h2>
-                <p>Automatycznie analizujemy umowy PDF i wyciągamy kluczowe informacje.</p>
-            </div>
-            <div style='flex: 1; min-width: 250px; max-width: 400px;'>
-                <h2>⚠️ Wykrywanie Ryzyk</h2>
-                <p>Wykrywamy nieoczywiste haczyki i ryzyka w zapisach umownych.</p>
-            </div>
-            <div style='flex: 1; min-width: 250px; max-width: 400px;'>
-                <h2>📊 Twoje Analizy</h2>
-                <p>Przeglądaj i porównuj wszystkie swoje wcześniejsze analizy w przejrzysty sposób.</p>
-            </div>
-        </div>
+# Analiza
+if text:
+    summary = ""
+    risk_keywords = ["kara", "odpowiedzialność", "ryzyko", "opóźnienie", "grzywna"]
+    score = sum(1 for word in risk_keywords if word in text.lower())
+    summary = f"Zidentyfikowano {score} potencjalnych punktów ryzyka."
 
-        <div class='top-card' style='text-align: center; padding: 3rem; margin-top: 3rem;'>
-            <h2>🚀 Dlaczego UmowaAI?</h2>
-            <ul style='list-style: none; font-size: 1.2em; padding: 0;'>
-                <li>✅ Intuicyjny i nowoczesny interfejs</li>
-                <li>✅ Wysoka skuteczność wykrywania niekorzystnych zapisów</li>
-                <li>✅ Bezpieczeństwo i poufność danych</li>
-                <li>✅ Historia wszystkich Twoich analiz</li>
-            </ul>
-        </div>
-    """, unsafe_allow_html=True)
+    st.subheader(tr("Podsumowanie:"))
+    st.write(summary)
 
-    if st.button("🔍 Rozpocznij analizę teraz"):
-        session_state.start_analysis = True
-        st.experimental_rerun()
-
-
-elif plain_choice == "Analiza Umowy":
-    import openai
-    from datetime import date
-
-    st.header("Analiza AI")
-    option = st.radio("Wybierz sposób analizy:", ["Prześlij PDF", "Wklej tekst"])
-
-    if option == "Prześlij PDF":
-        uploaded_file = st.file_uploader("Prześlij plik PDF do analizy", type="pdf")
-        if uploaded_file:
-            reader = PdfReader(uploaded_file)
-            full_text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
-    else:
-        full_text = st.text_area("Wklej tekst umowy tutaj:", height=300)
-
-    if (option == "Wklej tekst" or uploaded_file) and full_text.strip():
-        # Sprawdzenie dziennego limitu
-        today = date.today().isoformat()
-        cursor.execute("SELECT COUNT(*) FROM analiza WHERE user = ? AND DATE(timestamp) = ?", (session_state.username, today))
-        daily_count = cursor.fetchone()[0]
-
-        remaining = 2 - daily_count
-        st.markdown(f"📅 Pozostało analiz dzisiaj: **{remaining}/2**")
-
-        if remaining <= 0:
-            st.warning("Osiągnięto dzienny limit 2 analiz. Spróbuj jutro.")
-            st.stop()
-
-        if st.button("🔍 Przeanalizuj umowę"):
-            with st.spinner("Analiza za pomocą AI..."):
-                try:
-                    openai.api_key = st.secrets["openai"]["api_key"]
-
-                    prompt = (
-                        "Przeanalizuj poniższą umowę i podaj:\n"
-                        "- krótkie podsumowanie (do 150 słów),\n"
-                        "- ocenę potencjalnego ryzyka w skali od 0 do 10.\n\n"
-                        f"{full_text}"
-                    )
-
-                    response = openai.ChatCompletion.create(
-                        model="gpt-4",
-                        messages=[
-                            {"role": "system", "content": "Jesteś ekspertem prawnym specjalizującym się w analizie umów."},
-                            {"role": "user", "content": prompt}
-                        ],
-                        temperature=0.4,
-                        max_tokens=800
-                    )
-
-                    output = response.choices[0].message.content.strip()
-
-                    # Wyciąganie score
-                    match = re.search(r"(ryzyko|ocena).*?(\d{1,2})", output.lower())
-                    score = int(match.group(2)) if match else 5
-                    score = min(max(score, 0), 10)
-
-                    st.text_area("📄 Podsumowanie:", output, height=250)
-
-                    if st.button("💾 Zapisz analizę"):
-                        cursor.execute(
-                            "INSERT INTO analiza (user, tekst, podsumowanie, score, timestamp) VALUES (?, ?, ?, ?, ?)",
-                            (session_state.username, full_text, output, score, datetime.now().isoformat())
-                        )
-                        conn.commit()
-                        st.success("✅ Analiza zapisana.")
-                except Exception as e:
-                    st.error(f"Wystąpił błąd podczas analizy: {e}")
-    else:
-        st.info("Wprowadź lub załaduj tekst umowy.")
-
-
-elif plain_choice == "Ryzyka":
-    st.header("Wykrywanie Ryzyk")
-    cursor.execute("SELECT score, timestamp FROM analiza WHERE user = ? ORDER BY timestamp DESC LIMIT 5", (session_state.username,))
-    data = cursor.fetchall()
-    if data:
-        scores, times = zip(*data)
-        fig, ax = plt.subplots(figsize=(10, 4))
-        sns.set_style("darkgrid")
-        sns.lineplot(x=times, y=scores, marker='o', color='crimson', ax=ax)
-        ax.set_title("Ocena ryzyk w czasie")
-        ax.set_xlabel("Data")
-        ax.set_ylabel("Ryzyko (0-10)")
-        plt.xticks(rotation=30)
-        st.pyplot(fig)
-    else:
-        st.info("Brak analiz do pokazania wykresu.")
-
-elif plain_choice == "Moje Analizy":
-    st.header("Historia Twoich analiz")
-    cursor.execute("SELECT id, tekst, podsumowanie, score, timestamp FROM analiza WHERE user = ? ORDER BY timestamp DESC", (session_state.username,))
-    rows = cursor.fetchall()
-
-    if not rows:
-        st.info("Brak zapisanych analiz.")
-    else:
-        for row in rows:
-            analiza_id, tekst, podsumowanie, score, timestamp = row
-            with st.expander(f"Analiza z dnia {timestamp} (Ryzyko: {score}/10)"):
-                st.markdown(f"**Podsumowanie:** {podsumowanie[:500]}...")
-
-                # Przygotowanie pliku PDF w pamięci
-                buffer = io.BytesIO()
-                c = canvas.Canvas(buffer)
-                c.setFont("Helvetica", 12)
-                c.drawString(100, 800, f"Analiza Umowy - {timestamp}")
-                c.drawString(100, 780, f"Ryzyko: {score}/10")
-                text_object = c.beginText(100, 760)
-                for line in podsumowanie.splitlines():
-                    text_object.textLine(line[:120])  # linie maks. 120 znaków
-                c.drawText(text_object)
-                c.showPage()
-                c.save()
-                buffer.seek(0)
-
-                st.download_button(
-                    label="📄 Pobierz PDF",
-                    data=buffer,
-                    file_name=f"analiza_{analiza_id}.pdf",
-                    mime="application/pdf"
-                )
-
-                if st.button(f"\U0001F5D1️ Usuń analizę {analiza_id}", key=f"delete_{analiza_id}"):
-                    cursor.execute("DELETE FROM analiza WHERE id = ? AND user = ?", (analiza_id, session_state.username))
-                    conn.commit()
-                    st.success(f"Usunięto analizę z {timestamp}.")
-                    st.experimental_rerun()  
+    if st.button(tr("Zapisz analizę")):
+        timestamp = datetime.now().isoformat()
+        cursor.execute("INSERT INTO analiza (user, tekst, podsumowanie, score, timestamp) VALUES (?, ?, ?, ?, ?)",
+                       (session_state.username, text, summary, score, timestamp))
+        conn.commit()
+        st.success("Analiza została zapisana.")
