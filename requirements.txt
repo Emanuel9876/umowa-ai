@@ -1,8 +1,6 @@
 streamlit
+openai
 PyPDF2
 reportlab
 matplotlib
 seaborn
-openai
-smtplib   
-email-validator
