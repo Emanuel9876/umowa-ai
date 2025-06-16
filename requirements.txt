@@ -1,5 +1,6 @@
-streamlit>=1.32.0
-PyPDF2>=3.0.1
+streamlit
+PyPDF2
 reportlab
 matplotlib
 seaborn
+openai
