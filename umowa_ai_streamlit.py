@@ -142,11 +142,24 @@ plain_choice = [label for label, icon in menu_options][translated_menu.index(men
 
 # === STRONY ===
 if plain_choice == "Strona Główna":
-    if st.button("🚀 " + t("Rozpocznij analizę teraz")):
+    st.title("🤖 UmowaAI")
+    st.markdown(f"### {t('Twój osobisty asystent do analizy umów i wykrywania ryzyk')}")
+
+    st.markdown("---")
+    st.markdown("#### ✅ " + t("Co potrafi aplikacja:"))
+    st.markdown(f"""
+    - 📄 {t("Analiza tekstu umowy lub pliku PDF")}
+    - ⚠️ {t("Ocena ryzyka w umowie")}
+    - 🧠 {t("Podsumowanie kluczowych punktów")}
+    - 📊 {t("Zarządzanie historią analiz")}
+    - 🌍 {t("Tłumaczenie interfejsu na 3 języki")}
+    """)
+
+    st.markdown("#### 🚀 " + t("Gotowy?"))
+    if st.button(f"🧪 {t('Rozpocznij analizę teraz')}"):
         session_state["start_analysis"] = True
         st.experimental_rerun()
-    st.title("🤖 UmowaAI")
-    st.markdown("### " + t("Twój osobisty asystent do analizy umów i wykrywania ryzyk"))
+
 
 elif plain_choice == "Analiza Umowy":
     st.header("📄 " + t("Analiza Umowy"))
