@@ -4,3 +4,5 @@ reportlab
 matplotlib
 seaborn
 openai
+smtplib   
+email-validator
