@@ -118,7 +118,7 @@ if not session_state.logged_in:
             if username in users and users[username] == hash_password(password):
                 session_state.logged_in = True
                 session_state.username = username
-                st.experimental_rerun()
+                st.rerun()
             else:
                 st.sidebar.error(tr("Błędny login lub hasło."))
     st.stop()
@@ -150,11 +150,10 @@ elif method == tr("Prześlij PDF"):
 
 # Analiza
 if text:
+    summary = ""
     risk_keywords = ["kara", "odpowiedzialność", "ryzyko", "opóźnienie", "grzywna"]
     score = sum(1 for word in risk_keywords if word in text.lower())
-    
-    summary_template = tr("Zidentyfikowano {n} potencjalnych punktów ryzyka.")
-    summary = summary_template.format(n=score)
+    summary = tr("Zidentyfikowano {n} potencjalnych punktów ryzyka.").format(n=score)
 
     st.subheader(tr("Podsumowanie:"))
     st.write(summary)
