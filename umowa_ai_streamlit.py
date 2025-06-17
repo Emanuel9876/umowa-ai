@@ -95,7 +95,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Logowanie
+# Logowanie / Rejestracja
 if not session_state.logged_in:
     st.sidebar.subheader("\U0001F510 Logowanie / Rejestracja")
     choice = st.sidebar.radio("Wybierz opcję", ["Zaloguj się", "Zarejestruj się"])
@@ -121,7 +121,7 @@ if not session_state.logged_in:
                 st.sidebar.error("Błędny login lub hasło.")
     st.stop()
 
-# Menu główne
+# Menu główne z ikonkami
 menu_options = [
     ("Strona Główna", "\U0001F3E0"),
     ("Analiza Umowy", "\U0001F4C4"),
@@ -132,7 +132,7 @@ translated_menu = [f"{icon} {translations[label][session_state.language]}" for l
 menu_choice = st.sidebar.selectbox("Wybierz opcję", translated_menu)
 plain_choice = [label for label, icon in menu_options][translated_menu.index(menu_choice)]
 
-# 💡 NOWA STRONA GŁÓWNA
+# STRONA GŁÓWNA
 if plain_choice == "Strona Główna":
     if "start_analysis" not in session_state:
         session_state.start_analysis = False
@@ -177,3 +177,30 @@ if plain_choice == "Strona Główna":
     if st.button("🔍 Rozpocznij analizę teraz"):
         session_state.start_analysis = True
         st.rerun()
+
+# ANALIZA UMOWY
+elif plain_choice == "Analiza Umowy":
+    st.header("📄 Analiza Umowy")
+    st.info("Tutaj w przyszłości będzie można przesyłać pliki PDF do analizy.")
+    uploaded_file = st.file_uploader("Prześlij plik PDF", type="pdf")
+    if uploaded_file:
+        st.success("Plik został przesłany. Analiza będzie dostępna w kolejnych wersjach.")
+
+# RYZYKA
+elif plain_choice == "Ryzyka":
+    st.header("⚠️ Ryzyka")
+    st.warning("Funkcja w przygotowaniu – wkrótce dostępna analiza ryzyk.")
+
+# MOJE ANALIZY
+elif plain_choice == "Moje Analizy":
+    st.header("📋 Moje Analizy")
+    st.info("Tutaj będą wyświetlane Twoje zapisane analizy.")
+    cursor.execute("SELECT tekst, podsumowanie, score, timestamp FROM analiza WHERE user=?", (session_state.username,))
+    results = cursor.fetchall()
+    if results:
+        for tekst, podsumowanie, score, timestamp in results:
+            with st.expander(f"Analiza z dnia {timestamp} (Wynik: {score}/100)"):
+                st.write("**Fragment umowy:**", tekst[:500] + "...")
+                st.write("**Podsumowanie:**", podsumowanie)
+    else:
+        st.write("Brak zapisanych analiz.")
