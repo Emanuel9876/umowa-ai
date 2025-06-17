@@ -7,31 +7,40 @@ import sqlite3
 import json
 import hashlib
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 import seaborn as sns
 import matplotlib
+import openai
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 matplotlib.use('Agg')
 
-# === KONFIGURACJA ===
+# Konfiguracja GPT i emaili
+openai.api_key = os.getenv("OPENAI_API_KEY")
+EMAIL_SENDER = "twoj@email.com"
+EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
+SMTP_SERVER = "smtp.gmail.com"
+SMTP_PORT = 587
+
 st.set_page_config(page_title="Umowa AI", layout="wide")
 
-# === BAZA DANYCH ===
+# Baza danych SQLite
 conn = sqlite3.connect("umowa_ai.db", check_same_thread=False)
 cursor = conn.cursor()
-cursor.execute('''
-    CREATE TABLE IF NOT EXISTS analiza (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user TEXT,
-        tekst TEXT,
-        podsumowanie TEXT,
-        score INTEGER,
-        timestamp TEXT
-    )
-''')
+cursor.execute('''CREATE TABLE IF NOT EXISTS analiza (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user TEXT,
+    tekst TEXT,
+    podsumowanie TEXT,
+    score INTEGER,
+    timestamp TEXT
+)''')
 conn.commit()
 
-# === UŻYTKOWNICY ===
+# Użytkownicy
+
 def load_users():
     if os.path.exists("users.json"):
         with open("users.json", "r") as f:
@@ -45,83 +54,80 @@ def save_users(users):
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
+def is_premium(user):
+    premium_until = users.get(user, {}).get("premium_until")
+    if premium_until:
+        return datetime.fromisoformat(premium_until) > datetime.now()
+    return False
+
+def can_analyze(user):
+    cursor.execute("SELECT COUNT(*) FROM analiza WHERE user = ? AND timestamp > ?", (user, (datetime.now() - timedelta(days=30)).isoformat()))
+    count = cursor.fetchone()[0]
+    return is_premium(user) or count < 3
+
+def send_email(to, subject, body):
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = EMAIL_SENDER
+        msg['To'] = to
+        msg['Subject'] = subject
+        msg.attach(MIMEText(body, 'plain'))
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()
+        server.login(EMAIL_SENDER, EMAIL_PASSWORD)
+        server.send_message(msg)
+        server.quit()
+    except Exception as e:
+        print(f"Błąd wysyłki maila: {e}")
+
+def analyze_with_gpt(text):
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "Jesteś prawnikiem. Rozpoznaj typ umowy, analizuj ryzyka, podsumuj umowę."},
+                {"role": "user", "content": text}
+            ],
+            max_tokens=1000,
+            temperature=0.3
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        return f"Błąd analizy AI: {e}"
+
 users = load_users()
 session_state = st.session_state
-session_state.setdefault("logged_in", False)
-session_state.setdefault("username", "")
-session_state.setdefault("language", "PL")
 
-# === TŁUMACZENIA ===
-lang_options = {"PL": "Polski", "EN": "English", "DE": "Deutsch"}
-translations = {
-    "Strona Główna": {"PL": "Strona Główna", "EN": "Home", "DE": "Startseite"},
-    "Analiza Umowy": {"PL": "Analiza Umowy", "EN": "Contract Analysis", "DE": "Vertragsanalyse"},
-    "Ryzyka": {"PL": "Ryzyka", "EN": "Risks", "DE": "Risiken"},
-    "Moje Analizy": {"PL": "Moje Analizy", "EN": "My Analyses", "DE": "Meine Analysen"},
-    "Logowanie / Rejestracja": {"PL": "Logowanie / Rejestracja", "EN": "Login / Register", "DE": "Anmeldung / Registrierung"},
-    "Zaloguj się": {"PL": "Zaloguj się", "EN": "Login", "DE": "Einloggen"},
-    "Zarejestruj się": {"PL": "Zarejestruj się", "EN": "Register", "DE": "Registrieren"},
-    "Login": {"PL": "Login", "EN": "Username", "DE": "Benutzername"},
-    "Hasło": {"PL": "Hasło", "EN": "Password", "DE": "Passwort"},
-    "Rozpocznij analizę teraz": {"PL": "Rozpocznij analizę teraz", "EN": "Start analysis now", "DE": "Analyse jetzt starten"},
-    "Analiza zapisana.": {"PL": "Analiza zapisana.", "EN": "Analysis saved.", "DE": "Analyse gespeichert."},
-    "Brak analiz do pokazania wykresu.": {"PL": "Brak analiz do pokazania wykresu.", "EN": "No analyses to display chart.", "DE": "Keine Analysen zum Anzeigen des Diagramms."},
-    "Brak zapisanych analiz.": {"PL": "Brak zapisanych analiz.", "EN": "No saved analyses.", "DE": "Keine gespeicherten Analysen."},
-    "Usuń analizę": {"PL": "Usuń analizę", "EN": "Delete analysis", "DE": "Analyse löschen"},
-    "Analiza z dnia": {"PL": "Analiza z dnia", "EN": "Analysis from", "DE": "Analyse vom"},
-    "Ryzyko": {"PL": "Ryzyko", "EN": "Risk", "DE": "Risiko"},
-    "Wprowadź lub załaduj tekst umowy.": {"PL": "Wprowadź lub załaduj tekst umowy.", "EN": "Enter or upload contract text.", "DE": "Vertragstext eingeben oder hochladen."}
-}
+if "logged_in" not in session_state:
+    session_state.logged_in = False
+    session_state.username = ""
 
-def t(text):
-    return translations.get(text, {}).get(session_state.language, text)
+if "language" not in session_state:
+    session_state.language = "PL"
 
-# === WYBÓR JĘZYKA ===
-selected_lang = st.sidebar.selectbox("🌍 " + t("Wybierz język / Select Language / Sprache wählen"), list(lang_options.keys()), format_func=lambda x: lang_options[x])
-session_state.language = selected_lang
-
-# === STYL ===
-st.markdown("""
-    <style>
-        .stApp {
-            background: linear-gradient(to right, #2c3e50, #3498db);
-            font-family: 'Segoe UI', sans-serif;
-        }
-        html, body, [class*="css"] {
-            background-color: transparent !important;
-            color: #ffffff !important;
-        }
-        .top-card {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-        }
-        ul {
-            list-style-type: disc;
-            padding-left: 2rem;
-        }
-    </style>
-""", unsafe_allow_html=True)
-
-# === AUTORYZACJA ===
 if not session_state.logged_in:
-    st.sidebar.subheader("🔐 " + t("Logowanie / Rejestracja"))
-    choice = st.sidebar.radio(t("Wybierz opcję"), [t("Zaloguj się"), t("Zarejestruj się")])
-    username = st.sidebar.text_input(t("Login"))
-    password = st.sidebar.text_input(t("Hasło"), type="password")
+    st.sidebar.subheader("🔐 Logowanie / Rejestracja")
+    choice = st.sidebar.radio("Wybierz opcję", ["Zaloguj się", "Zarejestruj się"])
 
-    if choice == t("Zarejestruj się"):
-        if st.sidebar.button(t("Zarejestruj się")):
+    username = st.sidebar.text_input("Login")
+    password = st.sidebar.text_input("Hasło", type="password")
+
+    if choice == "Zarejestruj się":
+        if st.sidebar.button("Zarejestruj"):
             if username in users:
                 st.sidebar.warning("Użytkownik już istnieje.")
             else:
-                users[username] = hash_password(password)
+                users[username] = {
+                    "password": hash_password(password),
+                    "premium_until": (datetime.now() + timedelta(days=7)).isoformat()
+                }
                 save_users(users)
-                st.sidebar.success("Rejestracja zakończona sukcesem.")
+                st.sidebar.success("Rejestracja zakończona sukcesem. Możesz się zalogować.")
+
     else:
-        if st.sidebar.button(t("Zaloguj się")):
-            if username in users and users[username] == hash_password(password):
+        if st.sidebar.button("Zaloguj"):
+            user = users.get(username)
+            if user and user.get("password") == hash_password(password):
                 session_state.logged_in = True
                 session_state.username = username
                 st.rerun()
@@ -129,90 +135,70 @@ if not session_state.logged_in:
                 st.sidebar.error("Błędny login lub hasło.")
     st.stop()
 
-# === MENU ===
-menu_options = [
-    ("Strona Główna", "🏠"),
-    ("Analiza Umowy", "📄"),
-    ("Ryzyka", "⚠️"),
-    ("Moje Analizy", "📊")
-]
-translated_menu = [f"{icon} {t(label)}" for label, icon in menu_options]
-menu_choice = st.sidebar.selectbox("📋 " + t("Wybierz opcję"), translated_menu)
-plain_choice = [label for label, icon in menu_options][translated_menu.index(menu_choice)]
+# STRONA GŁÓWNA (przywrócony oryginalny wygląd)
+st.markdown("""
+    <style>
+    body {
+        background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+        color: white;
+    }
+    .main-title {
+        font-size: 48px;
+        font-weight: bold;
+        text-align: center;
+        margin-top: 30px;
+    }
+    .subtitle {
+        font-size: 24px;
+        text-align: center;
+        margin-bottom: 50px;
+    }
+    .card {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 20px;
+        margin: 20px;
+        color: white;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-# === STRONY ===
-if plain_choice == "Strona Główna":
-    st.title("🤖 UmowaAI")
-    st.markdown(f"### {t('Twój osobisty asystent do analizy umów i wykrywania ryzyk')}")
+st.markdown("""
+<div class="main-title">🤖 <span style='color:white'>UmowaAI</span></div>
+<div class="subtitle">Twój osobisty asystent do analizy umów i wykrywania ryzyk</div>
+""", unsafe_allow_html=True)
 
-    st.markdown("---")
-    st.markdown("#### ✅ " + t("Co potrafi aplikacja:"))
-    st.markdown(f"""
-    - 📄 {t("Analiza tekstu umowy lub pliku PDF")}
-    - ⚠️ {t("Ocena ryzyka w umowie")}
-    - 🧠 {t("Podsumowanie kluczowych punktów")}
-    - 📊 {t("Zarządzanie historią analiz")}
-    - 🌍 {t("Tłumaczenie interfejsu na 3 języki")}
-    """)
+col1, col2, col3 = st.columns(3)
+with col1:
+    st.markdown("""
+    <div class="card">
+        <h3>📄 Analiza Umowy</h3>
+        <p>Automatycznie analizujemy umowy PDF i wyciągamy kluczowe informacje.</p>
+    </div>
+    """, unsafe_allow_html=True)
+with col2:
+    st.markdown("""
+    <div class="card">
+        <h3>⚠️ Wykrywanie Ryzyk</h3>
+        <p>Wykrywamy nieoczywiste haczyki i ryzyka w zapisach umownych.</p>
+    </div>
+    """, unsafe_allow_html=True)
+with col3:
+    st.markdown("""
+    <div class="card">
+        <h3>📊 Twoje Analizy</h3>
+        <p>Przeglądaj i porównuj wszystkie swoje wcześniejsze analizy w przejrzysty sposób.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-    st.markdown("#### 🚀 " + t("Gotowy?"))
-    if st.button(f"🧪 {t('Rozpocznij analizę teraz')}"):
-        session_state["start_analysis"] = True
-        st.experimental_rerun()
-
-
-elif plain_choice == "Analiza Umowy":
-    st.header("📄 " + t("Analiza Umowy"))
-    option = st.radio("Metoda:", ["PDF", "Tekst"])
-    if option == "PDF":
-        uploaded_file = st.file_uploader("Prześlij plik PDF", type="pdf")
-        if uploaded_file:
-            reader = PdfReader(uploaded_file)
-            full_text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
-    else:
-        full_text = st.text_area("Tekst umowy:", height=300)
-
-    if full_text:
-        summary = full_text[:500] + "..."
-        st.text_area("🔎 Podsumowanie:", summary, height=150)
-        score = len(full_text) % 10
-        if st.button("💾 " + t("Zapisz analizę")):
-            cursor.execute("INSERT INTO analiza (user, tekst, podsumowanie, score, timestamp) VALUES (?, ?, ?, ?, ?)",
-                           (session_state.username, full_text, summary, score, datetime.now().isoformat()))
-            conn.commit()
-            st.success(t("Analiza zapisana."))
-    else:
-        st.info(t("Wprowadź lub załaduj tekst umowy."))
-
-elif plain_choice == "Ryzyka":
-    st.header("⚠️ " + t("Ryzyka"))
-    cursor.execute("SELECT score, timestamp FROM analiza WHERE user = ? ORDER BY timestamp DESC LIMIT 5", (session_state.username,))
-    data = cursor.fetchall()
-    if data:
-        scores, times = zip(*data)
-        fig, ax = plt.subplots()
-        sns.lineplot(x=times, y=scores, marker='o', ax=ax)
-        ax.set_title(t("Ryzyko") + " w czasie")
-        st.pyplot(fig)
-    else:
-        st.info(t("Brak analiz do pokazania wykresu."))
-
-elif plain_choice == "Moje Analizy":
-    st.header("📊 " + t("Moje Analizy"))
-    cursor.execute("SELECT id, podsumowanie, score, timestamp FROM analiza WHERE user = ? ORDER BY timestamp DESC", (session_state.username,))
-    for analiza_id, podsumowanie, score, timestamp in cursor.fetchall():
-        with st.expander(f"{t('Analiza z dnia')} {timestamp} ({t('Ryzyko')}: {score}/10)"):
-            st.write(podsumowanie[:500] + "...")
-            buffer = io.BytesIO()
-            c = canvas.Canvas(buffer)
-            c.drawString(100, 800, f"{t('Analiza z dnia')} {timestamp}")
-            c.drawString(100, 780, f"{t('Ryzyko')}: {score}/10")
-            c.drawText(c.beginText(100, 760))
-            c.save()
-            buffer.seek(0)
-            st.download_button(label="📄 PDF", data=buffer, file_name=f"analiza_{analiza_id}.pdf", mime="application/pdf")
-            if st.button(f"🗑 {t('Usuń analizę')} {analiza_id}", key=f"delete_{analiza_id}"):
-                cursor.execute("DELETE FROM analiza WHERE id = ? AND user = ?", (analiza_id, session_state.username))
-                conn.commit()
-                st.success("Usunięto.")
-                st.experimental_rerun()
+st.markdown("""
+<div class="card">
+    <h3>🚀 Dlaczego UmowaAI?</h3>
+    <ul>
+        <li>✅ Intuicyjny i nowoczesny interfejs</li>
+        <li>✅ Wysoka skuteczność wykrywania niekorzystnych zapisów</li>
+        <li>✅ Bezpieczeństwo i poufność danych</li>
+        <li>✅ Historia wszystkich Twoich analiz</li>
+    </ul>
+</div>
+""", unsafe_allow_html=True)
