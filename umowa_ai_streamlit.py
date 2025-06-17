@@ -282,4 +282,3 @@ elif plain_choice == "Moje Analizy":
                 st.text_area("Tekst umowy", tekst[:1000] + ("..." if len(tekst) > 1000 else ""), height=200)
     else:
         st.info("Brak zapisanych analiz.")
-
