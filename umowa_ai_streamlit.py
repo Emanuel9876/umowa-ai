@@ -70,56 +70,7 @@ translations = {
     "Usuń analizę": {"PL": "Usuń analizę", "EN": "Delete analysis", "DE": "Analyse löschen"},
     "Analiza z dnia": {"PL": "Analiza z dnia", "EN": "Analysis from", "DE": "Analyse vom"},
     "Ryzyko": {"PL": "Ryzyko", "EN": "Risk", "DE": "Risiko"},
-    "Wprowadź lub załaduj tekst umowy.": {"PL": "Wprowadź lub załaduj tekst umowy.", "EN": "Enter or upload contract text.", "DE": "Vertragstext eingeben oder hochladen."},
-    "Twój osobisty asystent do analizy umów i wykrywania ryzyk": {
-        "PL": "Twój osobisty asystent do analizy umów i wykrywania ryzyk",
-        "EN": "Your personal assistant for contract analysis and risk detection",
-        "DE": "Ihr persönlicher Assistent zur Vertragsanalyse und Risikobewertung"
-    },
-    "Co potrafi aplikacja:": {
-        "PL": "Co potrafi aplikacja:",
-        "EN": "What the app can do:",
-        "DE": "Was die App kann:"
-    },
-    "Analiza tekstu umowy lub pliku PDF": {
-        "PL": "Analiza tekstu umowy lub pliku PDF",
-        "EN": "Analyze contract text or PDF file",
-        "DE": "Analyse des Vertragstextes oder PDF-Datei"
-    },
-    "Ocena ryzyka w umowie": {
-        "PL": "Ocena ryzyka w umowie",
-        "EN": "Risk evaluation in the contract",
-        "DE": "Risikobewertung im Vertrag"
-    },
-    "Podsumowanie kluczowych punktów": {
-        "PL": "Podsumowanie kluczowych punktów",
-        "EN": "Summary of key points",
-        "DE": "Zusammenfassung der wichtigsten Punkte"
-    },
-    "Zarządzanie historią analiz": {
-        "PL": "Zarządzanie historią analiz",
-        "EN": "Manage analysis history",
-        "DE": "Analyseverlauf verwalten"
-    },
-    "Tłumaczenie interfejsu na 3 języki": {
-        "PL": "Tłumaczenie interfejsu na 3 języki",
-        "EN": "Interface translation in 3 languages",
-        "DE": "Oberfläche in 3 Sprachen übersetzen"
-    },
-    "Gotowy?": {
-        "PL": "Gotowy?",
-        "EN": "Ready?",
-        "DE": "Bereit?"
-    },
-    "Metoda:": {"PL": "Metoda:", "EN": "Method:", "DE": "Methode:"},
-    "Prześlij plik PDF": {"PL": "Prześlij plik PDF", "EN": "Upload PDF file", "DE": "PDF-Datei hochladen"},
-    "Tekst umowy:": {"PL": "Tekst umowy:", "EN": "Contract text:", "DE": "Vertragstext:"},
-    "Podsumowanie:": {"PL": "Podsumowanie:", "EN": "Summary:", "DE": "Zusammenfassung:"},
-    "Zapisz analizę": {"PL": "Zapisz analizę", "EN": "Save analysis", "DE": "Analyse speichern"},
-    "Wybierz język / Select Language / Sprache wählen": {
-        "PL": "Wybierz język", "EN": "Select Language", "DE": "Sprache wählen"
-    },
-    "Wybierz opcję": {"PL": "Wybierz opcję", "EN": "Choose option", "DE": "Option wählen"}
+    "Wprowadź lub załaduj tekst umowy.": {"PL": "Wprowadź lub załaduj tekst umowy.", "EN": "Enter or upload contract text.", "DE": "Vertragstext eingeben oder hochladen."}
 }
 
 def t(text):
@@ -185,21 +136,15 @@ menu_options = [
     ("Ryzyka", "⚠️"),
     ("Moje Analizy", "📊")
 ]
-
-if "menu_choice" in session_state:
-    default_index = [label for label, icon in menu_options].index(session_state["menu_choice"])
-    del session_state["menu_choice"]
-else:
-    default_index = 0
-
 translated_menu = [f"{icon} {t(label)}" for label, icon in menu_options]
-menu_choice = st.sidebar.selectbox("📋 " + t("Wybierz opcję"), translated_menu, index=default_index)
+menu_choice = st.sidebar.selectbox("📋 " + t("Wybierz opcję"), translated_menu)
 plain_choice = [label for label, icon in menu_options][translated_menu.index(menu_choice)]
 
 # === STRONY ===
 if plain_choice == "Strona Główna":
     st.title("🤖 UmowaAI")
     st.markdown(f"### {t('Twój osobisty asystent do analizy umów i wykrywania ryzyk')}")
+
     st.markdown("---")
     st.markdown("#### ✅ " + t("Co potrafi aplikacja:"))
     st.markdown(f"""
@@ -209,14 +154,15 @@ if plain_choice == "Strona Główna":
     - 📊 {t("Zarządzanie historią analiz")}
     - 🌍 {t("Tłumaczenie interfejsu na 3 języki")}
     """)
+
     st.markdown("#### 🚀 " + t("Gotowy?"))
     if st.button(f"🧪 {t('Rozpocznij analizę teraz')}"):
-        session_state["menu_choice"] = "Analiza Umowy"
+        session_state["start_analysis"] = True
         st.experimental_rerun()
+
 
 elif plain_choice == "Analiza Umowy":
     st.header("📄 " + t("Analiza Umowy"))
-    full_text = ""
     option = st.radio("Metoda:", ["PDF", "Tekst"])
     if option == "PDF":
         uploaded_file = st.file_uploader("Prześlij plik PDF", type="pdf")
