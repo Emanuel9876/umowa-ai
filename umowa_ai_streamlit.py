@@ -134,21 +134,6 @@ menu_choice = st.sidebar.selectbox("Wybierz opcję", translated_menu)
 plain_choice = [label for label, icon in menu_options][translated_menu.index(menu_choice)]
 
 if plain_choice == "Strona Główna":
-    elif plain_choice == "Analiza Umowy":
-    st.header(translations["Analiza Umowy"][session_state.language])
-    st.write("Tu będzie moduł analizy umowy. Wczytaj PDF i wykonaj analizę.")
-    # Tutaj dodaj kod do wczytywania i analizy PDF
-
-elif plain_choice == "Ryzyka":
-    st.header(translations["Ryzyka"][session_state.language])
-    st.write("Tu pokażemy wykryte ryzyka i ich analizę.")
-    # Tutaj dodaj kod wyświetlający ryzyka, wykresy itp.
-
-elif plain_choice == "Moje Analizy":
-    st.header(translations["Moje Analizy"][session_state.language])
-    st.write("Twoje poprzednie analizy i ich wyniki.")
-    # Tutaj kod do pokazywania historii analiz z bazy danych
-
     if "start_analysis" not in session_state:
         session_state.start_analysis = False
 
@@ -192,5 +177,3 @@ elif plain_choice == "Moje Analizy":
     if st.button("🔍 Rozpocznij analizę teraz"):
         session_state.start_analysis = True
         st.rerun()
-
-# pozostała część kodu (Analiza Umowy, Ryzyka, Moje Analizy) pozostaje bez zmian
