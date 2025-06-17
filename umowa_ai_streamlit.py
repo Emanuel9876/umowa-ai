@@ -122,7 +122,6 @@ translations = {
     "Wybierz opcję": {"PL": "Wybierz opcję", "EN": "Choose option", "DE": "Option wählen"}
 }
 
-
 def t(text):
     return translations.get(text, {}).get(session_state.language, text)
 
@@ -186,15 +185,21 @@ menu_options = [
     ("Ryzyka", "⚠️"),
     ("Moje Analizy", "📊")
 ]
+
+if "menu_choice" in session_state:
+    default_index = [label for label, icon in menu_options].index(session_state["menu_choice"])
+    del session_state["menu_choice"]
+else:
+    default_index = 0
+
 translated_menu = [f"{icon} {t(label)}" for label, icon in menu_options]
-menu_choice = st.sidebar.selectbox("📋 " + t("Wybierz opcję"), translated_menu)
+menu_choice = st.sidebar.selectbox("📋 " + t("Wybierz opcję"), translated_menu, index=default_index)
 plain_choice = [label for label, icon in menu_options][translated_menu.index(menu_choice)]
 
 # === STRONY ===
 if plain_choice == "Strona Główna":
     st.title("🤖 UmowaAI")
     st.markdown(f"### {t('Twój osobisty asystent do analizy umów i wykrywania ryzyk')}")
-
     st.markdown("---")
     st.markdown("#### ✅ " + t("Co potrafi aplikacja:"))
     st.markdown(f"""
@@ -204,16 +209,14 @@ if plain_choice == "Strona Główna":
     - 📊 {t("Zarządzanie historią analiz")}
     - 🌍 {t("Tłumaczenie interfejsu na 3 języki")}
     """)
-
     st.markdown("#### 🚀 " + t("Gotowy?"))
     if st.button(f"🧪 {t('Rozpocznij analizę teraz')}"):
-        session_state["start_analysis"] = True
+        session_state["menu_choice"] = "Analiza Umowy"
         st.experimental_rerun()
-
 
 elif plain_choice == "Analiza Umowy":
     st.header("📄 " + t("Analiza Umowy"))
-    full_text = ""  # <- Zapobiega błędowi NameError
+    full_text = ""
     option = st.radio("Metoda:", ["PDF", "Tekst"])
     if option == "PDF":
         uploaded_file = st.file_uploader("Prześlij plik PDF", type="pdf")
