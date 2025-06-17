@@ -27,7 +27,6 @@ CREATE TABLE IF NOT EXISTS analiza (
 ''')
 conn.commit()
 
-# Funkcje do obsługi użytkowników
 def load_users():
     if os.path.exists("users.json"):
         with open("users.json", "r") as f:
@@ -44,7 +43,6 @@ def hash_password(password):
 users = load_users()
 session_state = st.session_state
 
-# Inicjalizacja session_state
 if "logged_in" not in session_state:
     session_state.logged_in = False
     session_state.username = ""
@@ -58,7 +56,6 @@ if "sensitivity" not in session_state:
 if "custom_keywords" not in session_state:
     session_state.custom_keywords = []
 
-# Tłumaczenia i języki
 lang_options = {"PL": "Polski", "EN": "English", "DE": "Deutsch"}
 translations = {
     "Strona Główna": {"PL": "Strona Główna", "EN": "Home", "DE": "Startseite"},
@@ -71,7 +68,6 @@ translations = {
     "i prezentujemy je w czytelnej formie": {"PL": "i prezentujemy je w czytelnej formie", "EN": "and present them in a clear form", "DE": "und präsentieren sie in klarer Form"},
 }
 
-# Wybór języka w sidebarze
 selected_lang = st.sidebar.selectbox(
     "\U0001F310 Wybierz język / Select Language / Sprache wählen",
     list(lang_options.keys()),
@@ -79,7 +75,6 @@ selected_lang = st.sidebar.selectbox(
 )
 session_state.language = selected_lang
 
-# Styl CSS i efekty neonów + gwiazdy
 st.markdown("""
 <style>
 /* Body gradient + dark cosmic background */
@@ -117,137 +112,58 @@ st.markdown("""
     animation: star-blink 5s infinite ease-in-out;
 }
 
-/* Sidebar style */
-.css-1d391kg {
-    background-color: #002f4b !important;
-    color: white !important;
+/* Sidebar styling */
+[data-testid="stSidebar"] {
+    background-color: #001f33 !important;
+    color: #00ffff !important;
+    font-weight: 700;
+    border-top-right-radius: 25px;
+    border-bottom-right-radius: 25px;
+    padding: 25px 20px 30px 20px;
+    box-shadow: 0 0 15px #00ffffaa;
+    font-family: 'Orbitron', sans-serif;
+}
+
+[data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
+    color: #33ffff !important;
+    text-align: center;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    text-shadow:
+        0 0 10px #00ffff,
+        0 0 20px #00ffff;
+}
+
+[data-testid="stSidebar"] label {
+    color: #66ffff !important;
     font-weight: 600;
 }
 
-/* Sidebar font color white */
-.css-1d391kg * {
-    color: white !important;
+[data-testid="stSidebar"] .stRadio > label {
+    font-size: 1.1em;
+    margin-bottom: 15px;
 }
 
-/* Menu selectbox items font white */
-div[role="listbox"] div {
-    color: white !important;
-}
-
-/* Headers neon glow and pulsate */
-h1, h2, h3, h4, h5, h6 {
-    color: #00ffff;
-    text-shadow:
-       0 0 10px #00ffff,
-       0 0 30px #00ffff,
-       0 0 50px #00ffff,
-       0 0 80px #00ffff;
-    animation: pulse-glow 4s infinite ease-in-out;
-}
-
-/* Pulse glow animation */
-@keyframes pulse-glow {
-    0%, 100% {
-        text-shadow:
-           0 0 10px #00ffff,
-           0 0 30px #00ffff,
-           0 0 50px #00ffff,
-           0 0 80px #00ffff;
-    }
-    50% {
-        text-shadow:
-           0 0 20px #33ffff,
-           0 0 50px #33ffff,
-           0 0 80px #33ffff,
-           0 0 120px #33ffff;
-    }
-}
-
-/* Futuristic card with animated border */
-.top-card {
-    background: rgba(0, 30, 40, 0.85);
-    border-radius: 20px;
-    padding: 50px 60px;
-    margin: 60px auto;
-    max-width: 800px;
-    text-align: center;
-    line-height: 1.7;
-    position: relative;
-    color: #aaffff;
-    box-shadow:
-        0 0 15px #00ffff,
-        inset 0 0 15px #00ffff;
-    border: 2px solid transparent;
-    animation: border-glow 6s linear infinite;
-    backdrop-filter: blur(8px);
-}
-
-/* Animated glowing border */
-@keyframes border-glow {
-    0% {
-        border-color: #00ffff;
-        box-shadow:
-          0 0 10px #00ffff,
-          inset 0 0 10px #00ffff;
-    }
-    50% {
-        border-color: #33ffff;
-        box-shadow:
-          0 0 30px #33ffff,
-          inset 0 0 30px #33ffff;
-    }
-    100% {
-        border-color: #00ffff;
-        box-shadow:
-          0 0 10px #00ffff,
-          inset 0 0 10px #00ffff;
-    }
-}
-
-/* List style with glowing bullets */
-ul {
-    list-style-type: none;
-    padding-left: 0;
-    max-width: 600px;
-    margin: 30px auto 0 auto;
-    font-size: 1.3em;
-    color: #00ffff;
-}
-
-ul li {
-    margin: 12px 0;
-    position: relative;
-    padding-left: 25px;
-}
-
-ul li::before {
-    content: "▸";
-    position: absolute;
-    left: 0;
-    color: #00ffff;
-    text-shadow: 0 0 12px #00ffff;
-    font-weight: bold;
-    font-size: 1.3em;
-}
-
-/* Neon glowing buttons with hover animation */
-div.stButton > button:first-child {
+[data-testid="stSidebar"] .stButton > button {
     background: linear-gradient(90deg, #00ffff, #006677);
     color: #003344;
     border-radius: 15px;
-    padding: 0.8em 2.4em;
+    padding: 0.7em 2em;
     border: none;
     font-weight: 800;
-    font-size: 1.15em;
+    font-size: 1.1em;
     box-shadow:
         0 0 15px #00ffff,
         0 0 40px #00ffff inset;
     transition: all 0.4s ease;
     text-transform: uppercase;
     letter-spacing: 1.5px;
+    margin-top: 20px;
+    width: 100%;
 }
 
-div.stButton > button:first-child:hover {
+[data-testid="stSidebar"] .stButton > button:hover {
     background: linear-gradient(90deg, #33ffff, #0099aa);
     color: #001922;
     box-shadow:
@@ -257,48 +173,99 @@ div.stButton > button:first-child:hover {
     transform: scale(1.05);
 }
 
-/* Text area futuristic style */
-textarea, input[type="text"], input[type="password"], select {
-    background: rgba(0, 30, 40, 0.75);
-    border: 1.8px solid #00ffff;
-    border-radius: 12px;
+/* Main content container for home page */
+.main-container {
+    max-width: 900px;
+    margin: 60px auto 80px auto;
+    background: rgba(0, 30, 40, 0.9);
+    border-radius: 30px;
+    padding: 50px 70px;
+    box-shadow:
+        0 0 40px #00ffffcc,
+        inset 0 0 25px #00ffffaa;
     color: #aaffff;
-    font-size: 1em;
-    padding: 12px 15px;
-    width: 100%;
-    box-sizing: border-box;
-    margin-bottom: 15px;
-    transition: border-color 0.3s ease;
+    text-align: center;
+    font-family: 'Orbitron', sans-serif;
+    line-height: 1.8;
 }
 
-textarea:focus, input[type="text"]:focus, input[type="password"]:focus, select:focus {
-    outline: none;
-    border-color: #33ffff;
-    box-shadow: 0 0 12px #33ffff;
+/* Large centered heading */
+.main-container h1 {
+    font-size: 3.8em;
+    margin-bottom: 10px;
+    letter-spacing: 5px;
+    text-shadow:
+        0 0 15px #00ffff,
+        0 0 40px #00ffff;
 }
 
-/* Scrollbar for main area */
-::-webkit-scrollbar {
-    width: 10px;
+/* Subtitle */
+.main-container h3 {
+    font-size: 1.8em;
+    margin-bottom: 35px;
+    font-weight: 600;
+    text-shadow:
+        0 0 10px #33ffff;
 }
 
-::-webkit-scrollbar-track {
-    background: #001a33;
+/* Neon styled list */
+.main-container ul {
+    list-style-type: none;
+    padding-left: 0;
+    font-size: 1.4em;
+    max-width: 650px;
+    margin: 0 auto;
 }
 
-::-webkit-scrollbar-thumb {
-    background: #00ffff;
-    border-radius: 5px;
+.main-container ul li {
+    margin: 18px 0;
+    position: relative;
+    padding-left: 35px;
+    text-align: left;
 }
 
+.main-container ul li::before {
+    content: "▸";
+    position: absolute;
+    left: 0;
+    color: #00ffff;
+    text-shadow: 0 0 14px #00ffff;
+    font-weight: 900;
+    font-size: 1.6em;
+}
+
+/* Button large on main container */
+.main-container button {
+    background: linear-gradient(90deg, #00ffff, #006677);
+    color: #003344;
+    border-radius: 20px;
+    padding: 15px 40px;
+    border: none;
+    font-weight: 900;
+    font-size: 1.6em;
+    box-shadow:
+        0 0 25px #00ffff,
+        0 0 60px #00ffff inset;
+    margin-top: 40px;
+    cursor: pointer;
+    transition: all 0.5s ease;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+}
+
+.main-container button:hover {
+    background: linear-gradient(90deg, #33ffff, #0099aa);
+    color: #001922;
+    box-shadow:
+        0 0 45px #33ffff,
+        0 0 100px #33ffff inset;
+    transform: scale(1.1);
+}
 </style>
 
 <div class="stars"></div>
 """, unsafe_allow_html=True)
 
-# --- FUNKCJE ANALIZY ---
-
-# Funkcja do ekstrakcji tekstu z PDF
 def extract_text_from_pdf(file):
     try:
         pdf = PdfReader(file)
@@ -309,7 +276,6 @@ def extract_text_from_pdf(file):
     except:
         return ""
 
-# Funkcja do analizy tekstu i wykrywania słów kluczowych
 def analyze_text(text, keywords):
     results = []
     text_lower = text.lower()
@@ -318,26 +284,21 @@ def analyze_text(text, keywords):
             results.append(kw)
     return results
 
-# Prosty scoring na podstawie liczby trafień słów kluczowych
 def calculate_score(found_keywords):
     return len(found_keywords) * 10
 
-# Generowanie podsumowania (proste, na podstawie znalezionych słów)
 def generate_summary(found_keywords):
     if not found_keywords:
         return "Brak wykrytych kluczowych ryzyk."
     return "Wykryte ryzyka: " + ", ".join(found_keywords)
 
-# Funkcja do zapisu analizy do bazy
 def save_analysis(user, tekst, podsumowanie, score):
     timestamp = datetime.now().isoformat(timespec='seconds')
     cursor.execute('INSERT INTO analiza (user, tekst, podsumowanie, score, timestamp) VALUES (?, ?, ?, ?, ?)', (user, tekst, podsumowanie, score, timestamp))
     conn.commit()
 
-# --- LOGOWANIE i REJESTRACJA ---
-
 def login():
-    st.sidebar.header("🔑 Logowanie")
+    st.sidebar.markdown("<h2>🔑 Logowanie</h2>", unsafe_allow_html=True)
     username = st.sidebar.text_input("Nazwa użytkownika")
     password = st.sidebar.text_input("Hasło", type="password")
     if st.sidebar.button("Zaloguj"):
@@ -349,7 +310,7 @@ def login():
             st.sidebar.error("Nieprawidłowa nazwa użytkownika lub hasło")
 
 def register():
-    st.sidebar.header("📝 Rejestracja")
+    st.sidebar.markdown("<h2>📝 Rejestracja</h2>", unsafe_allow_html=True)
     new_user = st.sidebar.text_input("Nazwa użytkownika", key="reg_user")
     new_pass = st.sidebar.text_input("Hasło", type="password", key="reg_pass")
     new_pass2 = st.sidebar.text_input("Powtórz hasło", type="password", key="reg_pass2")
@@ -364,7 +325,6 @@ def register():
             users[new_user] = {"password": hash_password(new_pass)}
             save_users(users)
             st.sidebar.success("Rejestracja udana! Zaloguj się.")
-            # Czyszczenie pól
             st.experimental_rerun()
 
 def logout():
@@ -373,8 +333,6 @@ def logout():
         session_state.username = ""
         st.sidebar.success("Wylogowano")
         st.experimental_rerun()
-
-# --- MENU GŁÓWNE ---
 
 menu = {
     "main": translations["Strona Główna"][session_state.language],
@@ -385,91 +343,100 @@ menu = {
 
 selected_page = st.sidebar.radio("Menu", list(menu.values()))
 
-# --- STRONA GŁÓWNA ---
-
 def show_home():
-    st.markdown('<div class="top-card">', unsafe_allow_html=True)
-    st.title(translations["Strona Główna"][session_state.language])
-    st.header(translations["Witaj w aplikacji"][session_state.language])
-    st.subheader(translations["Twoim asystencie do analizy umów"][session_state.language])
-    st.write(translations["Automatycznie analizujemy dokumenty"][session_state.language])
-    st.write(translations["i prezentujemy je w czytelnej formie"][session_state.language])
     st.markdown("""
-    <ul>
-        <li>Wczytaj dokument PDF</li>
-        <li>Skonfiguruj czułość analizy</li>
-        <li>Dodaj własne słowa kluczowe</li>
-        <li>Przeglądaj wyniki i zapisuj analizy</li>
-    </ul>
-    """, unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# --- STRONA ANALIZY ---
+    <div class="main-container">
+        <h1>{title}</h1>
+        <h3>{subtitle}</h3>
+        <p>{desc1}</p>
+        <p>{desc2}</p>
+        <ul>
+            <li>Wczytaj dokument PDF</li>
+            <li>Skonfiguruj czułość analizy</li>
+            <li>Dodaj własne słowa kluczowe</li>
+            <li>Przeglądaj wyniki i zapisuj analizy</li>
+        </ul>
+    </div>
+    """.format(
+        title=translations["Strona Główna"][session_state.language],
+        subtitle=translations["Witaj w aplikacji"][session_state.language],
+        desc1=translations["Twoim asystencie do analizy umów"][session_state.language],
+        desc2=translations["Automatycznie analizujemy dokumenty"][session_state.language] + "<br>" + translations["i prezentujemy je w czytelnej formie"][session_state.language]
+    ), unsafe_allow_html=True)
 
 def show_analysis():
     st.title(menu["analysis"])
+    col1, col2 = st.columns([1,1])
 
-    st.write("Wczytaj plik PDF do analizy:")
-    uploaded_file = st.file_uploader("Wybierz plik PDF", type=["pdf"])
-    if uploaded_file is not None:
-        text = extract_text_from_pdf(uploaded_file)
-        if not text.strip():
-            st.error("Nie udało się wyodrębnić tekstu z pliku PDF.")
+    with col1:
+        st.write("📄 Wczytaj plik PDF do analizy:")
+        uploaded_file = st.file_uploader("Wybierz plik PDF", type=["pdf"])
+        pdf_text = ""
+        if uploaded_file is not None:
+            pdf_text = extract_text_from_pdf(uploaded_file)
+            if not pdf_text.strip():
+                st.error("Nie udało się wyodrębnić tekstu z pliku PDF.")
+                return
+            st.text_area("Wyodrębniony tekst z PDF", pdf_text, height=200, max_chars=None)
+
+    with col2:
+        st.write("✍️ Wpisz / wklej treść umowy ręcznie do analizy:")
+        manual_text = st.text_area("Treść umowy ręcznie", height=350)
+
+    # Ustawienia
+    sensitivity = st.selectbox("Wybierz czułość analizy", ["Niski", "Średni", "Wysoki"], index=1)
+    session_state.sensitivity = sensitivity
+
+    default_keywords = ["kara umowna", "odszkodowanie", "odpowiedzialność", "kara", "termin", "rozwiązanie", "odpowiedzialność"]
+    keywords = default_keywords + session_state.custom_keywords
+
+    st.write("Dodaj własne słowa kluczowe (oddzielone przecinkami):")
+    custom_kw_input = st.text_input("", value=", ".join(session_state.custom_keywords))
+    if custom_kw_input:
+        session_state.custom_keywords = [kw.strip() for kw in custom_kw_input.split(",") if kw.strip()]
+
+    # Połącz tekst z PDF i tekst ręczny do analizy
+    combined_text = (pdf_text or "") + "\n" + (manual_text or "")
+
+    if st.button("Analizuj"):
+        if not combined_text.strip():
+            st.error("Proszę wczytać plik PDF lub wpisać tekst umowy ręcznie.")
             return
-        st.text_area("Wyodrębniony tekst", text, height=200, max_chars=None, key="extracted_text")
 
-        # Czułość analizy
-        sensitivity = st.selectbox("Wybierz czułość analizy", ["Niski", "Średni", "Wysoki"], index=1)
-        session_state.sensitivity = sensitivity
+        found = analyze_text(combined_text, keywords)
+        score = calculate_score(found)
+        summary = generate_summary(found)
 
-        # Słowa kluczowe domyślne i niestandardowe
-        default_keywords = ["kara umowna", "odszkodowanie", "odpowiedzialność", "kara", "termin", "rozwiązanie", "kara umowna"]
-        keywords = default_keywords + session_state.custom_keywords
+        st.success(summary)
+        st.write(f"Wskaźnik ryzyka: {score}")
 
-        st.write("Dodaj własne słowa kluczowe (oddzielone przecinkami):")
-        custom_kw_input = st.text_input("", value=", ".join(session_state.custom_keywords))
-        if custom_kw_input:
-            session_state.custom_keywords = [kw.strip() for kw in custom_kw_input.split(",") if kw.strip()]
+        save_analysis(session_state.username, combined_text, summary, score)
 
-        if st.button("Analizuj"):
-            found = analyze_text(text, keywords)
-            score = calculate_score(found)
-            summary = generate_summary(found)
-
-            st.success(summary)
-            st.write(f"Wskaźnik ryzyka: {score}")
-
-            save_analysis(session_state.username, text, summary, score)
-
-            # Pobieranie podsumowania PDF
-            buffer = io.BytesIO()
-            c = canvas.Canvas(buffer, pagesize=letter)
-            c.setFont("Helvetica-Bold", 16)
-            c.setFillColorRGB(0, 1, 1)
-            c.drawString(72, 720, "Podsumowanie analizy umowy")
-            c.setFont("Helvetica", 12)
-            c.setFillColorRGB(0.5, 1, 1)
-            c.drawString(72, 690, f"Data: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-            c.drawString(72, 670, f"Użytkownik: {session_state.username}")
-            c.drawString(72, 640, "Podsumowanie:")
-            text_object = c.beginText(72, 620)
-            text_object.setFont("Helvetica", 12)
-            text_object.setFillColorRGB(0.5, 1, 1)
-            for line in summary.split(", "):
-                text_object.textLine("- " + line)
-            c.drawText(text_object)
-            c.showPage()
-            c.save()
-            buffer.seek(0)
-            st.download_button("Pobierz podsumowanie PDF", buffer, file_name="podsumowanie_umowy.pdf", mime="application/pdf")
-
-# --- STRONA RYZYKA ---
+        # Pobieranie podsumowania PDF
+        buffer = io.BytesIO()
+        c = canvas.Canvas(buffer, pagesize=letter)
+        c.setFont("Helvetica-Bold", 16)
+        c.setFillColorRGB(0, 1, 1)
+        c.drawString(72, 720, "Podsumowanie analizy umowy")
+        c.setFont("Helvetica", 12)
+        c.setFillColorRGB(0.5, 1, 1)
+        c.drawString(72, 690, f"Data: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        c.drawString(72, 670, f"Użytkownik: {session_state.username}")
+        c.drawString(72, 640, "Podsumowanie:")
+        text_object = c.beginText(72, 620)
+        text_object.setFont("Helvetica", 12)
+        text_object.setFillColorRGB(0.5, 1, 1)
+        for line in summary.split(", "):
+            text_object.textLine("- " + line)
+        c.drawText(text_object)
+        c.showPage()
+        c.save()
+        buffer.seek(0)
+        st.download_button("Pobierz podsumowanie PDF", buffer, file_name="podsumowanie_umowy.pdf", mime="application/pdf")
 
 def show_risks():
     st.title(menu["risks"])
     st.write("Strona z analizą i wykresami ryzyk (do implementacji).")
-
-# --- STRONA MOICH ANALIZ ---
 
 def show_my_analyses():
     st.title(menu["my_analyses"])
@@ -482,8 +449,6 @@ def show_my_analyses():
             st.markdown(f"**ID:** {r[0]} | **Data:** {r[1]} | **Wskaźnik ryzyka:** {r[3]}")
             st.write(r[2])
             st.markdown("---")
-
-# --- GŁÓWNA LOGIKA ---
 
 if not session_state.logged_in:
     login()
