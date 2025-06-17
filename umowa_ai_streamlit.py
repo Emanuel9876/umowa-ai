@@ -1,7 +1,7 @@
 import streamlit as st
 from PyPDF2 import PdfReader
 
-# Przykładowe tłumaczenia (wyciąg, dodaj więcej jeśli potrzebujesz)
+# --- Tłumaczenia ---
 translations = {
     "Strona Główna": {"PL": "Strona Główna", "EN": "Home", "DE": "Startseite"},
     "Analiza Umowy": {"PL": "Analiza Umowy", "EN": "Contract Analysis", "DE": "Vertragsanalyse"},
@@ -23,11 +23,10 @@ translations = {
     "Analiza zapisana.": {"PL": "Analiza zapisana.", "EN": "Analysis saved.", "DE": "Analyse gespeichert."}
 }
 
-# Inicjalizacja języka (domyślnie PL)
+# --- Inicjalizacja języka ---
 if "language" not in st.session_state:
     st.session_state.language = "PL"
 
-# Pasek boczny wyboru języka (możesz rozszerzyć)
 lang = st.sidebar.selectbox(
     "Wybierz język / Select Language / Sprache wählen",
     options=["PL", "EN", "DE"],
@@ -35,64 +34,55 @@ lang = st.sidebar.selectbox(
 )
 st.session_state.language = lang
 
-# Menu wyboru głównych stron
+# --- Menu główne ---
 menu = [
-    translations["Strona Główna"][st.session_state.language],
-    translations["Analiza Umowy"][st.session_state.language],
-    translations["Ryzyka"][st.session_state.language],
-    translations["Moje Analizy"][st.session_state.language]
+    translations["Strona Główna"][lang],
+    translations["Analiza Umowy"][lang],
+    translations["Ryzyka"][lang],
+    translations["Moje Analizy"][lang]
 ]
 
 choice = st.sidebar.radio("Menu", menu)
 
 # --- STRONA GŁÓWNA ---
-if choice == translations["Strona Główna"][st.session_state.language]:
-    st.markdown(f"""
-    <div style='text-align: center; padding: 5vh 2vw;'>
-        <h1 style='font-size: 4.5em; margin-bottom: 0;'>🤖 UmowaAI</h1>
-        <p style='font-size: 1.7em; margin-top: 0;'>{translations['Twój osobisty asystent do analizy umów i wykrywania ryzyk'][st.session_state.language]}</p>
+if choice == translations["Strona Główna"][lang]:
+    st.markdown("""
+    <div style="text-align:center; margin: 4vh 0 4vh 0;">
+        <h1 style="font-size: 5em;">🤖 UmowaAI</h1>
+        <p style="font-size: 1.7em;">""" + translations["Twój osobisty asystent do analizy umów i wykrywania ryzyk"][lang] + """</p>
     </div>
 
-    <div class='top-card' style='display: flex; flex-direction: row; justify-content: space-around; flex-wrap: wrap; gap: 2rem; padding: 2rem;'>
-        <div style='flex: 1; min-width: 250px; max-width: 400px;'>
-            <h2>📄 {translations['Analiza Umowy'][st.session_state.language]}</h2>
+    <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 2rem; padding: 2rem;">
+        <div style="flex:1; min-width: 250px; max-width: 350px; border-radius: 20px; background-color: #f5f5f5; padding: 1rem; box-shadow: 0 0 5px #aaa;">
+            <h2>📄 """ + translations["Analiza Umowy"][lang] + """</h2>
             <p>Automatyczna analiza dokumentów PDF i tekstów umów.</p>
         </div>
-        <div style='flex: 1; min-width: 250px; max-width: 400px;'>
-            <h2>⚠️ {translations['Ryzyka'][st.session_state.language]}</h2>
+        <div style="flex:1; min-width: 250px; max-width: 350px; border-radius: 20px; background-color: #f5f5f5; padding: 1rem; box-shadow: 0 0 5px #aaa;">
+            <h2>⚠️ """ + translations["Ryzyka"][lang] + """</h2>
             <p>Wykrywanie potencjalnych ryzyk i niekorzystnych zapisów w umowach.</p>
         </div>
-        <div style='flex: 1; min-width: 250px; max-width: 400px;'>
-            <h2>📊 {translations['Moje Analizy'][st.session_state.language]}</h2>
+        <div style="flex:1; min-width: 250px; max-width: 350px; border-radius: 20px; background-color: #f5f5f5; padding: 1rem; box-shadow: 0 0 5px #aaa;">
+            <h2>📋 """ + translations["Moje Analizy"][lang] + """</h2>
             <p>Przeglądanie historii wszystkich wykonanych analiz.</p>
         </div>
-    </div>
-
-    <div class='top-card' style='text-align: center; padding: 3rem; margin-top: 3rem;'>
-        <h2>🚀 {translations['Dlaczego UmowaAI?'][st.session_state.language]}</h2>
-        <ul style='list-style: none; font-size: 1.2em; padding: 0;'>
-            <li>✅ Intuicyjny i nowoczesny interfejs</li>
-            <li>✅ Wysoka skuteczność wykrywania niekorzystnych zapisów</li>
-            <li>✅ Bezpieczeństwo i poufność danych</li>
-            <li>✅ Historia wszystkich Twoich analiz</li>
-        </ul>
     </div>
     """, unsafe_allow_html=True)
 
 # --- ANALIZA UMOWY ---
-elif choice == translations["Analiza Umowy"][st.session_state.language]:
-    st.header(translations["Analiza Umowy"][st.session_state.language])
+elif choice == translations["Analiza Umowy"][lang]:
+    st.header(translations["Analiza Umowy"][lang])
 
     contract_text = st.text_area(
-        translations["Wprowadź lub załaduj tekst umowy."][st.session_state.language],
+        translations["Wprowadź lub załaduj tekst umowy."][lang],
         height=200
     )
 
     uploaded_file = st.file_uploader(
-        translations["Prześlij plik PDF"][st.session_state.language],
+        translations["Prześlij plik PDF"][lang],
         type=["pdf"]
     )
 
+    # Jeśli użytkownik załadował plik PDF, wczytaj tekst
     if uploaded_file:
         try:
             pdf = PdfReader(uploaded_file)
@@ -103,28 +93,28 @@ elif choice == translations["Analiza Umowy"][st.session_state.language]:
             st.error(f"Błąd podczas odczytu pliku PDF: {e}")
 
     if contract_text.strip() != "":
-        # Funkcja symulująca analizę i wykrywanie ryzyk z czułością
+        # Funkcja analizująca tekst - przykładowa, zamień na własną logikę
         def analyze_contract(text):
-            # Tutaj podmień na rzeczywistą analizę
+            # Przykładowe ryzyka z "czułością"
             return {
-                "Niejasne klauzule": 0.9,
+                "Niejasne klauzule": 0.89,
                 "Ryzyko kar umownych": 0.75,
-                "Nadmierna odpowiedzialność": 0.6
+                "Nadmierna odpowiedzialność": 0.62
             }
 
         risks = analyze_contract(contract_text)
 
-        st.subheader(translations["Ryzyka"][st.session_state.language])
-        for risk_name, sensitivity in risks.items():
-            st.write(f"- {risk_name}: {sensitivity*100:.0f}%")
+        st.subheader(translations["Ryzyka"][lang])
+        for risk, sensitivity in risks.items():
+            st.markdown(f"- **{risk}**: {sensitivity*100:.0f}%")
 
 # --- RYZYKA ---
-elif choice == translations["Ryzyka"][st.session_state.language]:
-    st.header(translations["Ryzyka"][st.session_state.language])
-    st.write("Tu możesz wyświetlić dodatkowe informacje o ryzykach.")
+elif choice == translations["Ryzyka"][lang]:
+    st.header(translations["Ryzyka"][lang])
+    st.write("Tutaj możesz dodać więcej informacji o ryzykach.")
 
 # --- MOJE ANALIZY ---
-elif choice == translations["Moje Analizy"][st.session_state.language]:
-    st.header(translations["Moje Analizy"][st.session_state.language])
-    st.write("Tu możesz wyświetlić zapisane analizy.")
+elif choice == translations["Moje Analizy"][lang]:
+    st.header(translations["Moje Analizy"][lang])
+    st.write("Tutaj możesz wyświetlić zapisane analizy.")
 
