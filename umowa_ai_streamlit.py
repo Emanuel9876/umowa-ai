@@ -12,7 +12,7 @@ from datetime import datetime
 
 st.set_page_config(page_title="Umowa AI", layout="wide")
 
-# Połączenie z bazą danych
+# --- Baza danych ---
 conn = sqlite3.connect("umowa_ai.db", check_same_thread=False)
 cursor = conn.cursor()
 cursor.execute('''
@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS analiza (
 ''')
 conn.commit()
 
+# --- Użytkownicy ---
 def load_users():
     if os.path.exists("users.json"):
         with open("users.json", "r") as f:
@@ -56,6 +57,7 @@ if "sensitivity" not in session_state:
 if "custom_keywords" not in session_state:
     session_state.custom_keywords = []
 
+# --- Tłumaczenia ---
 lang_options = {"PL": "Polski", "EN": "English", "DE": "Deutsch"}
 translations = {
     "Strona Główna": {"PL": "Strona Główna", "EN": "Home", "DE": "Startseite"},
@@ -75,33 +77,81 @@ selected_lang = st.sidebar.selectbox(
 )
 session_state.language = selected_lang
 
+# --- Styl ---
 st.markdown("""
 <style>
-/* (twój styl CSS z oryginału) */
+body {
+    background: linear-gradient(to right, #f2f6fc, #d1e0ff);
+    color: #333;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+h1, h2, h3 {
+    color: #0b3d91;
+    text-shadow: 0 0 3px #81a1ff;
+}
+.main-container {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 15px;
+    padding: 30px;
+    margin: 20px auto;
+    max-width: 1000px;
+    box-shadow: 0 0 20px rgba(30, 80, 200, 0.25);
+}
+.stButton>button {
+    background: linear-gradient(45deg, #2351fc, #76abff);
+    color: white;
+    border-radius: 15px;
+    font-weight: bold;
+    border: none;
+    padding: 10px 25px;
+    transition: 0.3s;
+    width: 100%;
+}
+.stButton>button:hover {
+    background: linear-gradient(45deg, #1828d3, #5382d6);
+    color: #e0eaff;
+}
+.sidebar .sidebar-content {
+    background: linear-gradient(to bottom, #dce8ff, #a3c4ff);
+}
+div[data-testid="stFileUploader"] > div > label {
+    font-weight: bold;
+    color: #0b3d91;
+}
+textarea, input, select {
+    border-radius: 10px;
+    border: 1px solid #7ca2ff;
+    padding: 8px;
+    width: 100%;
+}
 </style>
 
 <div class="stars"></div>
 """, unsafe_allow_html=True)
 
+# --- Funkcje ---
 def extract_text_from_pdf(file):
     try:
         pdf = PdfReader(file)
         text = ""
         for page in pdf.pages:
-            text += page.extract_text() + "\n"
+            txt = page.extract_text()
+            if txt:
+                text += txt + "\n"
         return text
     except:
         return ""
 
 def analyze_text(text, keywords):
-    results = []
+    found = []
     text_lower = text.lower()
     for kw in keywords:
         if kw.lower() in text_lower:
-            results.append(kw)
-    return results
+            found.append(kw)
+    return found
 
 def calculate_score(found_keywords):
+    # Prosty scoring - 10 punktów za każde znalezione słowo kluczowe
     return len(found_keywords) * 10
 
 def generate_summary(found_keywords):
@@ -160,13 +210,14 @@ menu = {
 
 selected_page = st.sidebar.radio("Menu", list(menu.values()))
 
+# --- Strony ---
 def show_home():
-    st.markdown("""
+    st.markdown(f"""
     <div class="main-container">
-        <h1>{title}</h1>
-        <h3>{subtitle}</h3>
-        <p>{desc1}</p>
-        <p>{desc2}</p>
+        <h1>{translations['Strona Główna'][session_state.language]}</h1>
+        <h3>{translations['Witaj w aplikacji'][session_state.language]}</h3>
+        <p>{translations['Twoim asystencie do analizy umów'][session_state.language]}</p>
+        <p>{translations['Automatycznie analizujemy dokumenty'][session_state.language]}<br>{translations['i prezentujemy je w czytelnej formie'][session_state.language]}</p>
         <ul>
             <li>Wczytaj dokument PDF</li>
             <li>Skonfiguruj czułość analizy</li>
@@ -174,16 +225,11 @@ def show_home():
             <li>Przeglądaj wyniki i zapisuj analizy</li>
         </ul>
     </div>
-    """.format(
-        title=translations["Strona Główna"][session_state.language],
-        subtitle=translations["Witaj w aplikacji"][session_state.language],
-        desc1=translations["Twoim asystencie do analizy umów"][session_state.language],
-        desc2=translations["Automatycznie analizujemy dokumenty"][session_state.language] + "<br>" + translations["i prezentujemy je w czytelnej formie"][session_state.language]
-    ), unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
 def show_analysis():
     st.title(menu["analysis"])
-    col1, col2 = st.columns([1,1])
+    col1, col2, col3 = st.columns([1,1,1])
 
     with col1:
         st.write("📄 Wczytaj plik PDF do analizy:")
@@ -191,29 +237,28 @@ def show_analysis():
         pdf_text = ""
         if uploaded_file is not None:
             pdf_text = extract_text_from_pdf(uploaded_file)
-            if not pdf_text.strip():
-                st.error("Nie udało się wyodrębnić tekstu z pliku PDF.")
-                return
-            st.text_area("Wyodrębniony tekst z PDF", pdf_text, height=200, max_chars=None)
+            if pdf_text.strip():
+                st.text_area("Wyodrębniony tekst z PDF", pdf_text, height=250)
 
     with col2:
         st.write("✍️ Wpisz / wklej treść umowy ręcznie do analizy:")
         manual_text = st.text_area("Treść umowy ręcznie", height=350)
 
-    sensitivity = st.selectbox("Wybierz czułość analizy", ["Niski", "Średni", "Wysoki"], index=1)
-    session_state.sensitivity = sensitivity
+    with col3:
+        sensitivity = st.selectbox("Wybierz czułość analizy", ["Niski", "Średni", "Wysoki"], index=1)
+        session_state.sensitivity = sensitivity
 
-    default_keywords = ["kara umowna", "odszkodowanie", "odpowiedzialność", "kara", "termin", "rozwiązanie", "odpowiedzialność"]
-    keywords = default_keywords + session_state.custom_keywords
+        default_keywords = ["kara umowna", "odszkodowanie", "odpowiedzialność", "kara", "termin", "rozwiązanie"]
+        keywords = default_keywords + session_state.custom_keywords
 
-    st.write("Dodaj własne słowa kluczowe (oddzielone przecinkami):")
-    custom_kw_input = st.text_input("", value=", ".join(session_state.custom_keywords))
-    if custom_kw_input:
-        session_state.custom_keywords = [kw.strip() for kw in custom_kw_input.split(",") if kw.strip()]
+        st.write("Dodaj własne słowa kluczowe (oddzielone przecinkami):")
+        custom_kw_input = st.text_input("", value=", ".join(session_state.custom_keywords))
+        if custom_kw_input:
+            session_state.custom_keywords = [kw.strip() for kw in custom_kw_input.split(",") if kw.strip()]
 
-    # Połącz oba teksty - PDF i ręczny
+    # Łączenie tekstów
     combined_text = ""
-    if pdf_text.strip():
+    if uploaded_file and pdf_text.strip():
         combined_text += pdf_text.strip()
     if manual_text.strip():
         if combined_text:
@@ -234,7 +279,7 @@ def show_analysis():
 
         save_analysis(session_state.username, combined_text, summary, score)
 
-        # Generowanie PDF podsumowania
+        # Generowanie PDF z podsumowaniem
         buffer = io.BytesIO()
         c = canvas.Canvas(buffer, pagesize=letter)
         c.setFont("Helvetica-Bold", 16)
@@ -258,7 +303,7 @@ def show_analysis():
 
 def show_risks():
     st.title(menu["risks"])
-    st.write("Strona z analizą i wykresami ryzyk (do implementacji).")
+    st.write("Strona z analizą i wykresami ryzyk (w budowie).")
 
 def show_my_analyses():
     st.title(menu["my_analyses"])
@@ -272,12 +317,14 @@ def show_my_analyses():
             st.write(r[2])
             st.markdown("---")
 
+# --- Logowanie / Nawigacja ---
 if not session_state.logged_in:
     login()
     register()
 else:
     st.sidebar.markdown(f"Witaj, **{session_state.username}**!")
     logout()
+
     if selected_page == menu["main"]:
         show_home()
     elif selected_page == menu["analysis"]:
