@@ -213,6 +213,7 @@ if plain_choice == "Strona Główna":
 
 elif plain_choice == "Analiza Umowy":
     st.header("📄 " + t("Analiza Umowy"))
+    full_text = ""  # <- Zapobiega błędowi NameError
     option = st.radio("Metoda:", ["PDF", "Tekst"])
     if option == "PDF":
         uploaded_file = st.file_uploader("Prześlij plik PDF", type="pdf")
