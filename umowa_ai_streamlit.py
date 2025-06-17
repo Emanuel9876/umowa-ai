@@ -128,8 +128,9 @@ if not session_state.logged_in:
                 st.sidebar.error("Błędny login lub hasło.")
     st.stop()
 
-# MENU - bez "Strona Główna"
+# Menu główne z ikonkami
 menu_options = [
+    ("Strona Główna", "\U0001F3E0"),
     ("Analiza Umowy", "\U0001F4C4"),
     ("Ryzyka", "\u26A0"),
     ("Moje Analizy", "\U0001F4CB")
@@ -207,74 +208,102 @@ def summarize_text(text):
     summary = ' '.join(sentences[:3]) if sentences else ""
     return summary
 
-if plain_choice == "Analiza Umowy":
-    st.header("📄 Analiza Umowy")
+if plain_choice == "Strona Główna":
+    # PRZYWRÓCONA STRONA GŁÓWNA, ale bez przycisku "Rozpocznij analizę teraz"
+    st.markdown("""
+        <div style='text-align: center; padding: 5vh 2vw;'>
+            <h1 style='font-size: 4.5em; margin-bottom: 0;'>🤖 UmowaAI</h1>
+            <p style='font-size: 1.7em; margin-top: 0;'>Twój osobisty asystent do analizy umów i wykrywania ryzyk</p>
+        </div>
 
-    uploaded_file = st.file_uploader("Wgraj plik PDF z umową", type=["pdf"])
-    manual_text = st.text_area("Lub wpisz / wklej treść umowy ręcznie", height=250)
+        <div class='top-card' style='display: flex; flex-direction: row; justify-content: space-around; flex-wrap: wrap; gap: 2rem; padding: 2rem;'>
+            <div style='flex: 1; min-width: 250px; max-width: 400px;'>
+                <h2>📄 Analiza Umowy</h2>
+                <p>Automatycznie analizujemy umowy PDF i wyciągamy kluczowe informacje.</p>
+            </div>
+            <div style='flex: 1; min-width: 250px; max-width: 400px;'>
+                <h2>⚠️ Wykrywanie Ryzyk</h2>
+                <p>Wykrywamy nieoczywiste haczyki i ryzyka w zapisach umownych.</p>
+            </div>
+            <div style='flex: 1; min-width: 250px; max-width: 400px;'>
+                <h2>📊 Statystyki i Historia</h2>
+                <p>Przeglądaj swoje wcześniejsze analizy i monitoruj trendy ryzyk.</p>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
 
-    sensitivity = st.sidebar.selectbox("Czułość wykrywania ryzyk", ["Niski", "Średni", "Wysoki"], index=["Niski", "Średni", "Wysoki"].index(session_state.sensitivity))
-    session_state.sensitivity = sensitivity
+elif plain_choice == "Analiza Umowy":
+    st.header(translations["Analiza Umowy"][session_state.language])
 
-    custom_keywords_input = st.sidebar.text_area("Dodatkowe słowa kluczowe (oddzielone przecinkami)")
-    if custom_keywords_input:
-        session_state.custom_keywords = [kw.strip() for kw in custom_keywords_input.split(",") if kw.strip()]
-    else:
-        session_state.custom_keywords = []
+    uploaded_file = st.file_uploader("Wgraj plik PDF lub wklej tekst umowy", type=["pdf", "txt"], accept_multiple_files=False)
 
-    # Pobierz tekst z PDF jeśli wgrany
-    if uploaded_file:
-        pdf_reader = PdfReader(uploaded_file)
-        text = ""
-        for page in pdf_reader.pages:
-            text += page.extract_text() or ""
-    else:
-        text = manual_text
-
-    if text.strip():
-        st.subheader("Wykryte ryzyka:")
-        risks_found = analyze_risks(text, sensitivity, session_state.custom_keywords)
-
-        if risks_found:
-            for category, count in risks_found.items():
-                st.markdown(f"- **{category}**: {count} razy")
+    input_text = ""
+    if uploaded_file is not None:
+        if uploaded_file.type == "application/pdf":
+            pdf_reader = PdfReader(uploaded_file)
+            for page in pdf_reader.pages:
+                input_text += page.extract_text() + "\n"
         else:
-            st.info("Nie wykryto istotnych ryzyk.")
+            input_text = uploaded_file.getvalue().decode("utf-8")
 
-        podsumowanie = summarize_text(text)
-        st.subheader("Podsumowanie umowy:")
-        st.write(podsumowanie)
+    if not input_text:
+        input_text = st.text_area("Lub wklej tekst umowy tutaj", height=300)
 
+    session_state.sensitivity = st.selectbox("Wybierz czułość wykrywania ryzyk", ["Niski", "Średni", "Wysoki"], index=["Niski", "Średni", "Wysoki"].index(session_state.sensitivity))
+    custom_kw_input = st.text_input("Dodaj własne słowa kluczowe (oddziel przecinkami)", value=",".join(session_state.custom_keywords))
+    session_state.custom_keywords = [x.strip() for x in custom_kw_input.split(",") if x.strip()]
+
+    if input_text:
+        summary = summarize_text(input_text)
+        risks_found = analyze_risks(input_text, session_state.sensitivity, session_state.custom_keywords)
         score = sum(risks_found.values())
 
-        # Zapisz analizę
-        save_analysis_to_db(session_state.username, text, podsumowanie, score)
+        st.subheader("Podsumowanie umowy")
+        st.write(summary)
 
-        # Pobierz PDF do pobrania
-        pdf_buffer = generate_pdf_report(text, podsumowanie, risks_found, session_state.username)
-        st.download_button("Pobierz raport PDF", pdf_buffer, file_name="raport_umowa.pdf", mime="application/pdf")
+        st.subheader("Wykryte ryzyka")
+        if risks_found:
+            for k, v in risks_found.items():
+                st.write(f"- {k}: {v}")
+        else:
+            st.write("Nie wykryto istotnych ryzyk.")
+
+        if st.button("Pobierz raport PDF"):
+            pdf_buffer = generate_pdf_report(input_text, summary, risks_found, session_state.username)
+            st.download_button("Pobierz raport PDF", pdf_buffer, file_name="raport_umowa.pdf", mime="application/pdf")
+
+        # Zapis analizy w bazie
+        save_analysis_to_db(session_state.username, input_text, summary, score)
 
 elif plain_choice == "Ryzyka":
-    st.header("⚠️ Ryzyka")
-
-    # Przykładowy wykres kołowy ryzyk
-    example_data = {"Finansowe": 10, "Prawne": 5, "Terminowe": 7}
-    fig, ax = plt.subplots()
-    ax.pie(example_data.values(), labels=example_data.keys(), autopct='%1.1f%%', startangle=90)
-    ax.axis('equal')
-    st.pyplot(fig)
+    st.header(translations["Ryzyka"][session_state.language])
+    user_analyses = load_user_analyses(session_state.username)
+    if not user_analyses:
+        st.write("Brak wcześniejszych analiz.")
+    else:
+        scores = [a[3] for a in user_analyses]
+        timestamps = [datetime.fromisoformat(a[4]) for a in user_analyses]
+        plt.figure(figsize=(10, 5))
+        sns.lineplot(x=timestamps, y=scores)
+        plt.title("Trend wykrytych ryzyk w czasie")
+        plt.xlabel("Data")
+        plt.ylabel("Liczba ryzyk")
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        st.pyplot(plt)
 
 elif plain_choice == "Moje Analizy":
-    st.header("🗂️ Moje Analizy")
-
+    st.header(translations["Moje Analizy"][session_state.language])
     analyses = load_user_analyses(session_state.username)
     if not analyses:
-        st.info("Nie znaleziono żadnych analiz.")
+        st.write("Nie znaleziono żadnych analiz.")
     else:
-        for id_, tekst, podsumowanie, score, timestamp in analyses:
-            with st.expander(f"Analiza z {timestamp[:19]} - Ryzyka: {score}"):
-                st.write("**Podsumowanie:**")
-                st.write(podsumowanie)
-                st.write("**Treść umowy:**")
-                st.write(tekst)
+        for a in analyses:
+            st.markdown(f"### Analiza z {a[4][:19]}")
+            st.write(f"Podsumowanie: {a[2]}")
+            st.write(f"Liczba ryzyk: {a[3]}")
+            if st.button(f"Pokaż pełny tekst #{a[0]}"):
+                st.write(a[1])
 
+# Zamknięcie połączenia z bazą przy zamknięciu aplikacji
+# (Streamlit sam kończy proces, więc nie jest to konieczne)
