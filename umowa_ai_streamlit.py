@@ -95,6 +95,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# Logowanie
 if not session_state.logged_in:
     st.sidebar.subheader("\U0001F510 Logowanie / Rejestracja")
     choice = st.sidebar.radio("Wybierz opcję", ["Zaloguj się", "Zarejestruj się"])
@@ -110,7 +111,6 @@ if not session_state.logged_in:
                 users[username] = hash_password(password)
                 save_users(users)
                 st.sidebar.success("Rejestracja zakończona sukcesem. Możesz się zalogować.")
-
     else:
         if st.sidebar.button("Zaloguj"):
             if username in users and users[username] == hash_password(password):
@@ -121,7 +121,7 @@ if not session_state.logged_in:
                 st.sidebar.error("Błędny login lub hasło.")
     st.stop()
 
-# Menu główne z ikonkami
+# Menu główne
 menu_options = [
     ("Strona Główna", "\U0001F3E0"),
     ("Analiza Umowy", "\U0001F4C4"),
@@ -130,9 +130,9 @@ menu_options = [
 ]
 translated_menu = [f"{icon} {translations[label][session_state.language]}" for label, icon in menu_options]
 menu_choice = st.sidebar.selectbox("Wybierz opcję", translated_menu)
-
 plain_choice = [label for label, icon in menu_options][translated_menu.index(menu_choice)]
 
+# 💡 NOWA STRONA GŁÓWNA
 if plain_choice == "Strona Główna":
     if "start_analysis" not in session_state:
         session_state.start_analysis = False
