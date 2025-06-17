@@ -261,17 +261,6 @@ st.markdown("""
         0 0 100px #33ffff inset;
     transform: scale(1.1);
 }
-
-/* Footer styling */
-.footer {
-    text-align: center;
-    margin: 40px auto 20px auto;
-    font-size: 1em;
-    color: #66ffff;
-    text-shadow:
-        0 0 10px #00ffff;
-    font-family: 'Orbitron', sans-serif;
-}
 </style>
 
 <div class="stars"></div>
@@ -309,7 +298,7 @@ def save_analysis(user, tekst, podsumowanie, score):
     conn.commit()
 
 def login():
-    st.sidebar.markdown("<h2>Logowanie</h2>", unsafe_allow_html=True)
+    st.sidebar.markdown("<h2>🔑 Logowanie</h2>", unsafe_allow_html=True)
     username = st.sidebar.text_input("Nazwa użytkownika")
     password = st.sidebar.text_input("Hasło", type="password")
     if st.sidebar.button("Zaloguj"):
@@ -318,121 +307,162 @@ def login():
             session_state.username = username
             st.sidebar.success(f"Zalogowano jako {username}")
         else:
-            st.sidebar.error("Niepoprawna nazwa użytkownika lub hasło")
+            st.sidebar.error("Nieprawidłowa nazwa użytkownika lub hasło")
 
 def register():
-    st.sidebar.markdown("<h2>Rejestracja</h2>", unsafe_allow_html=True)
-    new_user = st.sidebar.text_input("Nazwa użytkownika (nowy)")
-    new_pass = st.sidebar.text_input("Hasło (nowe)", type="password")
-    new_pass_confirm = st.sidebar.text_input("Potwierdź hasło", type="password")
+    st.sidebar.markdown("<h2>📝 Rejestracja</h2>", unsafe_allow_html=True)
+    new_user = st.sidebar.text_input("Nazwa użytkownika", key="reg_user")
+    new_pass = st.sidebar.text_input("Hasło", type="password", key="reg_pass")
+    new_pass2 = st.sidebar.text_input("Powtórz hasło", type="password", key="reg_pass2")
     if st.sidebar.button("Zarejestruj"):
-        if new_user and new_pass and new_pass == new_pass_confirm:
-            if new_user in users:
-                st.sidebar.error("Użytkownik już istnieje")
-            else:
-                users[new_user] = {"password": hash_password(new_pass)}
-                save_users(users)
-                st.sidebar.success("Konto utworzone! Zaloguj się.")
+        if not new_user or not new_pass:
+            st.sidebar.error("Wypełnij wszystkie pola")
+        elif new_user in users:
+            st.sidebar.error("Użytkownik już istnieje")
+        elif new_pass != new_pass2:
+            st.sidebar.error("Hasła nie są takie same")
         else:
-            st.sidebar.error("Wprowadź poprawne dane lub hasła się nie zgadzają")
+            users[new_user] = {"password": hash_password(new_pass)}
+            save_users(users)
+            st.sidebar.success("Rejestracja udana! Zaloguj się.")
+            st.experimental_rerun()
 
 def logout():
-    if st.sidebar.button("Wyloguj"):
+    if st.sidebar.button("🚪 Wyloguj się"):
         session_state.logged_in = False
         session_state.username = ""
         st.sidebar.success("Wylogowano")
+        st.experimental_rerun()
 
-def main_home():
+menu = {
+    "main": translations["Strona Główna"][session_state.language],
+    "analysis": translations["Analiza Umowy"][session_state.language],
+    "risks": translations["Ryzyka"][session_state.language],
+    "my_analyses": translations["Moje Analizy"][session_state.language],
+}
+
+selected_page = st.sidebar.radio("Menu", list(menu.values()))
+
+def show_home():
     st.markdown("""
     <div class="main-container">
-        <h1>Umowa AI</h1>
-        <h3>Twoim asystencie do analizy umów</h3>
-        <p>Automatycznie analizujemy dokumenty i prezentujemy je w czytelnej formie.</p>
+        <h1>{title}</h1>
+        <h3>{subtitle}</h3>
+        <p>{desc1}</p>
+        <p>{desc2}</p>
         <ul>
-            <li>Wczytaj umowę w formacie PDF lub TXT</li>
-            <li>Wybierz język i ustaw poziom czułości analizy</li>
-            <li>Sprawdź potencjalne ryzyka i otrzymaj podsumowanie</li>
-            <li>Zapisz swoje analizy i przeglądaj historię</li>
+            <li>Wczytaj dokument PDF</li>
+            <li>Skonfiguruj czułość analizy</li>
+            <li>Dodaj własne słowa kluczowe</li>
+            <li>Przeglądaj wyniki i zapisuj analizy</li>
         </ul>
-        <button onclick="window.location.href='#analiza'">Rozpocznij analizę</button>
     </div>
-    """, unsafe_allow_html=True)
+    """.format(
+        title=translations["Strona Główna"][session_state.language],
+        subtitle=translations["Witaj w aplikacji"][session_state.language],
+        desc1=translations["Twoim asystencie do analizy umów"][session_state.language],
+        desc2=translations["Automatycznie analizujemy dokumenty"][session_state.language] + "<br>" + translations["i prezentujemy je w czytelnej formie"][session_state.language]
+    ), unsafe_allow_html=True)
 
-def main_analysis():
-    st.header(translations["Analiza Umowy"][session_state.language])
-    uploaded_file = st.file_uploader("Wczytaj umowę (PDF lub TXT)", type=["pdf", "txt"])
-    if uploaded_file:
-        if uploaded_file.type == "application/pdf":
-            text = extract_text_from_pdf(uploaded_file)
-        else:
-            text = str(uploaded_file.read(), "utf-8")
-        st.text_area("Tekst umowy", text, height=200)
+def show_analysis():
+    st.title(menu["analysis"])
+    col1, col2 = st.columns([1,1])
 
-        sensitivity_map = {"Niski": 0.3, "Średni": 0.6, "Wysoki": 0.9}
-        sensitivity = st.selectbox("Poziom czułości analizy", ["Niski", "Średni", "Wysoki"], index=["Niski", "Średni", "Wysoki"].index(session_state.sensitivity))
-        session_state.sensitivity = sensitivity
+    with col1:
+        st.write("📄 Wczytaj plik PDF do analizy:")
+        uploaded_file = st.file_uploader("Wybierz plik PDF", type=["pdf"])
+        pdf_text = ""
+        if uploaded_file is not None:
+            pdf_text = extract_text_from_pdf(uploaded_file)
+            if not pdf_text.strip():
+                st.error("Nie udało się wyodrębnić tekstu z pliku PDF.")
+                return
+            st.text_area("Wyodrębniony tekst z PDF", pdf_text, height=200, max_chars=None)
 
-        # Przykładowe słowa kluczowe
-        base_keywords = ["kara umowna", "odpowiedzialność", "karencja", "termin", "wygaśnięcie", "płatność"]
-        custom = st.text_input("Dodaj własne słowa kluczowe, rozdzielone przecinkami", value=",".join(session_state.custom_keywords))
-        if custom:
-            session_state.custom_keywords = [kw.strip() for kw in custom.split(",") if kw.strip()]
-        keywords = base_keywords + session_state.custom_keywords
+    with col2:
+        st.write("✍️ Wpisz / wklej treść umowy ręcznie do analizy:")
+        manual_text = st.text_area("Treść umowy ręcznie", height=350)
 
-        if st.button("Analizuj umowę"):
-            found = analyze_text(text, keywords)
-            score = calculate_score(found)
-            summary = generate_summary(found)
+    # Ustawienia
+    sensitivity = st.selectbox("Wybierz czułość analizy", ["Niski", "Średni", "Wysoki"], index=1)
+    session_state.sensitivity = sensitivity
 
-            st.success(f"Znaleziono {len(found)} ryzyk: {', '.join(found)}")
-            st.info(summary)
-            st.metric(label="Wskaźnik ryzyka", value=f"{score} %")
+    default_keywords = ["kara umowna", "odszkodowanie", "odpowiedzialność", "kara", "termin", "rozwiązanie", "odpowiedzialność"]
+    keywords = default_keywords + session_state.custom_keywords
 
-            if session_state.logged_in:
-                save_analysis(session_state.username, text, summary, score)
-            else:
-                st.warning("Zaloguj się, aby zapisać analizę.")
+    st.write("Dodaj własne słowa kluczowe (oddzielone przecinkami):")
+    custom_kw_input = st.text_input("", value=", ".join(session_state.custom_keywords))
+    if custom_kw_input:
+        session_state.custom_keywords = [kw.strip() for kw in custom_kw_input.split(",") if kw.strip()]
 
-def main_my_analyses():
-    st.header(translations["Moje Analizy"][session_state.language])
-    if not session_state.logged_in:
-        st.warning("Zaloguj się, aby przeglądać swoje analizy.")
-        return
+    # Połącz tekst z PDF i tekst ręczny do analizy
+    combined_text = (pdf_text or "") + "\n" + (manual_text or "")
 
-    cursor.execute('SELECT tekst, podsumowanie, score, timestamp FROM analiza WHERE user = ? ORDER BY timestamp DESC', (session_state.username,))
+    if st.button("Analizuj"):
+        if not combined_text.strip():
+            st.error("Proszę wczytać plik PDF lub wpisać tekst umowy ręcznie.")
+            return
+
+        found = analyze_text(combined_text, keywords)
+        score = calculate_score(found)
+        summary = generate_summary(found)
+
+        st.success(summary)
+        st.write(f"Wskaźnik ryzyka: {score}")
+
+        save_analysis(session_state.username, combined_text, summary, score)
+
+        # Pobieranie podsumowania PDF
+        buffer = io.BytesIO()
+        c = canvas.Canvas(buffer, pagesize=letter)
+        c.setFont("Helvetica-Bold", 16)
+        c.setFillColorRGB(0, 1, 1)
+        c.drawString(72, 720, "Podsumowanie analizy umowy")
+        c.setFont("Helvetica", 12)
+        c.setFillColorRGB(0.5, 1, 1)
+        c.drawString(72, 690, f"Data: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        c.drawString(72, 670, f"Użytkownik: {session_state.username}")
+        c.drawString(72, 640, "Podsumowanie:")
+        text_object = c.beginText(72, 620)
+        text_object.setFont("Helvetica", 12)
+        text_object.setFillColorRGB(0.5, 1, 1)
+        for line in summary.split(", "):
+            text_object.textLine("- " + line)
+        c.drawText(text_object)
+        c.showPage()
+        c.save()
+        buffer.seek(0)
+        st.download_button("Pobierz podsumowanie PDF", buffer, file_name="podsumowanie_umowy.pdf", mime="application/pdf")
+
+def show_risks():
+    st.title(menu["risks"])
+    st.write("Strona z analizą i wykresami ryzyk (do implementacji).")
+
+def show_my_analyses():
+    st.title(menu["my_analyses"])
+    cursor.execute("SELECT id, timestamp, podsumowanie, score FROM analiza WHERE user=?", (session_state.username,))
     rows = cursor.fetchall()
     if not rows:
         st.info("Brak zapisanych analiz.")
-        return
-
-    for i, (tekst, podsumowanie, score, timestamp) in enumerate(rows, 1):
-        with st.expander(f"Analiza #{i} z {timestamp} — Score: {score}%"):
-            st.text_area("Tekst umowy", tekst, height=150)
-            st.write("Podsumowanie:", podsumowanie)
-
-def main():
-    st.sidebar.title("Menu")
-    if not session_state.logged_in:
-        login()
-        st.sidebar.markdown("---")
-        register()
     else:
-        st.sidebar.markdown(f"Witaj, **{session_state.username}**")
-        logout()
+        for r in rows:
+            st.markdown(f"**ID:** {r[0]} | **Data:** {r[1]} | **Wskaźnik ryzyka:** {r[3]}")
+            st.write(r[2])
+            st.markdown("---")
 
+if not session_state.logged_in:
+    login()
     st.sidebar.markdown("---")
+    register()
+else:
+    st.sidebar.markdown(f"**Zalogowany jako:** {session_state.username}")
+    logout()
 
-    page = st.sidebar.radio(
-        "Nawigacja",
-        [translations["Strona Główna"][session_state.language], translations["Analiza Umowy"][session_state.language], translations["Moje Analizy"][session_state.language]]
-    )
-
-    if page == translations["Strona Główna"][session_state.language]:
-        main_home()
-    elif page == translations["Analiza Umowy"][session_state.language]:
-        main_analysis()
-    elif page == translations["Moje Analizy"][session_state.language]:
-        main_my_analyses()
-
-if __name__ == "__main__":
-    main()
+    if selected_page == menu["main"]:
+        show_home()
+    elif selected_page == menu["analysis"]:
+        show_analysis()
+    elif selected_page == menu["risks"]:
+        show_risks()
+    elif selected_page == menu["my_analyses"]:
+        show_my_analyses()
