@@ -7,22 +7,11 @@ import sqlite3
 import json
 import hashlib
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 import matplotlib.pyplot as plt
 import seaborn as sns
 import matplotlib
-import openai
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 matplotlib.use('Agg')
-
-# Konfiguracja GPT i emaili
-openai.api_key = os.getenv("OPENAI_API_KEY")
-EMAIL_SENDER = "twoj@email.com"
-EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
-SMTP_SERVER = "smtp.gmail.com"
-SMTP_PORT = 587
 
 st.set_page_config(page_title="Umowa AI", layout="wide")
 
@@ -40,7 +29,6 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS analiza (
 conn.commit()
 
 # Użytkownicy
-
 def load_users():
     if os.path.exists("users.json"):
         with open("users.json", "r") as f:
@@ -54,47 +42,6 @@ def save_users(users):
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
-def is_premium(user):
-    premium_until = users.get(user, {}).get("premium_until")
-    if premium_until:
-        return datetime.fromisoformat(premium_until) > datetime.now()
-    return False
-
-def can_analyze(user):
-    cursor.execute("SELECT COUNT(*) FROM analiza WHERE user = ? AND timestamp > ?", (user, (datetime.now() - timedelta(days=30)).isoformat()))
-    count = cursor.fetchone()[0]
-    return is_premium(user) or count < 3
-
-def send_email(to, subject, body):
-    try:
-        msg = MIMEMultipart()
-        msg['From'] = EMAIL_SENDER
-        msg['To'] = to
-        msg['Subject'] = subject
-        msg.attach(MIMEText(body, 'plain'))
-        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
-        server.starttls()
-        server.login(EMAIL_SENDER, EMAIL_PASSWORD)
-        server.send_message(msg)
-        server.quit()
-    except Exception as e:
-        print(f"Błąd wysyłki maila: {e}")
-
-def analyze_with_gpt(text):
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": "Jesteś prawnikiem. Rozpoznaj typ umowy, analizuj ryzyka, podsumuj umowę."},
-                {"role": "user", "content": text}
-            ],
-            max_tokens=1000,
-            temperature=0.3
-        )
-        return response.choices[0].message.content.strip()
-    except Exception as e:
-        return f"Błąd analizy AI: {e}"
-
 users = load_users()
 session_state = st.session_state
 
@@ -105,8 +52,51 @@ if "logged_in" not in session_state:
 if "language" not in session_state:
     session_state.language = "PL"
 
+lang_options = {"PL": "Polski", "EN": "English", "DE": "Deutsch"}
+translations = {
+    "Strona Główna": {"PL": "Strona Główna", "EN": "Home", "DE": "Startseite"},
+    "Analiza Umowy": {"PL": "Analiza Umowy", "EN": "Contract Analysis", "DE": "Vertragsanalyse"},
+    "Ryzyka": {"PL": "Ryzyka", "EN": "Risks", "DE": "Risiken"},
+    "Moje Analizy": {"PL": "Moje Analizy", "EN": "My Analyses", "DE": "Meine Analysen"},
+    "Witaj w aplikacji": {"PL": "Witaj w aplikacji", "EN": "Welcome to the app", "DE": "Willkommen in der App"},
+    "Twoim asystencie do analizy umów": {"PL": "Twoim asystencie do analizy umów", "EN": "Your contract analysis assistant", "DE": "Ihr Vertragsanalyse-Assistent"},
+    "Automatycznie analizujemy dokumenty": {"PL": "Automatycznie analizujemy dokumenty", "EN": "We automatically analyze documents", "DE": "Wir analysieren automatisch Dokumente"},
+    "i prezentujemy je w czytelnej formie": {"PL": "i prezentujemy je w czytelnej formie", "EN": "and present them in a clear form", "DE": "und präsentieren sie in klarer Form"},
+}
+
+selected_lang = st.sidebar.selectbox("\U0001F310 Wybierz język / Select Language / Sprache wählen", list(lang_options.keys()), format_func=lambda x: lang_options[x])
+session_state.language = selected_lang
+
+# Styl nowoczesny z gradientem
+st.markdown("""
+    <style>
+        .stApp {
+            background: linear-gradient(to right, #2c3e50, #3498db);
+            font-family: 'Segoe UI', sans-serif;
+        }
+        html, body, [class*="css"] {
+            background-color: transparent !important;
+            color: #ffffff !important;
+        }
+        h1, h2, h3, h4, h5, h6, p, div, span, label {
+            color: #ffffff !important;
+        }
+        .top-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+        ul {
+            list-style-type: disc;
+            padding-left: 2rem;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 if not session_state.logged_in:
-    st.sidebar.subheader("🔐 Logowanie / Rejestracja")
+    st.sidebar.subheader("\U0001F510 Logowanie / Rejestracja")
     choice = st.sidebar.radio("Wybierz opcję", ["Zaloguj się", "Zarejestruj się"])
 
     username = st.sidebar.text_input("Login")
@@ -117,17 +107,13 @@ if not session_state.logged_in:
             if username in users:
                 st.sidebar.warning("Użytkownik już istnieje.")
             else:
-                users[username] = {
-                    "password": hash_password(password),
-                    "premium_until": (datetime.now() + timedelta(days=7)).isoformat()
-                }
+                users[username] = hash_password(password)
                 save_users(users)
                 st.sidebar.success("Rejestracja zakończona sukcesem. Możesz się zalogować.")
 
     else:
         if st.sidebar.button("Zaloguj"):
-            user = users.get(username)
-            if user and user.get("password") == hash_password(password):
+            if username in users and users[username] == hash_password(password):
                 session_state.logged_in = True
                 session_state.username = username
                 st.rerun()
@@ -135,70 +121,61 @@ if not session_state.logged_in:
                 st.sidebar.error("Błędny login lub hasło.")
     st.stop()
 
-# STRONA GŁÓWNA (przywrócony oryginalny wygląd)
-st.markdown("""
-    <style>
-    body {
-        background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
-        color: white;
-    }
-    .main-title {
-        font-size: 48px;
-        font-weight: bold;
-        text-align: center;
-        margin-top: 30px;
-    }
-    .subtitle {
-        font-size: 24px;
-        text-align: center;
-        margin-bottom: 50px;
-    }
-    .card {
-        background-color: rgba(255, 255, 255, 0.1);
-        border-radius: 15px;
-        padding: 20px;
-        margin: 20px;
-        color: white;
-    }
-    </style>
-""", unsafe_allow_html=True)
+# Menu główne z ikonkami
+menu_options = [
+    ("Strona Główna", "\U0001F3E0"),
+    ("Analiza Umowy", "\U0001F4C4"),
+    ("Ryzyka", "\u26A0"),
+    ("Moje Analizy", "\U0001F4CB")
+]
+translated_menu = [f"{icon} {translations[label][session_state.language]}" for label, icon in menu_options]
+menu_choice = st.sidebar.selectbox("Wybierz opcję", translated_menu)
 
-st.markdown("""
-<div class="main-title">🤖 <span style='color:white'>UmowaAI</span></div>
-<div class="subtitle">Twój osobisty asystent do analizy umów i wykrywania ryzyk</div>
-""", unsafe_allow_html=True)
+plain_choice = [label for label, icon in menu_options][translated_menu.index(menu_choice)]
 
-col1, col2, col3 = st.columns(3)
-with col1:
+if plain_choice == "Strona Główna":
+    if "start_analysis" not in session_state:
+        session_state.start_analysis = False
+
+    if session_state.start_analysis:
+        plain_choice = "Analiza Umowy"
+        session_state.start_analysis = False
+        st.rerun()
+
     st.markdown("""
-    <div class="card">
-        <h3>📄 Analiza Umowy</h3>
-        <p>Automatycznie analizujemy umowy PDF i wyciągamy kluczowe informacje.</p>
-    </div>
-    """, unsafe_allow_html=True)
-with col2:
-    st.markdown("""
-    <div class="card">
-        <h3>⚠️ Wykrywanie Ryzyk</h3>
-        <p>Wykrywamy nieoczywiste haczyki i ryzyka w zapisach umownych.</p>
-    </div>
-    """, unsafe_allow_html=True)
-with col3:
-    st.markdown("""
-    <div class="card">
-        <h3>📊 Twoje Analizy</h3>
-        <p>Przeglądaj i porównuj wszystkie swoje wcześniejsze analizy w przejrzysty sposób.</p>
-    </div>
+        <div style='text-align: center; padding: 5vh 2vw;'>
+            <h1 style='font-size: 4.5em; margin-bottom: 0;'>🤖 UmowaAI</h1>
+            <p style='font-size: 1.7em; margin-top: 0;'>Twój osobisty asystent do analizy umów i wykrywania ryzyk</p>
+        </div>
+
+        <div class='top-card' style='display: flex; flex-direction: row; justify-content: space-around; flex-wrap: wrap; gap: 2rem; padding: 2rem;'>
+            <div style='flex: 1; min-width: 250px; max-width: 400px;'>
+                <h2>📄 Analiza Umowy</h2>
+                <p>Automatycznie analizujemy umowy PDF i wyciągamy kluczowe informacje.</p>
+            </div>
+            <div style='flex: 1; min-width: 250px; max-width: 400px;'>
+                <h2>⚠️ Wykrywanie Ryzyk</h2>
+                <p>Wykrywamy nieoczywiste haczyki i ryzyka w zapisach umownych.</p>
+            </div>
+            <div style='flex: 1; min-width: 250px; max-width: 400px;'>
+                <h2>📊 Twoje Analizy</h2>
+                <p>Przeglądaj i porównuj wszystkie swoje wcześniejsze analizy w przejrzysty sposób.</p>
+            </div>
+        </div>
+
+        <div class='top-card' style='text-align: center; padding: 3rem; margin-top: 3rem;'>
+            <h2>🚀 Dlaczego UmowaAI?</h2>
+            <ul style='list-style: none; font-size: 1.2em; padding: 0;'>
+                <li>✅ Intuicyjny i nowoczesny interfejs</li>
+                <li>✅ Wysoka skuteczność wykrywania niekorzystnych zapisów</li>
+                <li>✅ Bezpieczeństwo i poufność danych</li>
+                <li>✅ Historia wszystkich Twoich analiz</li>
+            </ul>
+        </div>
     """, unsafe_allow_html=True)
 
-st.markdown("""
-<div class="card">
-    <h3>🚀 Dlaczego UmowaAI?</h3>
-    <ul>
-        <li>✅ Intuicyjny i nowoczesny interfejs</li>
-        <li>✅ Wysoka skuteczność wykrywania niekorzystnych zapisów</li>
-        <li>✅ Bezpieczeństwo i poufność danych</li>
-        <li>✅ Historia wszystkich Twoich analiz</li>
-    </ul>
-</div>
-""", unsafe_allow_html=True)
+    if st.button("🔍 Rozpocznij analizę teraz"):
+        session_state.start_analysis = True
+        st.rerun()
+
+# pozostała część kodu (Analiza Umowy, Ryzyka, Moje Analizy) pozostaje bez zmian
