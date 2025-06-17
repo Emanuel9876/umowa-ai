@@ -74,30 +74,69 @@ translations = {
 selected_lang = st.sidebar.selectbox("\U0001F310 Wybierz język / Select Language / Sprache wählen", list(lang_options.keys()), format_func=lambda x: lang_options[x])
 session_state.language = selected_lang
 
-# Przywrócenie starego designu (ciemne tło, bez gradientu)
+# Nowy styl jasnoniebieski z gradientem i nowoczesny układ dla strony głównej
 st.markdown("""
     <style>
+        /* Body and background gradient */
         .stApp {
-            background-color: #1e1e1e;
-            color: #e0e0e0;
+            background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
+            color: #0a1e3f;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            padding-bottom: 3rem;
         }
+        /* Sidebar background */
         .css-1d391kg {
-            background-color: #2c2c2c !important;
+            background-color: #f0f8ff !important;
+            color: #0a1e3f !important;
         }
+        /* Headers and text */
         h1, h2, h3, h4, h5, h6, p, div, span, label {
-            color: #e0e0e0 !important;
+            color: #0a1e3f !important;
         }
+        /* Card style for homepage */
         .top-card {
-            background: #292929;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 0 10px #00000088;
+            background: white;
+            border-radius: 15px;
+            padding: 40px 50px;
+            margin: 40px auto;
+            max-width: 700px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            line-height: 1.6;
         }
+        /* List style */
         ul {
             list-style-type: disc;
             padding-left: 1.5rem;
+            text-align: left;
+            max-width: 600px;
+            margin: 20px auto 0 auto;
+            font-size: 1.2em;
+            color: #0a1e3f;
+        }
+        /* Stronger buttons style */
+        div.stButton > button:first-child {
+            background-color: #3a86ff;
+            color: white;
+            border-radius: 8px;
+            padding: 0.5em 1.5em;
+            border: none;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+        div.stButton > button:first-child:hover {
+            background-color: #265ecf;
+            cursor: pointer;
+        }
+        /* Text area styling */
+        textarea {
+            background-color: #e8f0fe !important;
+            color: #0a1e3f !important;
+            border-radius: 8px !important;
+            border: 1px solid #a1c4fd !important;
+            font-size: 1em !important;
+            padding: 10px !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -209,11 +248,11 @@ def summarize_text(text):
     return summary
 
 if plain_choice == "Strona Główna":
-    st.markdown("""
-        <div style='text-align: center; padding: 5vh 2vw;'>
+    st.markdown(f"""
+        <div class="top-card">
             <h1 style='font-size: 4.5em; margin-bottom: 0;'>🤖 UmowaAI</h1>
-            <p style='font-size: 1.7em; margin-top: 0;'>Twój asystent do analizy umów</p>
-            <ul style='text-align: left; max-width: 600px; margin: auto; font-size: 1.3em;'>
+            <p style='font-size: 1.7em; margin-top: 0; font-weight: 600;'>Twój asystent do analizy umów</p>
+            <ul>
                 <li>Automatycznie analizujemy dokumenty</li>
                 <li>Prezentujemy najważniejsze informacje w czytelnej formie</li>
                 <li>Pomagamy identyfikować ryzyka i pułapki prawne</li>
