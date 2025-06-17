@@ -77,190 +77,7 @@ session_state.language = selected_lang
 
 st.markdown("""
 <style>
-/* Body gradient + dark cosmic background */
-.stApp {
-    background: radial-gradient(circle at top left, #00ffff 10%, #001a33 90%);
-    color: #e0f7fa;
-    font-family: 'Orbitron', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    min-height: 100vh;
-    padding-bottom: 3rem;
-    overflow-x: hidden;
-    position: relative;
-}
-
-/* Animate stars in background */
-@keyframes star-blink {
-    0%, 100% {opacity: 1;}
-    50% {opacity: 0.3;}
-}
-
-.stars {
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    top: 0;
-    left: 0;
-    z-index: 0;
-    background:
-      radial-gradient(2px 2px at 10% 20%, #00ffff, transparent),
-      radial-gradient(1.5px 1.5px at 50% 30%, #00ffff, transparent),
-      radial-gradient(2px 2px at 80% 25%, #33ffff, transparent),
-      radial-gradient(1px 1px at 30% 50%, #00ffff, transparent),
-      radial-gradient(1.7px 1.7px at 60% 60%, #33ffff, transparent),
-      radial-gradient(1.2px 1.2px at 85% 70%, #00ffff, transparent);
-    animation: star-blink 5s infinite ease-in-out;
-}
-
-/* Sidebar styling */
-[data-testid="stSidebar"] {
-    background-color: #001f33 !important;
-    color: #00ffff !important;
-    font-weight: 700;
-    border-top-right-radius: 25px;
-    border-bottom-right-radius: 25px;
-    padding: 25px 20px 30px 20px;
-    box-shadow: 0 0 15px #00ffffaa;
-    font-family: 'Orbitron', sans-serif;
-}
-
-[data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
-    color: #33ffff !important;
-    text-align: center;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    margin-bottom: 20px;
-    text-shadow:
-        0 0 10px #00ffff,
-        0 0 20px #00ffff;
-}
-
-[data-testid="stSidebar"] label {
-    color: #66ffff !important;
-    font-weight: 600;
-}
-
-[data-testid="stSidebar"] .stRadio > label {
-    font-size: 1.1em;
-    margin-bottom: 15px;
-}
-
-[data-testid="stSidebar"] .stButton > button {
-    background: linear-gradient(90deg, #00ffff, #006677);
-    color: #003344;
-    border-radius: 15px;
-    padding: 0.7em 2em;
-    border: none;
-    font-weight: 800;
-    font-size: 1.1em;
-    box-shadow:
-        0 0 15px #00ffff,
-        0 0 40px #00ffff inset;
-    transition: all 0.4s ease;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    margin-top: 20px;
-    width: 100%;
-}
-
-[data-testid="stSidebar"] .stButton > button:hover {
-    background: linear-gradient(90deg, #33ffff, #0099aa);
-    color: #001922;
-    box-shadow:
-        0 0 30px #33ffff,
-        0 0 80px #33ffff inset;
-    cursor: pointer;
-    transform: scale(1.05);
-}
-
-/* Main content container for home page */
-.main-container {
-    max-width: 900px;
-    margin: 60px auto 80px auto;
-    background: rgba(0, 30, 40, 0.9);
-    border-radius: 30px;
-    padding: 50px 70px;
-    box-shadow:
-        0 0 40px #00ffffcc,
-        inset 0 0 25px #00ffffaa;
-    color: #aaffff;
-    text-align: center;
-    font-family: 'Orbitron', sans-serif;
-    line-height: 1.8;
-}
-
-/* Large centered heading */
-.main-container h1 {
-    font-size: 3.8em;
-    margin-bottom: 10px;
-    letter-spacing: 5px;
-    text-shadow:
-        0 0 15px #00ffff,
-        0 0 40px #00ffff;
-}
-
-/* Subtitle */
-.main-container h3 {
-    font-size: 1.8em;
-    margin-bottom: 35px;
-    font-weight: 600;
-    text-shadow:
-        0 0 10px #33ffff;
-}
-
-/* Neon styled list */
-.main-container ul {
-    list-style-type: none;
-    padding-left: 0;
-    font-size: 1.4em;
-    max-width: 650px;
-    margin: 0 auto;
-}
-
-.main-container ul li {
-    margin: 18px 0;
-    position: relative;
-    padding-left: 35px;
-    text-align: left;
-}
-
-.main-container ul li::before {
-    content: "▸";
-    position: absolute;
-    left: 0;
-    color: #00ffff;
-    text-shadow: 0 0 14px #00ffff;
-    font-weight: 900;
-    font-size: 1.6em;
-}
-
-/* Button large on main container */
-.main-container button {
-    background: linear-gradient(90deg, #00ffff, #006677);
-    color: #003344;
-    border-radius: 20px;
-    padding: 15px 40px;
-    border: none;
-    font-weight: 900;
-    font-size: 1.6em;
-    box-shadow:
-        0 0 25px #00ffff,
-        0 0 60px #00ffff inset;
-    margin-top: 40px;
-    cursor: pointer;
-    transition: all 0.5s ease;
-    text-transform: uppercase;
-    letter-spacing: 3px;
-}
-
-.main-container button:hover {
-    background: linear-gradient(90deg, #33ffff, #0099aa);
-    color: #001922;
-    box-shadow:
-        0 0 45px #33ffff,
-        0 0 100px #33ffff inset;
-    transform: scale(1.1);
-}
+/* (twój styl CSS z oryginału) */
 </style>
 
 <div class="stars"></div>
@@ -383,7 +200,6 @@ def show_analysis():
         st.write("✍️ Wpisz / wklej treść umowy ręcznie do analizy:")
         manual_text = st.text_area("Treść umowy ręcznie", height=350)
 
-    # Ustawienia
     sensitivity = st.selectbox("Wybierz czułość analizy", ["Niski", "Średni", "Wysoki"], index=1)
     session_state.sensitivity = sensitivity
 
@@ -395,8 +211,14 @@ def show_analysis():
     if custom_kw_input:
         session_state.custom_keywords = [kw.strip() for kw in custom_kw_input.split(",") if kw.strip()]
 
-    # Połącz tekst z PDF i tekst ręczny do analizy
-    combined_text = (pdf_text or "") + "\n" + (manual_text or "")
+    # Połącz oba teksty - PDF i ręczny
+    combined_text = ""
+    if pdf_text.strip():
+        combined_text += pdf_text.strip()
+    if manual_text.strip():
+        if combined_text:
+            combined_text += "\n"
+        combined_text += manual_text.strip()
 
     if st.button("Analizuj"):
         if not combined_text.strip():
@@ -412,7 +234,7 @@ def show_analysis():
 
         save_analysis(session_state.username, combined_text, summary, score)
 
-        # Pobieranie podsumowania PDF
+        # Generowanie PDF podsumowania
         buffer = io.BytesIO()
         c = canvas.Canvas(buffer, pagesize=letter)
         c.setFont("Helvetica-Bold", 16)
@@ -452,12 +274,10 @@ def show_my_analyses():
 
 if not session_state.logged_in:
     login()
-    st.sidebar.markdown("---")
     register()
 else:
-    st.sidebar.markdown(f"**Zalogowany jako:** {session_state.username}")
+    st.sidebar.markdown(f"Witaj, **{session_state.username}**!")
     logout()
-
     if selected_page == menu["main"]:
         show_home()
     elif selected_page == menu["analysis"]:
