@@ -1,18 +1,14 @@
 import streamlit as st
-import re
 from PyPDF2 import PdfReader
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
-import io
-import sqlite3
-import json
 import hashlib
+import json
+import sqlite3
 import os
 from datetime import datetime
 
 st.set_page_config(page_title="Umowa AI", layout="wide")
 
-# Połączenie z bazą danych
+# --- Baza danych i użytkownicy (szkielet) ---
 conn = sqlite3.connect("umowa_ai.db", check_same_thread=False)
 cursor = conn.cursor()
 cursor.execute('''
@@ -41,21 +37,22 @@ def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
 users = load_users()
-session_state = st.session_state
 
-if "logged_in" not in session_state:
-    session_state.logged_in = False
-    session_state.username = ""
+# --- Stan sesji ---
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+    st.session_state.username = ""
 
-if "language" not in session_state:
-    session_state.language = "PL"
+if "language" not in st.session_state:
+    st.session_state.language = "PL"
 
-if "sensitivity" not in session_state:
-    session_state.sensitivity = "Średni"
+if "sensitivity" not in st.session_state:
+    st.session_state.sensitivity = "Średni"
 
-if "custom_keywords" not in session_state:
-    session_state.custom_keywords = []
+if "custom_keywords" not in st.session_state:
+    st.session_state.custom_keywords = []
 
+# --- Tłumaczenia ---
 lang_options = {"PL": "Polski", "EN": "English", "DE": "Deutsch"}
 translations = {
     "Strona Główna": {"PL": "Strona Główna", "EN": "Home", "DE": "Startseite"},
@@ -66,53 +63,31 @@ translations = {
     "Twoim asystencie do analizy umów": {"PL": "Twoim asystencie do analizy umów", "EN": "Your contract analysis assistant", "DE": "Ihr Vertragsanalyse-Assistent"},
     "Automatycznie analizujemy dokumenty": {"PL": "Automatycznie analizujemy dokumenty", "EN": "We automatically analyze documents", "DE": "Wir analysieren automatisch Dokumente"},
     "i prezentujemy je w czytelnej formie": {"PL": "i prezentujemy je w czytelnej formie", "EN": "and present them in a clear form", "DE": "und präsentieren sie in klarer Form"},
+    "Wczytaj PDF z umową": {"PL": "Wczytaj PDF z umową", "EN": "Upload contract PDF", "DE": "Vertrags-PDF hochladen"},
+    "Wybierz czułość analizy": {"PL": "Wybierz czułość analizy", "EN": "Choose analysis sensitivity", "DE": "Analyseempfindlichkeit wählen"},
+    "Dodaj własne słowa kluczowe (oddziel przecinkami)": {"PL": "Dodaj własne słowa kluczowe (oddziel przecinkami)", "EN": "Add custom keywords (comma separated)", "DE": "Eigene Schlüsselwörter hinzufügen (kommagetrennt)"},
+    "Rozpocznij analizę": {"PL": "Rozpocznij analizę", "EN": "Start analysis", "DE": "Analyse starten"},
+    "Zaloguj się": {"PL": "Zaloguj się", "EN": "Log In", "DE": "Anmelden"},
+    "Zarejestruj się": {"PL": "Zarejestruj się", "EN": "Sign Up", "DE": "Registrieren"},
+    "Wyloguj się": {"PL": "Wyloguj się", "EN": "Log Out", "DE": "Abmelden"},
+    "Login": {"PL": "Login", "EN": "Login", "DE": "Benutzername"},
+    "Hasło": {"PL": "Hasło", "EN": "Password", "DE": "Passwort"},
+    "Nie masz konta?": {"PL": "Nie masz konta?", "EN": "Don't have an account?", "DE": "Kein Konto?"},
+    "Zarejestruj się teraz": {"PL": "Zarejestruj się teraz", "EN": "Sign up now", "DE": "Jetzt registrieren"},
 }
 
-selected_lang = st.sidebar.selectbox(
-    "\U0001F310 Wybierz język / Select Language / Sprache wählen",
-    list(lang_options.keys()),
-    format_func=lambda x: lang_options[x]
-)
-session_state.language = selected_lang
+# --- Styl CSS ---
 
 st.markdown("""
 <style>
-/* Body gradient + dark cosmic background */
 .stApp {
-    background: radial-gradient(circle at top left, #00ffff 10%, #001a33 90%);
-    color: #e0f7fa;
+    background: radial-gradient(circle at top left, #001a33 10%, #000d1a 90%);
+    color: #aaffff;
     font-family: 'Orbitron', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     min-height: 100vh;
     padding-bottom: 3rem;
-    overflow-x: hidden;
-    position: relative;
 }
 
-/* Animate stars in background */
-@keyframes star-blink {
-    0%, 100% {opacity: 1;}
-    50% {opacity: 0.3;}
-}
-
-.stars {
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    top: 0;
-    left: 0;
-    z-index: 0;
-    background:
-      radial-gradient(2px 2px at 10% 20%, #00ffff, transparent),
-      radial-gradient(1.5px 1.5px at 50% 30%, #00ffff, transparent),
-      radial-gradient(2px 2px at 80% 25%, #33ffff, transparent),
-      radial-gradient(1px 1px at 30% 50%, #00ffff, transparent),
-      radial-gradient(1.7px 1.7px at 60% 60%, #33ffff, transparent),
-      radial-gradient(1.2px 1.2px at 85% 70%, #00ffff, transparent);
-    animation: star-blink 5s infinite ease-in-out;
-}
-
-/* Sidebar styling */
 [data-testid="stSidebar"] {
     background-color: #001f33 !important;
     color: #00ffff !important;
@@ -173,7 +148,6 @@ st.markdown("""
     transform: scale(1.05);
 }
 
-/* Main content container for home page */
 .main-container {
     max-width: 900px;
     margin: 60px auto 80px auto;
@@ -189,9 +163,8 @@ st.markdown("""
     line-height: 1.8;
 }
 
-/* Large centered heading */
 .main-container h1 {
-    font-size: 3.8em;
+    font-size: 4em;
     margin-bottom: 10px;
     letter-spacing: 5px;
     text-shadow:
@@ -199,29 +172,36 @@ st.markdown("""
         0 0 40px #00ffff;
 }
 
-/* Subtitle */
 .main-container h3 {
-    font-size: 1.8em;
-    margin-bottom: 35px;
+    font-size: 2em;
+    margin-bottom: 25px;
     font-weight: 600;
     text-shadow:
         0 0 10px #33ffff;
 }
 
-/* Neon styled list */
+.main-container p {
+    font-size: 1.3em;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 1.5em;
+    color: #88eeffcc;
+}
+
 .main-container ul {
     list-style-type: none;
     padding-left: 0;
-    font-size: 1.4em;
+    font-size: 1.3em;
     max-width: 650px;
-    margin: 0 auto;
+    margin: 0 auto 2.5em auto;
+    text-align: left;
 }
 
 .main-container ul li {
-    margin: 18px 0;
+    margin: 15px 0;
     position: relative;
     padding-left: 35px;
-    text-align: left;
 }
 
 .main-container ul li::before {
@@ -234,19 +214,18 @@ st.markdown("""
     font-size: 1.6em;
 }
 
-/* Button large on main container */
 .main-container button {
     background: linear-gradient(90deg, #00ffff, #006677);
     color: #003344;
     border-radius: 20px;
-    padding: 15px 40px;
+    padding: 15px 50px;
     border: none;
     font-weight: 900;
     font-size: 1.6em;
     box-shadow:
         0 0 30px #00ffff,
         0 0 80px #00ffff inset;
-    margin-top: 50px;
+    margin-top: 40px;
     cursor: pointer;
     transition: all 0.4s ease;
     letter-spacing: 2px;
@@ -261,7 +240,6 @@ st.markdown("""
     transform: scale(1.05);
 }
 
-/* Analysis page layout */
 .analysis-container {
     max-width: 900px;
     margin: 60px auto 80px auto;
@@ -277,7 +255,7 @@ st.markdown("""
 
 .analysis-container h1 {
     font-size: 3em;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
     letter-spacing: 3px;
     text-align: center;
     background: -webkit-linear-gradient(#00ffff, #33ffff);
@@ -361,119 +339,234 @@ st.markdown("""
     transform: scale(1.05);
 }
 
+.login-container {
+    max-width: 400px;
+    margin: 80px auto;
+    background: rgba(0, 30, 40, 0.9);
+    border-radius: 25px;
+    padding: 40px 50px;
+    box-shadow:
+        0 0 35px #00ffffcc,
+        inset 0 0 20px #00ffffaa;
+    color: #aaffff;
+    font-family: 'Orbitron', sans-serif;
+    text-align: center;
+}
+
+.login-container h2 {
+    margin-bottom: 25px;
+    font-size: 2.5em;
+    letter-spacing: 3px;
+    text-shadow:
+        0 0 10px #00ffff,
+        0 0 30px #33ffff;
+}
+
+.login-container label {
+    display: block;
+    text-align: left;
+    font-weight: 700;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+    color: #66ffff;
+}
+
+.login-container input {
+    width: 100%;
+    padding: 10px 15px;
+    margin-bottom: 25px;
+    font-size: 1.1em;
+    border-radius: 12px;
+    border: 2px solid #00cccc;
+    background: #002244;
+    color: #00ffff;
+    outline: none;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.login-container button {
+    width: 100%;
+    padding: 12px 0;
+    background: linear-gradient(90deg, #00ffff, #006677);
+    border: none;
+    border-radius: 20px;
+    color: #003344;
+    font-weight: 900;
+    font-size: 1.3em;
+    box-shadow:
+        0 0 30px #00ffff,
+        0 0 80px #00ffff inset;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: all 0.4s ease;
+}
+
+.login-container button:hover {
+    background: linear-gradient(90deg, #33ffff, #0099aa);
+    color: #001922;
+    box-shadow:
+        0 0 50px #33ffff,
+        0 0 120px #33ffff inset;
+    transform: scale(1.05);
+}
+
 </style>
 """, unsafe_allow_html=True)
 
-# Gwiazdy w tle
-st.markdown('<div class="stars"></div>', unsafe_allow_html=True)
-
-
-def show_home():
-    st.markdown(f"""
-    <div class="main-container">
-        <h1 style="font-size:4em; background: -webkit-linear-gradient(#00ffff, #33ffff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-            {translations["Strona Główna"][session_state.language]}
-        </h1>
-        <h3 style="font-size:2em; color:#66ffff;">{translations["Witaj w aplikacji"][session_state.language]}</h3>
-        <p style="font-size:1.3em; margin-top:1.5em;">
-            {translations["Twoim asystencie do analizy umów"][session_state.language]}
-        </p>
-        <p style="font-size:1.3em;">
-            {translations["Automatycznie analizujemy dokumenty"][session_state.language]}<br>
-            {translations["i prezentujemy je w czytelnej formie"][session_state.language]}
-        </p>
-        <ul style="margin-top:2em;">
-            <li>📥 Wczytaj dokument PDF</li>
-            <li>🎯 Skonfiguruj czułość analizy</li>
-            <li>🧠 Dodaj własne słowa kluczowe</li>
-            <li>📊 Przeglądaj wyniki i zapisuj analizy</li>
-        </ul>
-        <button onclick="window.scrollTo(0, document.body.scrollHeight);" style="margin-top:50px;">
-            Rozpocznij analizę
-        </button>
-    </div>
-    """, unsafe_allow_html=True)
-
-
-def show_analysis():
-    st.markdown("""
-    <div class="analysis-container">
-        <h1>Analiza Umowy</h1>
-        <div class="analysis-row">
-            <div class="analysis-column">
-                <label for="pdf_input">Wczytaj PDF z umową</label>
-                uploaded_file = st.file_uploader("", type=["pdf"])
-            </div>
-            <div class="analysis-column">
-                <label for="sensitivity_select">Wybierz czułość analizy</label>
-                sensitivity = st.selectbox("", ["Niski", "Średni", "Wysoki"], index=1)
-                
-                <label for="custom_keywords_input">Dodaj własne słowa kluczowe (oddziel przecinkami)</label>
-                custom_keywords = st.text_input("", placeholder="np. kara umowna, odszkodowanie, termin zapłaty")
-            </div>
-        </div>
-        <button class="analysis-button">Rozpocznij analizę</button>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Poniżej dodajemy działanie formularza Streamlit, bo powyższy HTML to tylko stylizacja
-    # Nie da się bezpośrednio mieszać streamlitowych inputów w raw HTML, więc trzeba wywołać Streamlit inputy w Pythonie
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        uploaded_file = st.file_uploader(translations["Wczytaj PDF z umową"][session_state.language] if "Wczytaj PDF z umową" in translations else "Wczytaj PDF z umową", type=["pdf"])
-    with col2:
-        sensitivity = st.selectbox(
-            translations["Wybierz czułość analizy"][session_state.language] if "Wybierz czułość analizy" in translations else "Wybierz czułość analizy",
-            ["Niski", "Średni", "Wysoki"],
-            index=["Niski", "Średni", "Wysoki"].index(session_state.sensitivity)
-        )
-        custom_keywords = st.text_input(
-            translations["Dodaj własne słowa kluczowe (oddziel przecinkami)"][session_state.language] if "Dodaj własne słowa kluczowe (oddziel przecinkami)" in translations else "Dodaj własne słowa kluczowe (oddziel przecinkami)",
-            value=",".join(session_state.custom_keywords)
-        )
-    if st.button(translations["Rozpocznij analizę"][session_state.language] if "Rozpocznij analizę" in translations else "Rozpocznij analizę"):
-        session_state.sensitivity = sensitivity
-        session_state.custom_keywords = [kw.strip() for kw in custom_keywords.split(",") if kw.strip()]
-        if uploaded_file is not None:
-            text = extract_text_from_pdf(uploaded_file)
-            st.success("PDF został wczytany i przetworzony.")
-            # Tutaj możesz wywołać funkcję analizy umowy
-            st.write("Treść umowy:")
-            st.write(text)
-        else:
-            st.error("Proszę wczytać plik PDF.")
-
+# --- Funkcje ---
 
 def extract_text_from_pdf(pdf_file):
     pdf_reader = PdfReader(pdf_file)
     text = ""
     for page in pdf_reader.pages:
-        text += page.extract_text() + "\n"
+        extracted = page.extract_text()
+        if extracted:
+            text += extracted + "\n"
     return text
 
+# --- UI Funkcje ---
+
+def login_page():
+    st.markdown('<div class="login-container">', unsafe_allow_html=True)
+    st.markdown(f"<h2>{translations['Zaloguj się'][st.session_state.language]}</h2>", unsafe_allow_html=True)
+    username = st.text_input(translations["Login"][st.session_state.language])
+    password = st.text_input(translations["Hasło"][st.session_state.language], type="password")
+    if st.button(translations["Zaloguj się"][st.session_state.language]):
+        if username in users and users[username] == hash_password(password):
+            st.session_state.logged_in = True
+            st.session_state.username = username
+            st.success(f"Zalogowano jako {username}")
+        else:
+            st.error("Nieprawidłowy login lub hasło.")
+    st.markdown(f"<p>{translations['Nie masz konta?'][st.session_state.language]} <a href='#' onclick='window.location.reload();'>{translations['Zarejestruj się teraz'][st.session_state.language]}</a></p>", unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+def signup_page():
+    st.markdown('<div class="login-container">', unsafe_allow_html=True)
+    st.markdown(f"<h2>{translations['Zarejestruj się'][st.session_state.language]}</h2>", unsafe_allow_html=True)
+    new_username = st.text_input(translations["Login"][st.session_state.language], key="signup_user")
+    new_password = st.text_input(translations["Hasło"][st.session_state.language], type="password", key="signup_pass")
+    if st.button(translations["Zarejestruj się"][st.session_state.language]):
+        if new_username in users:
+            st.error("Użytkownik już istnieje.")
+        elif len(new_password) < 5:
+            st.error("Hasło jest za krótkie (min 5 znaków).")
+        elif new_username.strip() == "":
+            st.error("Login nie może być pusty.")
+        else:
+            users[new_username] = hash_password(new_password)
+            save_users(users)
+            st.success("Rejestracja zakończona pomyślnie! Możesz się teraz zalogować.")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+def show_home():
+    st.markdown("""
+    <div class="main-container">
+        <h1>Umowa AI</h1>
+        <h3>Twoim asystencie do analizy umów</h3>
+        <p>Witaj w naszej aplikacji, która wspiera Cię w szybkiej i precyzyjnej analizie umów. Dzięki nowoczesnym technologiom automatycznie przetwarzamy dokumenty, identyfikując kluczowe zagadnienia i potencjalne ryzyka.</p>
+        <p>Naszym celem jest ułatwienie Twojej pracy prawniczej lub biznesowej poprzez:</p>
+        <ul>
+            <li>📥 Proste wczytywanie dokumentów PDF</li>
+            <li>🎯 Regulację czułości analizy dla optymalnych wyników</li>
+            <li>🧠 Możliwość dodania własnych słów kluczowych do wyszukiwania</li>
+            <li>📊 Intuicyjne prezentowanie wyników oraz eksport raportów</li>
+            <li>🔒 Bezpieczeństwo Twoich danych i analiz dzięki logowaniu</li>
+        </ul>
+        <p>Przekonaj się sam, jak łatwo możesz zoptymalizować analizę umów i minimalizować ryzyka.</p>
+        <button onclick="window.scrollTo(0, document.body.scrollHeight);">Rozpocznij analizę</button>
+    </div>
+    """, unsafe_allow_html=True)
+
+def show_analysis():
+    st.markdown('<div class="analysis-container">', unsafe_allow_html=True)
+    st.markdown(f"<h1>{translations['Analiza Umowy'][st.session_state.language]}</h1>", unsafe_allow_html=True)
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        uploaded_file = st.file_uploader(translations["Wczytaj PDF z umową"][st.session_state.language], type=["pdf"])
+    with col2:
+        sensitivity = st.selectbox(
+            translations["Wybierz czułość analizy"][st.session_state.language],
+            ["Niski", "Średni", "Wysoki"],
+            index=["Niski", "Średni", "Wysoki"].index(st.session_state.sensitivity)
+        )
+        custom_keywords = st.text_input(
+            translations["Dodaj własne słowa kluczowe (oddziel przecinkami)"][st.session_state.language],
+            value=",".join(st.session_state.custom_keywords)
+        )
+
+    if st.button(translations["Rozpocznij analizę"][st.session_state.language]):
+        if uploaded_file is None:
+            st.error("Proszę wczytać plik PDF.")
+            return
+
+        st.session_state.sensitivity = sensitivity
+        st.session_state.custom_keywords = [kw.strip() for kw in custom_keywords.split(",") if kw.strip()]
+        text = extract_text_from_pdf(uploaded_file)
+        st.success("PDF został wczytany i przetworzony.")
+
+        # Prosty przykład analizy: liczymy wystąpienia słów kluczowych
+        keywords = {
+            "Niski": ["opłata", "termin", "odpowiedzialność"],
+            "Średni": ["kara", "odstąpienie", "zobowiązanie"],
+            "Wysoki": ["kara umowna", "odszkodowanie", "wypowiedzenie", "niezgodność"]
+        }
+        keywords_to_search = keywords[sensitivity] + st.session_state.custom_keywords
+
+        found = {}
+        text_lower = text.lower()
+        for kw in keywords_to_search:
+            found[kw] = text_lower.count(kw.lower())
+
+        st.markdown("<hr>", unsafe_allow_html=True)
+        st.markdown("### Wyniki analizy:")
+        for kw, count in found.items():
+            st.write(f"🔹 Słowo kluczowe '{kw}': znaleziono {count} razy")
+
+        # Tutaj można dodać generowanie podsumowania, wykrywanie ryzyk itp.
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
 def main():
     st.sidebar.title("Umowa AI")
+    lang = st.sidebar.radio("Język / Language / Sprache", options=list(lang_options.keys()), index=list(lang_options.keys()).index(st.session_state.language))
+    st.session_state.language = lang
 
-    pages = {
-        "home": show_home,
-        "analysis": show_analysis,
-        # Dodaj inne podstrony tutaj
-    }
+    if not st.session_state.logged_in:
+        auth_action = st.sidebar.radio("", ["Zaloguj się", "Zarejestruj się"])
+        if auth_action == "Zaloguj się":
+            login_page()
+        else:
+            signup_page()
+    else:
+        st.sidebar.markdown(f"👤 Zalogowany jako: **{st.session_state.username}**")
+        if st.sidebar.button(translations["Wyloguj się"][st.session_state.language]):
+            st.session_state.logged_in = False
+            st.session_state.username = ""
+            st.experimental_rerun()
 
-    page = st.sidebar.radio(
-        "Nawigacja",
-        options=["home", "analysis"],
-        format_func=lambda x: {
-            "home": translations["Strona Główna"][session_state.language],
-            "analysis": translations["Analiza Umowy"][session_state.language],
-        }[x]
-    )
+        menu = st.sidebar.radio(
+            "Nawigacja",
+            [
+                translations["Strona Główna"][lang],
+                translations["Analiza Umowy"][lang],
+                translations["Moje Analizy"][lang]
+            ]
+        )
 
-    pages[page]()
-
+        if menu == translations["Strona Główna"][lang]:
+            show_home()
+        elif menu == translations["Analiza Umowy"][lang]:
+            show_analysis()
+        elif menu == translations["Moje Analizy"][lang]:
+            st.markdown("""
+            <div class="main-container">
+                <h1>Twoje poprzednie analizy</h1>
+                <p>Ta funkcja zostanie wkrótce dodana.</p>
+            </div>
+            """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
