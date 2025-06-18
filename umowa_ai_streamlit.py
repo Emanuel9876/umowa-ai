@@ -244,225 +244,236 @@ st.markdown("""
     font-weight: 900;
     font-size: 1.6em;
     box-shadow:
-        0 0 25px #00ffff,
-        0 0 60px #00ffff inset;
-    margin-top: 40px;
+        0 0 30px #00ffff,
+        0 0 80px #00ffff inset;
+    margin-top: 50px;
     cursor: pointer;
-    transition: all 0.5s ease;
-    text-transform: uppercase;
-    letter-spacing: 3px;
+    transition: all 0.4s ease;
+    letter-spacing: 2px;
 }
 
 .main-container button:hover {
     background: linear-gradient(90deg, #33ffff, #0099aa);
     color: #001922;
     box-shadow:
-        0 0 45px #33ffff,
-        0 0 100px #33ffff inset;
-    transform: scale(1.1);
+        0 0 50px #33ffff,
+        0 0 120px #33ffff inset;
+    transform: scale(1.05);
 }
-</style>
 
-<div class="stars"></div>
+/* Analysis page layout */
+.analysis-container {
+    max-width: 900px;
+    margin: 60px auto 80px auto;
+    background: rgba(0, 30, 40, 0.85);
+    border-radius: 30px;
+    padding: 40px 60px;
+    box-shadow:
+        0 0 40px #00ffffcc,
+        inset 0 0 25px #00ffffaa;
+    color: #aaffff;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.analysis-container h1 {
+    font-size: 3em;
+    margin-bottom: 20px;
+    letter-spacing: 3px;
+    text-align: center;
+    background: -webkit-linear-gradient(#00ffff, #33ffff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow:
+        0 0 10px #00ffff,
+        0 0 30px #33ffff;
+}
+
+.analysis-row {
+    display: flex;
+    gap: 30px;
+    margin-top: 30px;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.analysis-column {
+    flex: 1 1 45%;
+    min-width: 320px;
+}
+
+.analysis-column textarea {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1em;
+    border-radius: 15px;
+    padding: 15px;
+    background: #001a33;
+    color: #00ffff;
+    border: 2px solid #00cccc;
+    resize: vertical;
+    min-height: 160px;
+}
+
+.analysis-column select, .analysis-column input {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.1em;
+    border-radius: 12px;
+    background: #002244;
+    color: #00ffff;
+    border: 2px solid #00cccc;
+    padding: 8px 12px;
+    width: 100%;
+    margin-top: 10px;
+    margin-bottom: 20px;
+    outline: none;
+}
+
+.analysis-column label {
+    font-weight: 700;
+    font-size: 1.2em;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.analysis-button {
+    display: block;
+    margin: 0 auto;
+    background: linear-gradient(90deg, #00ffff, #006677);
+    color: #003344;
+    border-radius: 20px;
+    padding: 15px 40px;
+    border: none;
+    font-weight: 900;
+    font-size: 1.5em;
+    box-shadow:
+        0 0 30px #00ffff,
+        0 0 80px #00ffff inset;
+    cursor: pointer;
+    transition: all 0.4s ease;
+    letter-spacing: 2px;
+}
+
+.analysis-button:hover {
+    background: linear-gradient(90deg, #33ffff, #0099aa);
+    color: #001922;
+    box-shadow:
+        0 0 50px #33ffff,
+        0 0 120px #33ffff inset;
+    transform: scale(1.05);
+}
+
+</style>
 """, unsafe_allow_html=True)
 
-def extract_text_from_pdf(file):
-    try:
-        pdf = PdfReader(file)
-        text = ""
-        for page in pdf.pages:
-            text += page.extract_text() + "\n"
-        return text
-    except:
-        return ""
+# Gwiazdy w tle
+st.markdown('<div class="stars"></div>', unsafe_allow_html=True)
 
-def analyze_text(text, keywords):
-    results = []
-    text_lower = text.lower()
-    for kw in keywords:
-        if kw.lower() in text_lower:
-            results.append(kw)
-    return results
-
-def calculate_score(found_keywords):
-    return len(found_keywords) * 10
-
-def generate_summary(found_keywords):
-    if not found_keywords:
-        return "Brak wykrytych kluczowych ryzyk."
-    return "Wykryte ryzyka: " + ", ".join(found_keywords)
-
-def save_analysis(user, tekst, podsumowanie, score):
-    timestamp = datetime.now().isoformat(timespec='seconds')
-    cursor.execute('INSERT INTO analiza (user, tekst, podsumowanie, score, timestamp) VALUES (?, ?, ?, ?, ?)', (user, tekst, podsumowanie, score, timestamp))
-    conn.commit()
-
-def login():
-    st.sidebar.markdown("<h2>🔑 Logowanie</h2>", unsafe_allow_html=True)
-    username = st.sidebar.text_input("Nazwa użytkownika")
-    password = st.sidebar.text_input("Hasło", type="password")
-    if st.sidebar.button("Zaloguj"):
-        if username in users and users[username]["password"] == hash_password(password):
-            session_state.logged_in = True
-            session_state.username = username
-            st.sidebar.success(f"Zalogowano jako {username}")
-        else:
-            st.sidebar.error("Nieprawidłowa nazwa użytkownika lub hasło")
-
-def register():
-    st.sidebar.markdown("<h2>📝 Rejestracja</h2>", unsafe_allow_html=True)
-    new_user = st.sidebar.text_input("Nazwa użytkownika", key="reg_user")
-    new_pass = st.sidebar.text_input("Hasło", type="password", key="reg_pass")
-    new_pass2 = st.sidebar.text_input("Powtórz hasło", type="password", key="reg_pass2")
-    if st.sidebar.button("Zarejestruj"):
-        if not new_user or not new_pass:
-            st.sidebar.error("Wypełnij wszystkie pola")
-        elif new_user in users:
-            st.sidebar.error("Użytkownik już istnieje")
-        elif new_pass != new_pass2:
-            st.sidebar.error("Hasła nie są takie same")
-        else:
-            users[new_user] = {"password": hash_password(new_pass)}
-            save_users(users)
-            st.sidebar.success("Rejestracja udana! Zaloguj się.")
-            st.experimental_rerun()
-
-def logout():
-    if st.sidebar.button("🚪 Wyloguj się"):
-        session_state.logged_in = False
-        session_state.username = ""
-        st.sidebar.success("Wylogowano")
-        st.experimental_rerun()
-
-menu = {
-    "main": translations["Strona Główna"][session_state.language],
-    "analysis": translations["Analiza Umowy"][session_state.language],
-    "risks": translations["Ryzyka"][session_state.language],
-    "my_analyses": translations["Moje Analizy"][session_state.language],
-}
-
-selected_page = st.sidebar.radio("Menu", list(menu.values()))
 
 def show_home():
-    st.markdown("""
+    st.markdown(f"""
     <div class="main-container">
-        <h1>{title}</h1>
-        <h3>{subtitle}</h3>
-        <p>{desc1}</p>
-        <p>{desc2}</p>
-        <ul>
-            <li>Wczytaj dokument PDF</li>
-            <li>Skonfiguruj czułość analizy</li>
-            <li>Dodaj własne słowa kluczowe</li>
-            <li>Przeglądaj wyniki i zapisuj analizy</li>
+        <h1 style="font-size:4em; background: -webkit-linear-gradient(#00ffff, #33ffff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+            {translations["Strona Główna"][session_state.language]}
+        </h1>
+        <h3 style="font-size:2em; color:#66ffff;">{translations["Witaj w aplikacji"][session_state.language]}</h3>
+        <p style="font-size:1.3em; margin-top:1.5em;">
+            {translations["Twoim asystencie do analizy umów"][session_state.language]}
+        </p>
+        <p style="font-size:1.3em;">
+            {translations["Automatycznie analizujemy dokumenty"][session_state.language]}<br>
+            {translations["i prezentujemy je w czytelnej formie"][session_state.language]}
+        </p>
+        <ul style="margin-top:2em;">
+            <li>📥 Wczytaj dokument PDF</li>
+            <li>🎯 Skonfiguruj czułość analizy</li>
+            <li>🧠 Dodaj własne słowa kluczowe</li>
+            <li>📊 Przeglądaj wyniki i zapisuj analizy</li>
         </ul>
+        <button onclick="window.scrollTo(0, document.body.scrollHeight);" style="margin-top:50px;">
+            Rozpocznij analizę
+        </button>
     </div>
-    """.format(
-        title=translations["Strona Główna"][session_state.language],
-        subtitle=translations["Witaj w aplikacji"][session_state.language],
-        desc1=translations["Twoim asystencie do analizy umów"][session_state.language],
-        desc2=translations["Automatycznie analizujemy dokumenty"][session_state.language] + "<br>" + translations["i prezentujemy je w czytelnej formie"][session_state.language]
-    ), unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
+
 
 def show_analysis():
-    st.title(menu["analysis"])
-    col1, col2 = st.columns([1,1])
+    st.markdown("""
+    <div class="analysis-container">
+        <h1>Analiza Umowy</h1>
+        <div class="analysis-row">
+            <div class="analysis-column">
+                <label for="pdf_input">Wczytaj PDF z umową</label>
+                uploaded_file = st.file_uploader("", type=["pdf"])
+            </div>
+            <div class="analysis-column">
+                <label for="sensitivity_select">Wybierz czułość analizy</label>
+                sensitivity = st.selectbox("", ["Niski", "Średni", "Wysoki"], index=1)
+                
+                <label for="custom_keywords_input">Dodaj własne słowa kluczowe (oddziel przecinkami)</label>
+                custom_keywords = st.text_input("", placeholder="np. kara umowna, odszkodowanie, termin zapłaty")
+            </div>
+        </div>
+        <button class="analysis-button">Rozpocznij analizę</button>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Poniżej dodajemy działanie formularza Streamlit, bo powyższy HTML to tylko stylizacja
+    # Nie da się bezpośrednio mieszać streamlitowych inputów w raw HTML, więc trzeba wywołać Streamlit inputy w Pythonie
+
+    col1, col2 = st.columns(2)
 
     with col1:
-        st.write("📄 Wczytaj plik PDF do analizy:")
-        uploaded_file = st.file_uploader("Wybierz plik PDF", type=["pdf"])
-        pdf_text = ""
-        if uploaded_file is not None:
-            pdf_text = extract_text_from_pdf(uploaded_file)
-            if not pdf_text.strip():
-                st.error("Nie udało się wyodrębnić tekstu z pliku PDF.")
-                return
-            st.text_area("Wyodrębniony tekst z PDF", pdf_text, height=200, max_chars=None)
-
+        uploaded_file = st.file_uploader(translations["Wczytaj PDF z umową"][session_state.language] if "Wczytaj PDF z umową" in translations else "Wczytaj PDF z umową", type=["pdf"])
     with col2:
-        st.write("✍️ Wpisz / wklej treść umowy ręcznie do analizy:")
-        manual_text = st.text_area("Treść umowy ręcznie", height=350)
+        sensitivity = st.selectbox(
+            translations["Wybierz czułość analizy"][session_state.language] if "Wybierz czułość analizy" in translations else "Wybierz czułość analizy",
+            ["Niski", "Średni", "Wysoki"],
+            index=["Niski", "Średni", "Wysoki"].index(session_state.sensitivity)
+        )
+        custom_keywords = st.text_input(
+            translations["Dodaj własne słowa kluczowe (oddziel przecinkami)"][session_state.language] if "Dodaj własne słowa kluczowe (oddziel przecinkami)" in translations else "Dodaj własne słowa kluczowe (oddziel przecinkami)",
+            value=",".join(session_state.custom_keywords)
+        )
+    if st.button(translations["Rozpocznij analizę"][session_state.language] if "Rozpocznij analizę" in translations else "Rozpocznij analizę"):
+        session_state.sensitivity = sensitivity
+        session_state.custom_keywords = [kw.strip() for kw in custom_keywords.split(",") if kw.strip()]
+        if uploaded_file is not None:
+            text = extract_text_from_pdf(uploaded_file)
+            st.success("PDF został wczytany i przetworzony.")
+            # Tutaj możesz wywołać funkcję analizy umowy
+            st.write("Treść umowy:")
+            st.write(text)
+        else:
+            st.error("Proszę wczytać plik PDF.")
 
-    # Ustawienia
-    sensitivity = st.selectbox("Wybierz czułość analizy", ["Niski", "Średni", "Wysoki"], index=1)
-    session_state.sensitivity = sensitivity
 
-    default_keywords = ["kara umowna", "odszkodowanie", "odpowiedzialność", "kara", "termin", "rozwiązanie", "odpowiedzialność"]
-    keywords = default_keywords + session_state.custom_keywords
+def extract_text_from_pdf(pdf_file):
+    pdf_reader = PdfReader(pdf_file)
+    text = ""
+    for page in pdf_reader.pages:
+        text += page.extract_text() + "\n"
+    return text
 
-    st.write("Dodaj własne słowa kluczowe (oddzielone przecinkami):")
-    custom_kw_input = st.text_input("", value=", ".join(session_state.custom_keywords))
-    if custom_kw_input:
-        session_state.custom_keywords = [kw.strip() for kw in custom_kw_input.split(",") if kw.strip()]
 
-    # Połącz tekst z PDF i tekst ręczny do analizy
-    combined_text = (pdf_text or "") + "\n" + (manual_text or "")
+def main():
+    st.sidebar.title("Umowa AI")
 
-    if st.button("Analizuj"):
-        if not combined_text.strip():
-            st.error("Proszę wczytać plik PDF lub wpisać tekst umowy ręcznie.")
-            return
+    pages = {
+        "home": show_home,
+        "analysis": show_analysis,
+        # Dodaj inne podstrony tutaj
+    }
 
-        found = analyze_text(combined_text, keywords)
-        score = calculate_score(found)
-        summary = generate_summary(found)
+    page = st.sidebar.radio(
+        "Nawigacja",
+        options=["home", "analysis"],
+        format_func=lambda x: {
+            "home": translations["Strona Główna"][session_state.language],
+            "analysis": translations["Analiza Umowy"][session_state.language],
+        }[x]
+    )
 
-        st.success(summary)
-        st.write(f"Wskaźnik ryzyka: {score}")
+    pages[page]()
 
-        save_analysis(session_state.username, combined_text, summary, score)
 
-        # Pobieranie podsumowania PDF
-        buffer = io.BytesIO()
-        c = canvas.Canvas(buffer, pagesize=letter)
-        c.setFont("Helvetica-Bold", 16)
-        c.setFillColorRGB(0, 1, 1)
-        c.drawString(72, 720, "Podsumowanie analizy umowy")
-        c.setFont("Helvetica", 12)
-        c.setFillColorRGB(0.5, 1, 1)
-        c.drawString(72, 690, f"Data: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        c.drawString(72, 670, f"Użytkownik: {session_state.username}")
-        c.drawString(72, 640, "Podsumowanie:")
-        text_object = c.beginText(72, 620)
-        text_object.setFont("Helvetica", 12)
-        text_object.setFillColorRGB(0.5, 1, 1)
-        for line in summary.split(", "):
-            text_object.textLine("- " + line)
-        c.drawText(text_object)
-        c.showPage()
-        c.save()
-        buffer.seek(0)
-        st.download_button("Pobierz podsumowanie PDF", buffer, file_name="podsumowanie_umowy.pdf", mime="application/pdf")
-
-def show_risks():
-    st.title(menu["risks"])
-    st.write("Strona z analizą i wykresami ryzyk (do implementacji).")
-
-def show_my_analyses():
-    st.title(menu["my_analyses"])
-    cursor.execute("SELECT id, timestamp, podsumowanie, score FROM analiza WHERE user=?", (session_state.username,))
-    rows = cursor.fetchall()
-    if not rows:
-        st.info("Brak zapisanych analiz.")
-    else:
-        for r in rows:
-            st.markdown(f"**ID:** {r[0]} | **Data:** {r[1]} | **Wskaźnik ryzyka:** {r[3]}")
-            st.write(r[2])
-            st.markdown("---")
-
-if not session_state.logged_in:
-    login()
-    st.sidebar.markdown("---")
-    register()
-else:
-    st.sidebar.markdown(f"**Zalogowany jako:** {session_state.username}")
-    logout()
-
-    if selected_page == menu["main"]:
-        show_home()
-    elif selected_page == menu["analysis"]:
-        show_analysis()
-    elif selected_page == menu["risks"]:
-        show_risks()
-    elif selected_page == menu["my_analyses"]:
-        show_my_analyses()
+if __name__ == "__main__":
+    main()
