@@ -6,3 +6,6 @@ seaborn
 plotly
 scikit-learn
 python-docx
+git add .
+git commit -m "Initial project structure"
+git push -u origin main
