@@ -147,3 +147,5 @@ def main():
 if __name__ == "__main__":
     main()
 
+streamlit run umowa_ai_premium.py
+
